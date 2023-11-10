@@ -1,0 +1,77 @@
+# app and org for use with dashboard.serverless.com
+# org: your-org-name
+# app: fsg
+service: ${env:bamboo_SERVICE}
+useDotenv: true
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+frameworkVersion: '3'
+
+plugins:
+  - serverless-plugin-lambda-dead-letter
+
+custom:
+  lambdaDocEncryptionImage: ${env:LAMBDA_IMAGE}
+  lambdaDocEncryptionReservedConcurrency: ${env:bamboo_LAMBDA_DOC_ENCRYPTION_RESERVED_CONCURRENCY}
+  lambdaDocEncryptionProvisionedConcurrency: ${env:bamboo_LAMBDA_DOC_ENCRYPTION_PROVISIONED_CONCURRENCY}
+  lambdaDocEncryptionMemorySize: ${env:bamboo_LAMBDA_DOC_ENCRYPTION_MEMORY_SIZE}
+  lambdaDocEncryptionEphemeralStorageSize: ${env:bamboo_LAMBDA_DOC_ENCRYPTION_EPHEMERAL_STORAGE_SIZE}
+  lambdaDocEncryptionTimeOut: ${env:bamboo_LAMBDA_DOC_ENCRYPTION_TIMEOUT}
+
+  lambdaDocEncryptionIamRole: ${env:LAMBDA_DOC_ENCRYPTION_IAM_ROLE}
+  lambdaDocEncryptionDlqArn: ${env:LAMBDA_DOC_ENCRYPTION_DLQ_ARN}
+  lambdaDeploymentBucket: ${env:LAMBDA_DEPLOYMENT_BUCKET}
+  lambdaAppSubnetId1: ${env:LAMBDA_APP_SUBNET_ID_1}
+  lambdaAppSubnetId2: ${env:LAMBDA_APP_SUBNET_ID_2}
+  lambdaSecurityGroupId: ${env:LAMBDA_SECURITY_GROUP_ID}
+
+provider:
+  deploymentBucket:
+    name: ${self:custom.lambdaDeploymentBucket}
+  name: aws
+  stage: dev
+  region: ap-southeast-1
+  stackName: cfn-${env:bamboo_PROJ_CODE}-${env:bamboo_ENV}ezapp-${env:bamboo_SERVICE}
+  # Default memory size for functions
+  memorySize: ${self:custom.lambdaDocEncryptionMemorySize}
+  # Default timeout for functions (default: 6 seconds)
+  # Note: API Gateway has a maximum timeout of 30 seconds
+  timeout: ${self:custom.lambdaDocEncryptionTimeOut}
+
+functions:
+  docEncryption:
+    name: lambda-${env:bamboo_PROJ_CODE}-${env:bamboo_ENV}ezapp-${env:bamboo_SERVICE}
+    image:
+      uri: ${self:custom.lambdaDocEncryptionImage}
+      command:
+        - doc-encryption.handler
+    maximumRetryAttempts: 0 # Function is only meant for synchronous invocation, so setting to 0 does not matter
+    deadLetter:
+      targetArn: ${self:custom.lambdaDocEncryptionDlqArn}
+    memorySize: ${self:custom.lambdaDocEncryptionMemorySize}
+    ephemeralStorageSize: ${self:custom.lambdaDocEncryptionEphemeralStorageSize}
+    timeout: ${self:custom.lambdaDocEncryptionTimeOut}
+    # Reserve a maximum number of concurrent instances (default: account limit)
+    reservedConcurrency: ${self:custom.lambdaDocEncryptionReservedConcurrency}
+    # Provision a minimum number of concurrent instances (default: 0)
+    provisionedConcurrency: ${self:custom.lambdaDocEncryptionProvisionedConcurrency}
+    role: ${self:custom.lambdaDocEncryptionIamRole}
+    vpc:
+      securityGroupIds:
+        - ${self:custom.lambdaSecurityGroupId}
+      subnetIds:
+        - ${self:custom.lambdaAppSubnetId1}
+        - ${self:custom.lambdaAppSubnetId2}
+    # Override the IAM role to use for this function
+    # Environment variable for the function (Uses env variables from .env file in pipeline)
+    environment:
+      ENV: ${env:ENV}
+      NODE_ENV: ${env:NODE_ENV}
+      LOG_LEVEL: ${env:LOG_LEVEL}
+      USE_LOCALSTACK: ${env:USE_LOCALSTACK}
+      AWS_S3_BUCKET_STG_CLEAN: ${env:AWS_S3_BUCKET_STG_CLEAN}
+      AWS_S3_BUCKET_MAIN: ${env:AWS_S3_BUCKET_MAIN}
+      AWS_STS_ASSUME_ROLE_SESSION_DURATION: ${env:AWS_STS_ASSUME_ROLE_SESSION_DURATION}
+      AWS_IAM_UPLOAD_MOVE_ROLE_ARN: ${env:AWS_IAM_UPLOAD_MOVE_ROLE_ARN}
+      PDF_BOX_JAR_FILE_PATH: ${env:PDF_BOX_JAR_FILE_PATH}

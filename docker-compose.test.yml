@@ -1,0 +1,21 @@
+version: "3.8"
+services:
+  test-db:
+    image: mysql:8.0.27
+    command: --default-authentication-plugin=mysql_native_password --default-time-zone=Asia/Singapore
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: filesgpass
+      MYSQL_DATABASE: filesg-test
+      MYSQL_USER: test
+      MYSQL_PASSWORD: filesgpass
+      TZ: Asia/Singapore
+    ports:
+      - 33206:3306
+  test-redis:
+    image: "redis:6-alpine"
+    ports:
+      - "6479:6379"
+    environment:
+      TZ: Asia/Singapore
+

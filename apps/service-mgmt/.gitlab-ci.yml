@@ -1,0 +1,39 @@
+include:
+  - local: .gitlab-ci/COMMON.gitlab-ci.yml
+
+backend-mgmt-deploy-dev:
+  extends: .backend-mgmt-deploy-dev
+  stage: deploy-to-dev-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-mgmt-build
+
+backend-mgmt-deploy-stg:
+  extends: .backend-mgmt-deploy-stg
+  stage: deploy-to-stg-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-mgmt-build
+
+backend-mgmt-deploy-uat:
+  extends: .backend-mgmt-deploy-uat
+  stage: deploy-to-uat-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-mgmt-build
+
+backend-mgmt-deploy-prd:
+  extends: .backend-mgmt-deploy-prd
+  stage: deploy-to-prd-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-mgmt-build
+    - job: backend-mgmt-deploy-stg

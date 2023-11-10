@@ -1,0 +1,58 @@
+openapi: 3.0.0
+info:
+  version: '1.0.0'
+  title: FileSG Webhook Endpoints API
+paths:
+  /handler:
+    post:
+      description: Webhook endpoints for FormSG
+      responses:
+        '200':
+          description: Message received.
+        '400':
+          description: The message failed to be delivered to the queue.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      parameters:
+        - in: query
+          name: type
+          required: true
+          schema:
+            type: string
+            enum:
+              - single-issuance
+              - batch-issuance
+              - recall-transaction
+          description: The types of the Form.
+        - in: header
+          name: X-FormSG-Signature
+          required: true
+          schema:
+            type: string
+          description: FormSG signature for authentication.
+      x-amazon-apigateway-integration:
+        credentials: ${execution_role_arn}
+        httpMethod: POST
+        uri: arn:aws:apigateway:${region}:sqs:path/${account_id}/${formsg_processor_sqs_name}
+        requestParameters:
+          integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
+          integration.request.querystring.MessageAttribute.1.Name: "'type'"
+          integration.request.querystring.MessageAttribute.1.Value.StringValue: 'method.request.querystring.type'
+          integration.request.querystring.MessageAttribute.1.Value.DataType: "'String'"
+          integration.request.querystring.MessageAttribute.2.Name: "'formsgSignature'"
+          integration.request.querystring.MessageAttribute.2.Value.StringValue: 'method.request.header.X-FormSG-Signature'
+          integration.request.querystring.MessageAttribute.2.Value.DataType: "'String'"
+        acceptParameters:
+          method.request.querystring.type: true
+        requestTemplates:
+          application/json: 'Action=SendMessage&MessageBody=$util.urlEncode($input.body)'
+        responses:
+          default:
+            statusCode: 200
+        passthroughBehavior: 'when_no_match'
+        type: 'aws'

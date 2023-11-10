@@ -1,0 +1,22 @@
+{
+   "/api/core": {
+    "target": "http://localhost:3001",
+      "secure": false,
+      "changeOrigin": true
+   },
+   "/api/transfer": {
+    "target": "http://localhost:3002",
+      "secure": false,
+      "changeOrigin": true
+   },
+   "/assets": {
+      "target": "https://www.dev.file.gov.sg",
+      "secure": false,
+      "changeOrigin": true
+   },
+   "/config": {
+      "target": "https://www.dev.file.gov.sg",
+      "secure": false,
+      "changeOrigin": true
+   }
+}

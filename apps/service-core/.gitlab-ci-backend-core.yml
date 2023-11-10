@@ -1,0 +1,79 @@
+include:
+  - local: .gitlab-ci/COMMON.gitlab-ci.yml
+
+backend-core-db-migration-dev:
+  extends: .backend-core-db-migration-dev
+  stage: deploy-to-dev-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+
+backend-core-deploy-dev:
+  extends: .backend-core-deploy-dev
+  stage: deploy-to-dev-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-core-build
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-core-gen-swagger
+    - job: backend-core-db-migration-dev
+
+backend-core-db-migration-stg:
+  extends: .backend-core-db-migration-stg
+  stage: deploy-to-stg-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+
+backend-core-deploy-stg:
+  extends: .backend-core-deploy-stg
+  stage: deploy-to-stg-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-core-build
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-core-gen-swagger
+    - job: backend-core-db-migration-stg
+
+backend-core-db-migration-uat:
+  extends: .backend-core-db-migration-uat
+  stage: deploy-to-uat-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+
+backend-core-deploy-uat:
+  extends: .backend-core-deploy-uat
+  stage: deploy-to-uat-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-core-build
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-core-gen-swagger
+    - job: backend-core-db-migration-uat
+
+backend-core-db-migration-prd:
+  extends: .backend-core-db-migration-prd
+  stage: deploy-to-prd-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+
+backend-core-deploy-prd:
+  extends: .backend-core-deploy-prd
+  stage: deploy-to-prd-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-core-build
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-core-gen-swagger
+    - job: backend-core-db-migration-prd
+    - job: backend-core-deploy-stg

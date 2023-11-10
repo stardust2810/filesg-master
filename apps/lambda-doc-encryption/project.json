@@ -1,0 +1,57 @@
+{
+  "name": "lambda-doc-encryption",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/lambda-doc-encryption/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/lambda-doc-encryption",
+        "main": "apps/lambda-doc-encryption/src/main.ts",
+        "tsConfig": "apps/lambda-doc-encryption/tsconfig.app.json",
+        "additionalEntryPoints": [
+          {
+            "entryName": "doc-encryption",
+            "entryPath": "apps/lambda-doc-encryption/src/doc-encryption.ts"
+          }
+        ],
+        "generatePackageJson": true,
+        "target": "node",
+        "compiler": "tsc",
+        "assets": [
+          "apps/lambda-doc-encryption/src/scripts/encryption-worker.js"
+        ]
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "inspect": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/node:node",
+      "options": {
+        "buildTarget": "lambda-doc-encryption:build"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/lambda-doc-encryption/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/lambda-doc-encryption"],
+      "options": {
+        "jestConfig": "apps/lambda-doc-encryption/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": ["backend"]
+}

@@ -1,0 +1,41 @@
+$sgds-font-path: '../../../../../../node_modules/sgds-govtech/fonts';
+
+@import '~sgds-govtech/sgds/sass/sgds-icons/all';
+
+html {
+  // Scrolling handled by page
+  overflow-y: auto;
+
+  //To hide scroll bar
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+
+  // Font appears with extra bold weight on Firefox without font smoothing
+  -moz-osx-font-smoothing: grayscale
+}
+
+.nav-link:hover {
+  color: 'rgba(0, 0, 0)';
+}
+
+/* To hide arrow for input type 'number' */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.branchIndicator {
+  width: 100%;
+  background-color: #1d3557;
+  color: #ced4da;
+  text-align: center;
+}
+
+.noscroll {
+  overflow: hidden !important;
+}

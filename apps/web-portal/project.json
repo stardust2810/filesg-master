@@ -1,0 +1,121 @@
+{
+  "name": "web-portal",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/web-portal/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "compiler": "swc",
+        "outputPath": "dist/apps/web-portal",
+        "index": "apps/web-portal/src/index.html",
+        "baseHref": "/",
+        "main": "apps/web-portal/src/index.tsx",
+        "polyfills": "apps/web-portal/src/polyfills.ts",
+        "tsConfig": "apps/web-portal/tsconfig.app.json",
+        "assets": [
+          "apps/web-portal/src/public/favicon.ico",
+          "apps/web-portal/src/public/site.webmanifest",
+          "apps/web-portal/src/public/browserconfig.xml",
+          "apps/web-portal/src/public/__ENV.js",
+          {
+            "input": "node_modules/pdfjs-dist/build",
+            "glob": "pdf.worker.min.js",
+            "output": "./public"
+          },
+          {
+            "input": "apps/web-portal/src/public/",
+            "glob": "*.png",
+            "output": "./public"
+          }
+        ],
+        "styles": [],
+        "scripts": [],
+        "webpackConfig": "webpack.react.config.js"
+      },
+      "configurations": {
+        "production": {
+          "statsJson": false,
+          "optimization": true,
+          "outputHashing": "all",
+          "sourceMap": false,
+          "namedChunks": false,
+          "vendorChunk": false,
+          "assets": [
+            "apps/web-portal/src/public/favicon.ico",
+            "apps/web-portal/src/public/site.webmanifest",
+            "apps/web-portal/src/public/browserconfig.xml",
+            {
+              "input": "node_modules/pdfjs-dist/build",
+              "glob": "pdf.worker.min.js",
+              "output": "./public"
+            },
+            {
+              "input": "apps/web-portal/src/public/",
+              "glob": "*.png",
+              "output": "./public"
+            }
+          ]
+        },
+        "development": {
+          "extractLicenses": false,
+          "optimization": false,
+          "sourceMap": true,
+          "vendorChunk": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "generate-env": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["react-env --dest src/public", "../../scripts/update-env-with-current-date.sh src/public/__ENV.js"],
+        "cwd": "apps/web-portal",
+        "parallel": false
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/webpack:dev-server",
+      "options": {
+        "buildTarget": "web-portal:build",
+        "hmr": true,
+        "proxyConfig": "proxy.conf.json",
+        "port": 3500
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "web-portal:build:production",
+          "hmr": false
+        },
+        "development": {
+          "buildTarget": "web-portal:build:development"
+        }
+      },
+      "dependsOn": [
+        {
+          "target": "generate-env",
+          "projects": "self"
+        }
+      ],
+      "defaultConfiguration": "development"
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/web-portal/**/*.{ts,tsx,js,jsx}"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/web-portal"],
+      "options": {
+        "jestConfig": "apps/web-portal/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": ["frontend"]
+}

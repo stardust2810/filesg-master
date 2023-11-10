@@ -1,0 +1,112 @@
+{
+  "name": "service-core",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/service-core/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/service-core",
+        "main": "apps/service-core/src/main.ts",
+        "tsConfig": "apps/service-core/tsconfig.app.json",
+        "generatePackageJson": true,
+        "target": "node",
+        "compiler": "tsc"
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "inspect": false
+        },
+        "expire-docs": {
+          "optimization": false,
+          "inspect": false,
+          "main": "apps/service-core/src/standalone/expire-docs.cron.ts",
+          "outputFileName": "expire-docs.js"
+        },
+        "agency-delete-docs": {
+          "optimization": false,
+          "inspect": false,
+          "main": "apps/service-core/src/standalone/agency-delete-docs.cron.ts",
+          "outputFileName": "agency-delete-docs.js"
+        },
+        "notification-failure-reporting": {
+          "optimization": false,
+          "inspect": false,
+          "main": "apps/service-core/src/standalone/notification-failure-reporting.cron.ts",
+          "outputFileName": "notification-failure-reporting.js"
+        }
+      }
+    },
+    "build-swagger": {
+      "executor": "@nrwl/node:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "apps/service-core/dist",
+        "main": "apps/service-core/src/standalone/generate-swagger-doc.ts",
+        "tsConfig": "apps/service-core/tsconfig.app.json",
+        "outputFileName": "generate-swagger-doc.js",
+        "sourceMap": false
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/node:node",
+      "options": {
+        "buildTarget": "service-core:build"
+      }
+    },
+    "serve-cron": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["nx build service-core --configuration={args.name}", "node dist/apps/service-core/{args.name}.js"],
+        "parallel": false
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/service-core/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/service-core"],
+      "options": {
+        "jestConfig": "apps/service-core/jest.config.ts",
+        "passWithNoTests": true
+      }
+    },
+    "db-migration-create": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ts-node -r tsconfig-paths/register --project tsconfig.app.json ../../node_modules/typeorm/cli.js migration:create ./src/migrations/record/{args.n}",
+        "cwd": "apps/service-core"
+      }
+    },
+    "db-migration-generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ts-node -r tsconfig-paths/register --project tsconfig.app.json ../../node_modules/typeorm/cli.js migration:generate --dataSource ./src/migrations/ormconfig.migration.ts ./src/migrations/record/{args.n}",
+        "cwd": "apps/service-core"
+      }
+    },
+    "db-migration-revert": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ts-node -r tsconfig-paths/register --project tsconfig.app.json ../../node_modules/typeorm/cli.js migration:revert --dataSource ./src/migrations/ormconfig.migration.ts",
+        "cwd": "apps/service-core"
+      }
+    },
+    "db-migration-show": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ts-node -r tsconfig-paths/register --project tsconfig.app.json ../../node_modules/typeorm/cli.js migration:show --dataSource ./src/migrations/ormconfig.migration.ts",
+        "cwd": "apps/service-core"
+      }
+    }
+  },
+  "tags": ["backend"]
+}

@@ -1,0 +1,93 @@
+{
+  "name": "web-maintenance",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/web-maintenance/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "compiler": "swc",
+        "outputPath": "dist/apps/web-maintenance/maintenance",
+        "index": "apps/web-maintenance/src/index.html",
+        "baseHref": "/",
+        "main": "apps/web-maintenance/src/index.tsx",
+        "polyfills": "apps/web-maintenance/src/polyfills.ts",
+        "tsConfig": "apps/web-maintenance/tsconfig.app.json",
+        "assets": ["apps/web-maintenance/src/public/favicon-filesg.ico", "apps/web-maintenance/src/public/__ENV.js"],
+        "styles": [],
+        "scripts": [],
+        "webpackConfig": "webpack.react.config.js"
+      },
+      "configurations": {
+        "production": {
+          "baseHref": "/maintenance/",
+          "statsJson": false,
+          "optimization": true,
+          "outputHashing": "all",
+          "sourceMap": false,
+          "namedChunks": false,
+          "vendorChunk": false,
+          "assets": ["apps/web-maintenance/src/public/favicon-filesg.ico"]
+        },
+        "development": {
+          "extractLicenses": false,
+          "optimization": false,
+          "sourceMap": true,
+          "vendorChunk": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "generate-env": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["react-env --dest src/public", "../../scripts/update-env-with-current-date.sh src/public/__ENV.js"],
+        "cwd": "apps/web-maintenance",
+        "parallel": false
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/webpack:dev-server",
+      "options": {
+        "buildTarget": "web-maintenance:build",
+        "proxyConfig": "proxy.conf.json",
+        "hmr": true,
+        "port": 3502
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "web-maintenance:build:production",
+          "hmr": false
+        },
+        "development": {
+          "buildTarget": "web-maintenance:build:development"
+        }
+      },
+      "dependsOn": [
+        {
+          "target": "generate-env",
+          "projects": "self"
+        }
+      ],
+      "defaultConfiguration": "development"
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/web-maintenance/**/*.{ts,tsx,js,jsx}"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/web-maintenance"],
+      "options": {
+        "jestConfig": "apps/web-maintenance/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": ["frontend"]
+}

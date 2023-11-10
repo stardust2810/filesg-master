@@ -1,0 +1,39 @@
+{
+  "keys": [
+    {
+      "crv": "P-521",
+      "kid": "filesg-ec-sig-pub-key",
+      "kty": "EC",
+      "use": "sig",
+      "x": "Ad-VnR4OpTLbJi76TsYjwOvRkGZn-IMVNearLgIiiOi4IQJ82kJbiMYFJ8MxVvB7AATL3P-k6n8RRlM7KjDfHdmW",
+      "y": "AdlTd4Z8A1P5k-amQGafGvtc4l6QelGYBgrBUZff-O-DObBzshlk-0E4kkaTZabTz9wPMxFqKowYeWblmNkFA0Fz"
+    },
+    {
+      "alg": "ECDH-ES+A256KW",
+      "crv": "P-521",
+      "kid": "filesg-ec-enc-pub-key",
+      "kty": "EC",
+      "use": "enc",
+      "x": "APXM-Mqw3DtTTAU3mMqBFRRORYxIfrjedEIfm9uk3MZ8JnOmERUtyRqMWyjre54ouQmxFhsTjGaLs0KoeNHiIl_o",
+      "y": "ADDDEgHltRZjTM8Sr6BBSThmxhgKXGid5pBoL7jW2nQsbbX-8SHpVOwD_ajFk4qPoXhXXZo8HuojqirztRdKUUKN"
+    },
+    {
+      "alg": "ES256",
+      "crv": "P-256",
+      "kid": "filesg-apex-ec-sig-pub-key",
+      "kty": "EC",
+      "use": "sig",
+      "x": "pIGoUJX9cL9juMbznCHPQeA_JB0b-W1znp6vOBAqzcs",
+      "y": "YhHrz8BU7PG4mgV0qRLfpzXUzZZ9FfDKmDkQUxzPOaY"
+    },
+    {
+      "alg": "ECDH-ES+A256KW",
+      "crv": "P-256",
+      "kid": "filesg-apex-ec-enc-pub-key",
+      "kty": "EC",
+      "use": "enc",
+      "x": "42RZWXh3Wq28CXRmI8kyIQj9H4iZy4bPsMJ2tbyW5QI",
+      "y": "8aVjrITezaqVUJZB4yod5yQf0UlwsQpBXJRyKWXuTWY"
+    }
+  ]
+}

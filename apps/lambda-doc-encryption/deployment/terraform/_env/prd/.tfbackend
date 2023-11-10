@@ -1,0 +1,3 @@
+bucket = "s3-fsg2-prdnana-tfstate"
+key = "params/doc-encryption/prd/terraform.tfstate"
+region = "ap-southeast-1"

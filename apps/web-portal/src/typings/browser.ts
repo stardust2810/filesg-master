@@ -1,0 +1,17 @@
+export enum BROWSER {
+  CHROME = 'Chrome',
+  CHROME_HEADLESS = 'Chrome Headless',
+  EDGE = 'Edge',
+  FIREFOX = 'Firefox',
+  MOBILE_SAFARI = 'Mobile Safari',
+  SAFARI = 'Safari',
+}
+
+export const SUPPORTED_BROWSERS = [
+  BROWSER.CHROME,
+  BROWSER.CHROME_HEADLESS,
+  BROWSER.EDGE,
+  BROWSER.FIREFOX,
+  BROWSER.MOBILE_SAFARI,
+  BROWSER.SAFARI,
+];

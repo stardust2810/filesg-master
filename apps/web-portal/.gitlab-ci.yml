@@ -1,0 +1,39 @@
+include:
+  - local: .gitlab-ci/COMMON.gitlab-ci.yml
+
+frontend-citizen-deploy-dev:
+  extends: .frontend-citizen-deploy-dev
+  stage: deploy-to-dev-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: frontend-citizen-build
+
+frontend-citizen-deploy-stg:
+  extends: .frontend-citizen-deploy-stg
+  stage: deploy-to-stg-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: frontend-citizen-build
+
+frontend-citizen-deploy-uat:
+  extends: .frontend-citizen-deploy-uat
+  stage: deploy-to-uat-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: frontend-citizen-build
+
+frontend-citizen-deploy-prd:
+  extends: .frontend-citizen-deploy-prd
+  stage: deploy-to-prd-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: frontend-citizen-build
+    - job: frontend-citizen-deploy-stg

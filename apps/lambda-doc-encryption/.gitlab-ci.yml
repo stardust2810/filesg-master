@@ -1,0 +1,39 @@
+include:
+  - local: .gitlab-ci/COMMON.gitlab-ci.yml
+
+lambda-doc-encryption-deploy-dev:
+  extends: .lambda-doc-encryption-deploy-dev
+  stage: deploy-to-dev-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: lambda-doc-encryption-build
+
+lambda-doc-encryption-deploy-stg:
+  extends: .lambda-doc-encryption-deploy-stg
+  stage: deploy-to-stg-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: lambda-doc-encryption-build
+
+lambda-doc-encryption-deploy-uat:
+  extends: .lambda-doc-encryption-deploy-uat
+  stage: deploy-to-uat-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: lambda-doc-encryption-build
+
+lambda-doc-encryption-deploy-prd:
+  extends: .lambda-doc-encryption-deploy-prd
+  stage: deploy-to-prd-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: lambda-doc-encryption-build
+    - job: lambda-doc-encryption-deploy-stg

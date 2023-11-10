@@ -1,0 +1,31 @@
+export const mockFileSGConfigService = {
+  systemConfig: {
+    uploadFileSizeLimitInMBytes: 10,
+    pollingSleepTimeInSeconds: 2,
+  },
+  jwtConfig: {},
+  awsConfig: {
+    region: 'mockRegion',
+    toBeUpdatedQueueUrl: 'mocktoBeUpdatedQueue',
+    coreEventsQueueUrl: 'mockCoreEventsQueueUrl',
+    uploadMoveRoleArn: 'mockUploadMoveRoleArn',
+    transferMoveRoleArn: 'mockTransferMoveRoleArn',
+    uploadRoleArn: 'mockUploadRoleArn',
+    retrieveRoleArn: 'mockRetrieveRoleArn',
+    assumeRoleSessionDuration: 'mockAssumeRoleSessionDuration',
+    stgFileBucketName: 'mockS3StgBucket',
+    stgCleanFileBucketName: 'mockS3StgCleanBucket',
+    mainFileBucketName: 'mockS3MainBucket',
+    agencyOASchemaFolderName: 'ICA_LTVP',
+    staticFileBucketURL: 'configBucket',
+    toBeMovedQueueUrl: 'to-be-moved-queue',
+    transferEventsQueueUrl: 'transfer-events-queue',
+    maxMessageReceiveCount: 3,
+    docEncryptionLambdaFunctionName: 'mockDocEncryptionLambdaFunction',
+  },
+  oaConfig: {
+    revocationLocation: 'https://dev.file.gov.sg',
+    identityProofLocation: 'dev.file.gov.sg',
+    rendererUrl: 'https://renderer.dev.file.gov.sg/',
+  },
+};

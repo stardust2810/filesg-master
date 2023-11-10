@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "lib": ["es2021"],
+    "baseUrl": ".",
+    "paths": {
+      "@filesg/common": ["../../../../../../libs/common/common/src/index.ts"]
+    }
+  },
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
+}

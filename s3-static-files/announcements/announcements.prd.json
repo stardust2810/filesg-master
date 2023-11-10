@@ -1,0 +1,11 @@
+{
+  "announcements": [
+    {
+      "id": "5930d0a0-71c5-4b13-963b-570507ff1070",
+      "title": "Scheduled maintenance",
+      "description": "Due to scheduled maintenance, you may experience intermittent issues with document access from: 01 Nov 2023 11:00 PM to 02 Nov 2023, 01:00 AM",
+      "displayStart": "2023-10-23T00:00:00.000+08:00",
+      "displayEnd": "2023-11-02T01:00:00.000+08:00"
+    }
+  ]
+}

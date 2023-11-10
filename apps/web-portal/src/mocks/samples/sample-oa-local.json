@@ -1,0 +1,62 @@
+{
+  "version": "https://schema.openattestation.com/2.0/schema.json",
+  "data": {
+    "id": "9f307a87-520b-422d-85a3-6efe82a7958e:string:4656dba0-6780-4670-ad5f-7643f5a0e649",
+    "status": "a99cb3b8-488a-448b-9260-52cf0431a7e9:string:live",
+    "recipient": {
+      "name": "2dd75b2b-cabf-449c-8626-208808455d92:string:John Doe"
+    },
+    "agencyData": {
+      "issuedOn": "ed1060c5-7178-42cf-833b-6963ec13444f:string:2022-08-04T10:47:54.841",
+      "expireOn": "6ff1bc6a-76df-4cff-854a-00c7e4c45db4:string:2027-08-06T00:00:00.000",
+      "name": "f9200630-6e37-450a-a5e0-ff83ec7db206:string:John Doe",
+      "hanyupinyinName": "c89fd2d9-bf39-4299-bbca-1dc1d1d36570:string:Yue Han Duo Er",
+      "photoIdNo": "247bd7e2-8571-43b1-97d0-dcf4ad545d76:string:test",
+      "fin": "a3c96d23-441e-4726-8b86-d806f0a55f89:string:F1234567A",
+      "dob": "f382a68f-c5ba-461c-8628-69d2d3cea126:string:1995-09-18T00:00:00.000",
+      "sex": "c4f93ad4-ab88-4b9e-a2ca-748e9ae3ec4a:string:male",
+      "nationality": "31263838-d233-41f8-8b6f-15981ee80650:string:Indonesia",
+      "address": [
+        "618ac9af-4e13-4dbd-b660-98ded6631e3c:string:123 Goldwater Ave",
+        "276249d3-112f-448d-b3d1-2e573e59750d:string:#01-55",
+        "0daa2c7f-696b-492e-a8ff-8d3df8b15a2a:string:Singapore 345123"
+      ],
+      "verificationUrl": "54649c01-5ba4-467e-b840-62534942e7e3:string:http://localhost:3500/verify?q=%7B%22type%22%3A%22DOCUMENT%22%2C%22payload%22%3A%7B%22uri%22%3A%22https%3A%2F%2Fname.s3.ap-southeast-1.amazonaws.com%2Fdocument%2F61346e42610f%22%2C%22permittedActions%22%3A%5B%22VIEW%22%2C%22STORE%22%5D%7D%7D#%7B%22key%22%3A%22f09e2588ba83a3b61ac08da1efaaa220ef5bf7d293f52300a0c6079623013cda%22%7D"
+    },
+    "issuers": [
+      {
+        "id": "2bcf1338-001e-465a-8233-5b12ebe4bea1:string:did:ethr:0xC5f1FFfaAA0984c0dB6a82440b9885204eb3A482",
+        "name": "e58a73c8-6041-441d-bd84-b79b10df720d:string:Immigration & Checkpoints Authority",
+        "revocation": {
+          "type": "e6a67adf-f8e5-4215-b62d-622930e235e2:string:OCSP_RESPONDER",
+          "location": "847d4571-c83b-4f40-ab26-6c9e6b8fd7d6:string:http://localhost:3001/core/open-attestation/revocation"
+        },
+        "identityProof": {
+          "type": "998430ee-9046-4a37-8634-5c9ce2ff7a2c:string:DNS-DID",
+          "location": "51b17a1a-ab8c-4ccd-8bf3-3577516325d7:string:dev.file.gov.sg",
+          "key": "56b4b447-d46b-4581-a90a-a0628aeae747:string:did:ethr:0xC5f1FFfaAA0984c0dB6a82440b9885204eb3A482#controller"
+        }
+      }
+    ],
+    "$template": {
+      "name": "66366b89-b69f-43a4-9732-a6cb951f4518:string:LTVP",
+      "type": "28e394f2-dadf-4362-8112-fb69a23cbc12:string:EMBEDDED_RENDERER",
+      "url": "961c6036-b7b8-4e90-ba99-15689951ab8b:string:http://localhost:3501"
+    }
+  },
+  "signature": {
+    "type": "SHA3MerkleProof",
+    "targetHash": "0b154fe564ffb89c836f636c244aaddfeb4c427a6df8a525021bf7075a0d4d7d",
+    "proof": [],
+    "merkleRoot": "0b154fe564ffb89c836f636c244aaddfeb4c427a6df8a525021bf7075a0d4d7d"
+  },
+  "proof": [
+    {
+      "type": "OpenAttestationSignature2018",
+      "created": "2022-08-04T02:47:55.239Z",
+      "proofPurpose": "assertionMethod",
+      "verificationMethod": "did:ethr:0xC5f1FFfaAA0984c0dB6a82440b9885204eb3A482#controller",
+      "signature": "0x3e45cc4f19daba9d47d5118a04cea556e2ca651ac46976dac674a9605b411ca476027d0d2da5b5e1b79fc22845b418593d18e7f2695ca6e6afce7999dab63fcb1b"
+    }
+  ]
+}

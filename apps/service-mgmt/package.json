@@ -1,0 +1,13 @@
+{
+  "name": "service-mgmt",
+  "version": "1.0.0",
+  "description": "the brain of service-transfer, instructing on to/from of an upload",
+  "scripts": {
+    "docker:build": "docker build -f ../../Dockerfile.app -t be-mgmt ../.. --build-arg SERVICE_NAME=mgmt",
+    "env:get:local": "../../scripts/get-env-variables.sh mgmt local",
+    "env:get:dev": "../../scripts/get-env-variables.sh mgmt dev",
+    "env:get:stg": "../../scripts/get-env-variables.sh mgmt stg",
+    "env:get:uat": "../../scripts/get-env-variables.sh mgmt uat",
+    "env:apply:local": "../../bin/tf-run.sh terraform local init && ../../bin/tf-run.sh terraform local apply -target aws_ssm_parameter.this"
+  }
+}

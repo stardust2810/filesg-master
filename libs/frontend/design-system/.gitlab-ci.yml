@@ -1,0 +1,11 @@
+include:
+  - local: .gitlab-ci/COMMON.gitlab-ci.yml
+
+frontend-storybook-deploy-dev:
+  extends: .frontend-storybook-deploy-dev
+  stage: deploy-to-dev-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: frontend-storybook-build

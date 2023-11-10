@@ -1,0 +1,15 @@
+{
+  "name": "service-event-logs",
+  "version": "1.0.0",
+  "description": "the event logs service of filesg which handles event logs and used for report generation purpose.",
+  "scripts": {
+    "docker:build": "docker build -f ../../Dockerfile.app -t be-event-logs ../.. --build-arg SERVICE_NAME=event-logs",
+    "env:get:local": "../../scripts/get-env-variables.sh event-logs local",
+    "env:get:dev": "../../scripts/get-env-variables.sh event-logs dev",
+    "env:get:stg": "../../scripts/get-env-variables.sh event-logs stg",
+    "env:get:uat": "../../scripts/get-env-variables.sh event-logs uat",
+    "env:apply:local": "../../bin/tf-run.sh terraform local init && ../../bin/tf-run.sh terraform local apply -target aws_ssm_parameter.this",
+    "ddb:formsg:apply:local": "../../bin/tf-run.sh terraform local init && ../../bin/tf-run.sh terraform local apply -target aws_dynamodb_table.formsg_transaction",
+    "swagger:generate": "nx build-swagger service-event-logs && node dist/generate-swagger-doc"
+  }
+}

@@ -1,0 +1,31 @@
+include:
+  - local: .gitlab-ci/COMMON.gitlab-ci.yml
+
+static-files-announcement-deploy-dev:
+  extends: .static-files-announcement-deploy-dev
+  stage: deploy-to-dev-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+
+static-files-announcement-deploy-stg:
+  extends: .static-files-announcement-deploy-stg
+  stage: deploy-to-stg-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+
+static-files-announcement-deploy-uat:
+  extends: .static-files-announcement-deploy-uat
+  stage: deploy-to-uat-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+
+static-files-announcement-deploy-prd:
+  extends: .static-files-announcement-deploy-prd
+  stage: deploy-to-prd-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - job: static-files-announcement-deploy-stg

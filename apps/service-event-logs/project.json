@@ -1,0 +1,60 @@
+{
+  "name": "service-event-logs",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "version": "0.0.0",
+  "sourceRoot": "apps/service-event-logs/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/service-event-logs",
+        "main": "apps/service-event-logs/src/main.ts",
+        "tsConfig": "apps/service-event-logs/tsconfig.app.json",
+        "generatePackageJson": true
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "inspect": false
+        }
+      }
+    },
+    "build-swagger": {
+      "executor": "@nrwl/node:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "apps/service-event-logs/dist",
+        "main": "apps/service-event-logs/src/standalone/generate-swagger-doc.ts",
+        "tsConfig": "apps/service-event-logs/tsconfig.app.json",
+        "outputFileName": "generate-swagger-doc.js",
+        "sourceMap": false
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/js:node",
+      "options": {
+        "buildTarget": "service-event-logs:build"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/service-event-logs/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/service-event-logs/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": ["backend"]
+}

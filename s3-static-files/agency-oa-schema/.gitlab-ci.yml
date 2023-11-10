@@ -1,0 +1,31 @@
+include:
+  - local: .gitlab-ci/COMMON.gitlab-ci.yml
+
+static-files-agency-oa-schema-deploy-dev:
+  extends: .static-files-agency-oa-schema-deploy-dev
+  stage: deploy-to-dev-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+
+static-files-agency-oa-schema-deploy-stg:
+  extends: .static-files-agency-oa-schema-deploy-stg
+  stage: deploy-to-stg-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+
+static-files-agency-oa-schema-deploy-uat:
+  extends: .static-files-agency-oa-schema-deploy-uat
+  stage: deploy-to-uat-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+
+static-files-agency-oa-schema-deploy-prd:
+  extends: .static-files-agency-oa-schema-deploy-prd
+  stage: deploy-to-prd-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - job: static-files-agency-oa-schema-deploy-stg

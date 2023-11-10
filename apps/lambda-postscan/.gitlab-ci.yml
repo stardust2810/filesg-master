@@ -1,0 +1,39 @@
+include:
+  - local: .gitlab-ci/COMMON.gitlab-ci.yml
+
+lambda-postscan-deploy-dev:
+  extends: .lambda-postscan-deploy-dev
+  stage: deploy-to-dev-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: lambda-postscan-build
+
+lambda-postscan-deploy-stg:
+  extends: .lambda-postscan-deploy-stg
+  stage: deploy-to-stg-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: lambda-postscan-build
+
+lambda-postscan-deploy-uat:
+  extends: .lambda-postscan-deploy-uat
+  stage: deploy-to-uat-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: lambda-postscan-build
+
+lambda-postscan-deploy-prd:
+  extends: .lambda-postscan-deploy-prd
+  stage: deploy-to-prd-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: lambda-postscan-build
+    - job: lambda-postscan-deploy-stg

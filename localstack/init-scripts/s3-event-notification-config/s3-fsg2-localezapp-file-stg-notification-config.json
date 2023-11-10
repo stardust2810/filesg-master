@@ -1,0 +1,10 @@
+{
+  "QueueConfigurations": [
+    {
+      "QueueArn": "arn:aws:sqs:ap-southeast-1:000000000000:sqs-fsg2-localezapp-ScannerQueue",
+      "Events": [
+        "s3:ObjectCreated:*"
+      ]
+    }
+  ]
+}

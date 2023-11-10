@@ -1,0 +1,26 @@
+{
+  "agency": "FSG",
+  "oaType": "STP",
+  "schema": {
+    "type": "object",
+    "required": ["name", "issuerName", "issuedOn", "expireOn", "fin", "dob", "sex", "nationality", "address", "mjvInd"],
+    "properties": {
+      "name": { "type": "string" },
+      "issuerName": { "type": "string" },
+      "issuedOn": { "type": "string", "format": "date" },
+      "expireOn": { "type": "string", "format": "date" },
+      "fin": { "type": "string" },
+      "dob": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}" },
+      "sex": { "type": "string" },
+      "nationality": { "type": "string" },
+      "address": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+      "mjvInd": { "type": "boolean" }
+    },
+    "additionalProperties": false,
+    "errorMessage": {
+      "properties": {
+        "dob": "dob should be in the following format YYYY-MM-DD or YYYY-MM-00 or YYYY-00-00"
+      }
+    }
+  }
+}

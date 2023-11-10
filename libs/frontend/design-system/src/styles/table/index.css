@@ -1,0 +1,88 @@
+.ReactVirtualized__Table__row:hover {
+  background-color: #f7f7f7;
+}
+
+.ReactVirtualized__Table__rowColumn {
+  text-overflow: initial;
+  white-space: initial;
+  overflow: visible !important;
+}
+
+.ReactVirtualized__Table__headerColumn,
+.ReactVirtualized__Table__rowColumn {
+  margin: 0 0.75rem;
+
+}
+
+.ReactVirtualized__Table__headerRow{
+  box-shadow: 0px -1px 0px 0px #c6c6c6 inset;
+}
+
+@media screen and (max-width: 599px) {
+  .ReactVirtualized__Table__headerColumn,
+  .ReactVirtualized__Table__rowColumn {
+    margin: 0 0.5rem;
+  }
+
+  .ReactVirtualized__Table__headerRow{
+    box-shadow: 0px -1px 0px 0px white inset;
+  }
+}
+
+.ReactVirtualized__Table__headerColumn:first-of-type,
+.ReactVirtualized__Table__rowColumn:first-of-type {
+  margin-left: 1.5rem;
+  margin-right: 0.5rem;
+}
+
+@media screen and (max-width: 599px) {
+  .ReactVirtualized__Table__headerColumn:first-of-type,
+  .ReactVirtualized__Table__rowColumn:first-of-type {
+    margin-left: 1rem;
+  }
+}
+
+.ReactVirtualized__Table__headerColumn:last-of-type,
+.ReactVirtualized__Table__rowColumn:last-of-type {
+  margin-left: 0.5rem;
+  margin-right: 1.5rem;
+}
+
+@media screen and (max-width: 599px) {
+  .ReactVirtualized__Table__headerColumn:last-of-type,
+  .ReactVirtualized__Table__rowColumn:last-of-type {
+    margin-left: 0.25rem;
+    margin-right: 1rem;
+  }
+}
+
+.ReactVirtualized__Table__rowColumn > * {
+  vertical-align: middle;
+}
+
+.ReactVirtualized__Table__Grid {
+  overflow: visible !important;
+}
+
+.ReactVirtualized__Grid__innerScrollContainer,
+.ReactVirtualized__Table__row {
+  overflow: visible !important;
+  box-shadow: 0px -1px 0px 0px #c6c6c6 inset;
+
+}
+@media screen and (max-width: 599px) {
+  .ReactVirtualized__Table__row {
+    box-shadow: 0px -1px 0px 0px white inset !important;
+  }
+}
+@media screen and (max-width: 767px) {
+  .Table-is-hidden-tablet {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 599px) {
+  .Table-is-hidden-mobile {
+    display: none;
+  }
+}

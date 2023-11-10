@@ -1,0 +1,91 @@
+# app and org for use with dashboard.serverless.com
+# org: your-org-name
+# app: fsg
+service: ${env:bamboo_SERVICE}
+useDotenv: true
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+frameworkVersion: '3'
+
+plugins:
+  - serverless-plugin-lambda-dead-letter
+
+custom:
+  lambdaFormsgProcessorImage: ${env:LAMBDA_IMAGE}
+  lambdaFormsgProcessorReservedConcurrency: ${env:bamboo_LAMBDA_FORMSG_PROCESSOR_RESERVED_CONCURRENCY}
+  lambdaFormsgProcessorProvisionedConcurrency: ${env:bamboo_LAMBDA_FORMSG_PROCESSOR_PROVISIONED_CONCURRENCY}
+  lambdaFormsgProcessorMemorySize: ${env:bamboo_LAMBDA_FORMSG_PROCESSOR_MEMORY_SIZE}
+  lambdaFormsgProcessorEphemeralStorageSize: ${env:bamboo_LAMBDA_FORMSG_PROCESSOR_EPHEMERAL_STORAGE_SIZE}
+  lambdaFormsgProcessorTimeOut: ${env:bamboo_LAMBDA_FORMSG_PROCESSOR_TIMEOUT}
+
+  lambdaFormsgProcessorIamRole: ${env:LAMBDA_FORMSG_PROCESSOR_IAM_ROLE}
+  lambdaFormsgProcessorEventTriggerSqsArn: ${env:LAMBDA_FORMSG_PROCESSOR_EVENT_TRIGGER_SQS_ARN}
+  lambdaFormsgProcessorSqsBatchSize: ${env:LAMBDA_FORMSG_PROCESSOR_SQS_BATCH_SIZE}
+  lambdaDeploymentBucket: ${env:LAMBDA_DEPLOYMENT_BUCKET}
+  lambdaAppSubnetId1: ${env:LAMBDA_APP_SUBNET_ID_1}
+  lambdaAppSubnetId2: ${env:LAMBDA_APP_SUBNET_ID_2}
+  lambdaSecurityGroupId: ${env:LAMBDA_SECURITY_GROUP_ID}
+
+provider:
+  deploymentBucket:
+    name: ${self:custom.lambdaDeploymentBucket}
+  name: aws
+  stage: dev
+  region: ap-southeast-1
+  stackName: cfn-${env:bamboo_PROJ_CODE}-${env:bamboo_ENV}ezapp-${env:bamboo_SERVICE}
+  # Default memory size for functions
+  memorySize: ${self:custom.lambdaFormsgProcessorMemorySize}
+  # Default timeout for functions (default: 6 seconds)
+  # Note: API Gateway has a maximum timeout of 30 seconds
+  timeout: ${self:custom.lambdaFormsgProcessorTimeOut}
+
+# No deadletter queue is configured because retry mechanism depends on SQS
+functions:
+  FormsgProcessor:
+    name: lambda-${env:bamboo_PROJ_CODE}-${env:bamboo_ENV}ezapp-${env:bamboo_SERVICE}
+    image:
+      uri: ${self:custom.lambdaFormsgProcessorImage}
+      command:
+        - formsg-processor.handler
+    maximumRetryAttempts: 0 # Lambda handles message from SQS, will disable retry here, but depend on SQS receive count to retry
+    events:
+      - sqs:
+          arn: ${self:custom.lambdaFormsgProcessorEventTriggerSqsArn}
+          batchSize: ${self:custom.lambdaFormsgProcessorSqsBatchSize}
+          maximumBatchingWindow: 0 # do not wait for batch size to be achieved, immediately process any message received
+    memorySize: ${self:custom.lambdaFormsgProcessorMemorySize}
+    ephemeralStorageSize: ${self:custom.lambdaFormsgProcessorEphemeralStorageSize}
+    timeout: ${self:custom.lambdaFormsgProcessorTimeOut}
+    # Reserve a maximum number of concurrent instances (default: account limit)
+    reservedConcurrency: ${self:custom.lambdaFormsgProcessorReservedConcurrency}
+    # Provision a minimum number of concurrent instances (default: 0)
+    provisionedConcurrency: ${self:custom.lambdaFormsgProcessorProvisionedConcurrency}
+    role: ${self:custom.lambdaFormsgProcessorIamRole}
+    vpc:
+      securityGroupIds:
+        - ${self:custom.lambdaSecurityGroupId}
+      subnetIds:
+        - ${self:custom.lambdaAppSubnetId1}
+        - ${self:custom.lambdaAppSubnetId2}
+    # Override the IAM role to use for this function
+    # Environment variable for the function (Uses env variables from .env file in pipeline)
+    environment:
+      ENV: ${env:ENV}
+      NODE_ENV: ${env:NODE_ENV}
+      LOG_LEVEL: ${env:LOG_LEVEL}
+      USE_LOCALSTACK: ${env:USE_LOCALSTACK}
+      CORE_SERVICE_URL: ${env:CORE_SERVICE_URL}
+      TRANSFER_SERVICE_URL: ${env:TRANSFER_SERVICE_URL}
+      EVENT_LOGS_SERVICE_URL: ${env:EVENT_LOGS_SERVICE_URL}
+      # AWS_REGION: ${env:AWS_REGION} //reserved env var by lambda
+      AWS_SQS_FORMSG_PROCESSOR: ${env:AWS_SQS_FORMSG_PROCESSOR}
+      FILESG_SYSTEM_INTEGRATION_CLIENT_ID: ${env:FILESG_SYSTEM_INTEGRATION_CLIENT_ID}
+      FORMSG_SINGLE_ISSUANCE_FORM_ID: ${env:FORMSG_SINGLE_ISSUANCE_FORM_ID}
+      FORMSG_SINGLE_ISSUANCE_WEBHOOK_URL: ${env:FORMSG_SINGLE_ISSUANCE_WEBHOOK_URL}
+      FORMSG_BATCH_ISSUANCE_FORM_ID: ${env:FORMSG_BATCH_ISSUANCE_FORM_ID}
+      FORMSG_BATCH_ISSUANCE_WEBHOOK_URL: ${env:FORMSG_BATCH_ISSUANCE_WEBHOOK_URL}
+      FORMSG_RECALL_TRANSACTION_FORM_ID: ${env:FORMSG_RECALL_TRANSACTION_FORM_ID}
+      FORMSG_RECALL_TRANSACTION_WEBHOOK_URL: ${env:FORMSG_RECALL_TRANSACTION_WEBHOOK_URL}
+      # AWS_IAM_FORMSG_ROLE_ARN: ${env:AWS_IAM_FORMSG_ROLE_ARN}
+      # AWS_STS_ASSUME_ROLE_SESSION_DURATION: ${env:AWS_STS_ASSUME_ROLE_SESSION_DURATION}

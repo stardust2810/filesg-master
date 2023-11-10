@@ -1,0 +1,41 @@
+apiVersion: vpcresources.k8s.aws/v1beta1
+kind: SecurityGroupPolicy
+metadata:
+  name: db-migration
+  namespace: default
+  annotations:
+    'helm.sh/hook': 'pre-install,pre-upgrade'
+    'helm.sh/hook-delete-policy': 'before-hook-creation'
+    'helm.sh/hook-weight': '0'
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: db-migration
+  securityGroups:
+    groupIds:
+      - $EKS_CLUSTER_SEC_GROUP_ID
+      - $SERVICE_SEC_GROUP_ID
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: db-migration
+  namespace: default
+  labels:
+    app.kubernetes.io/name: db-migration
+spec:
+  automountServiceAccountToken: false
+  containers:
+    - command:
+        - sleep
+        - infinity
+      image: nexus-docker.ship.gov.sg/node:18-bullseye
+      imagePullPolicy: IfNotPresent
+      name: db-migration
+      resources:
+        limits:
+          memory: 1000Mi
+          cpu: 1
+        requests:
+          memory: 1000Mi
+          cpu: 1

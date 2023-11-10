@@ -1,0 +1,95 @@
+# app and org for use with dashboard.serverless.com
+# org: your-org-name
+# app: fsg
+service: ${env:bamboo_SERVICE}
+useDotenv: true
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+frameworkVersion: '3'
+
+plugins:
+  - serverless-plugin-lambda-dead-letter
+
+custom:
+  lambdaPostScanImage: ${env:LAMBDA_IMAGE}
+  lambdaPostScanReservedConcurrency: ${env:bamboo_LAMBDA_POSTSCAN_RESERVED_CONCURRENCY}
+  lambdaPostScanProvisionedConcurrency: ${env:bamboo_LAMBDA_POSTSCAN_PROVISIONED_CONCURRENCY}
+  lambdaPostScanMemorySize: ${env:bamboo_LAMBDA_POSTSCAN_MEMORY_SIZE}
+  lambdaPostScanEphemeralStorageSize: ${env:bamboo_LAMBDA_POSTSCAN_EPHEMERAL_STORAGE_SIZE}
+  lambdaPostScanTimeOut: ${env:bamboo_LAMBDA_POSTSCAN_TIMEOUT}
+
+  lambdaPostScanIamRole: ${env:LAMBDA_POSTSCAN_IAM_ROLE}
+  lambdaPostScanEventTriggerSnsArn: ${env:LAMBDA_POSTSCAN_EVENT_TRIGGER_SNS_ARN}
+  lambdaPostScanDlqArn: ${env:LAMBDA_POSTSCAN_DLQ_ARN}
+  lambdaDeploymentBucket: ${env:LAMBDA_DEPLOYMENT_BUCKET}
+  lambdaAppSubnetId1: ${env:LAMBDA_APP_SUBNET_ID_1}
+  lambdaAppSubnetId2: ${env:LAMBDA_APP_SUBNET_ID_2}
+  lambdaSecurityGroupId: ${env:LAMBDA_SECURITY_GROUP_ID}
+  # iamPolicyPermissionBoundary: arn:aws:iam::${aws:accountId}:policy/GCCIAccountBoundary
+
+provider:
+  deploymentBucket:
+    name: ${self:custom.lambdaDeploymentBucket}
+  name: aws
+  stage: dev
+  region: ap-southeast-1
+  stackName: cfn-${env:bamboo_PROJ_CODE}-${env:bamboo_ENV}ezapp-${env:bamboo_SERVICE}
+  # iam:
+  #   # role: arn:aws:iam::${aws:accountId}:role/iam-role-fsg-${sls:stage}ezapp-backend-scan-lambda
+  #   deploymentRole: arn:aws:iam::${aws:accountId}:role/iam-role-fsg-devezapp-backend-scan-lambda-attach-s3-event
+  # Default memory size for functions
+  memorySize: ${self:custom.lambdaPostScanMemorySize}
+  # Default timeout for functions (default: 6 seconds)
+  # Note: API Gateway has a maximum timeout of 30 seconds
+  timeout: ${self:custom.lambdaPostScanTimeOut}
+
+functions:
+  postScan:
+    name: lambda-${env:bamboo_PROJ_CODE}-${env:bamboo_ENV}ezapp-${env:bamboo_SERVICE}
+    image:
+      uri: ${self:custom.lambdaPostScanImage}
+      command:
+        - postscan.handler
+    maximumRetryAttempts: 2 # Lambda handles message from SNS, thus uses lambda for retry if there are errors
+    deadLetter:
+      targetArn: ${self:custom.lambdaPostScanDlqArn}
+    events:
+      - sns:
+          arn: ${self:custom.lambdaPostScanEventTriggerSnsArn}
+    memorySize: ${self:custom.lambdaPostScanMemorySize}
+    ephemeralStorageSize: ${self:custom.lambdaPostScanEphemeralStorageSize}
+    timeout: ${self:custom.lambdaPostScanTimeOut}
+    # Reserve a maximum number of concurrent instances (default: account limit)
+    reservedConcurrency: ${self:custom.lambdaPostScanReservedConcurrency}
+    # Provision a minimum number of concurrent instances (default: 0)
+    provisionedConcurrency: ${self:custom.lambdaPostScanProvisionedConcurrency}
+    role: ${self:custom.lambdaPostScanIamRole}
+    vpc:
+      securityGroupIds:
+        - ${self:custom.lambdaSecurityGroupId}
+      subnetIds:
+        - ${self:custom.lambdaAppSubnetId1}
+        - ${self:custom.lambdaAppSubnetId2}
+    # Override the IAM role to use for this function
+    # Environment variable for the function (Uses env variables from .env file in pipeline)
+    environment:
+      ENV: ${env:ENV}
+      NODE_ENV: ${env:NODE_ENV}
+      LOG_LEVEL: ${env:LOG_LEVEL}
+      USE_LOCALSTACK: ${env:USE_LOCALSTACK}
+      # AWS_REGION: ${env:AWS_REGION} //reserved env var by lambda
+      AWS_S3_BUCKET_STG: ${env:AWS_S3_BUCKET_STG}
+      AWS_S3_BUCKET_STG_CLEAN: ${env:AWS_S3_BUCKET_STG_CLEAN}
+      AWS_SQS_CORE_EVENTS: ${env:AWS_SQS_CORE_EVENTS}
+      AWS_IAM_SCAN_MOVE_ROLE_ARN: ${env:AWS_IAM_SCAN_MOVE_ROLE_ARN}
+      AWS_STS_ASSUME_ROLE_SESSION_DURATION: ${env:AWS_STS_ASSUME_ROLE_SESSION_DURATION}
+# resources:
+#   extensions:
+#     # As cloudformation s3 does not allow notification to be managed separately, serverless uses lambda to add s3 notification to s3 bucket
+#     # The lambda helps to create s3 notification to send to lambda, and add permission on lambda to allow s3 to invoke function
+#     # https://aws.amazon.com/premiumsupport/knowledge-center/cloudformation-s3-notification-lambda/ (The lambda is similar to the one AWS suggest)
+#     IamRoleCustomResourcesLambdaExecution:
+#       Properties:
+#         # RoleName: iam-role-fsg-devezapp-backend-scan-lambda-attach-s3-event
+#         PermissionsBoundary: ${self:custom.iamPolicyPermissionBoundary}

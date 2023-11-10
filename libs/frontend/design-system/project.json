@@ -1,0 +1,59 @@
+{
+  "name": "design-system",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/frontend/design-system/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/frontend/design-system/**/*.{ts,tsx,js,jsx}"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/frontend/design-system"],
+      "options": {
+        "jestConfig": "libs/frontend/design-system/jest.config.ts",
+        "passWithNoTests": true,
+        "setupFile": "libs/frontend/design-system/jest-setup.ts"
+      }
+    },
+    "storybook": {
+      "executor": "@nrwl/storybook:storybook",
+      "options": {
+        "uiFramework": "@storybook/react",
+        "port": 6006,
+        "config": {
+          "configFolder": "libs/frontend/design-system/.storybook"
+        },
+        "configDir": "libs/frontend/design-system/.storybook"
+      },
+      "configurations": {
+        "ci": {
+          "quiet": true
+        }
+      }
+    },
+    "build-storybook": {
+      "executor": "@nrwl/storybook:build",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "uiFramework": "@storybook/react",
+        "outputDir": "dist/libs/frontend/design-system",
+        "config": {
+          "configFolder": "libs/frontend/design-system/.storybook"
+        },
+        "configDir": "libs/frontend/design-system/.storybook",
+        "tsConfig":"libs/frontend/design-system/tsconfig.json"
+      },
+      "configurations": {
+        "ci": {
+          "quiet": true
+        }
+      }
+    }
+  },
+  "tags": ["frontend"]
+}

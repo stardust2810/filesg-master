@@ -1,0 +1,39 @@
+include:
+  - local: .gitlab-ci/COMMON.gitlab-ci.yml
+
+cron-failure-notification-deploy-dev:
+  extends: .cron-failure-notification-deploy-dev
+  stage: deploy-to-dev-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: cron-failure-notification-build
+
+cron-failure-notification-deploy-stg:
+  extends: .cron-failure-notification-deploy-stg
+  stage: deploy-to-stg-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: cron-failure-notification-build
+
+cron-failure-notification-deploy-uat:
+  extends: .cron-failure-notification-deploy-uat
+  stage: deploy-to-uat-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: cron-failure-notification-build
+
+cron-failure-notification-deploy-prd:
+  extends: .cron-failure-notification-deploy-prd
+  stage: deploy-to-prd-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: cron-failure-notification-build
+    - job: cron-failure-notification-deploy-stg

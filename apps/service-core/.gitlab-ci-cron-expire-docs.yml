@@ -1,0 +1,36 @@
+include:
+  - local: .gitlab-ci/COMMON.gitlab-ci.yml
+
+cron-expire-docs-deploy-dev:
+  extends: .cron-expire-docs-deploy-dev
+  stage: deploy-to-dev-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: cron-expire-docs-build
+cron-expire-docs-deploy-stg:
+  extends: .cron-expire-docs-deploy-stg
+  stage: deploy-to-stg-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: cron-expire-docs-build
+cron-expire-docs-deploy-uat:
+  extends: .cron-expire-docs-deploy-uat
+  stage: deploy-to-uat-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: cron-expire-docs-build
+cron-expire-docs-deploy-prd:
+  extends: .cron-expire-docs-deploy-prd
+  stage: deploy-to-prd-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: cron-expire-docs-build
+    - job: cron-expire-docs-deploy-stg

@@ -1,0 +1,19 @@
+{
+  "name": "service-core",
+  "version": "1.0.0",
+  "description": "the core service of filesg which handles mainly authentication and transaction flow",
+  "scripts": {
+    "docker:build": "docker build -f ../../Dockerfile.app -t be-core ../.. --build-arg SERVICE_NAME=core",
+    "docker:build:expire-docs": "docker build -f ../../Dockerfile.app -t cron-expire-docs ../.. --build-arg SERVICE_NAME=core --build-arg SERVICE_NAME=core --build-arg NX_BUILD_CONFIGURATION=expire-docs",
+    "docker:build:delete-docs": "docker build -f ../../Dockerfile.app -t cron-delete-docs ../.. --build-arg SERVICE_NAME=core --build-arg SERVICE_NAME=core --build-arg NX_BUILD_CONFIGURATION=agency-delete-docs",
+    "docker:build:notification-failure-reporting": "docker build -f ../../Dockerfile.app -t cron-notification-failure-reporting ../.. --build-arg SERVICE_NAME=core --build-arg SERVICE_NAME=core --build-arg NX_BUILD_CONFIGURATION=notification-failure-reporting",
+    "env:get:local": "../../scripts/get-env-variables.sh core local",
+    "env:get:dev": "../../scripts/get-env-variables.sh core dev",
+    "env:get:stg": "../../scripts/get-env-variables.sh core stg",
+    "env:get:uat": "../../scripts/get-env-variables.sh core uat",
+    "env:apply:local": "../../bin/tf-run.sh terraform local init && ../../bin/tf-run.sh terraform local apply -target aws_ssm_parameter.this",
+    "swagger:generate": "nx build-swagger service-core && node dist/generate-swagger-doc",
+    "db-migration:seed": "ts-node sql/import.ts",
+    "db-migration:run": "ts-node -r tsconfig-paths/register --project tsconfig.app.json ../../node_modules/typeorm/cli.js migration:run --dataSource ./src/migrations/ormconfig.migration.ts"
+  }
+}

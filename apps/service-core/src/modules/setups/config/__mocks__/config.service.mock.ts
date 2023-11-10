@@ -1,0 +1,81 @@
+import { FEATURE_TOGGLE } from '@filesg/common';
+
+export const mockFileSGConfigService = {
+  redisConfig: {
+    host: 'mockHost',
+    port: 3000,
+    name: 'mockName',
+    storeSecret: 'mockSecret',
+    fileUploadTtlInSeconds: 30,
+    username: 'mockUsername',
+    password: 'mockPassword',
+  },
+  authConfig: {
+    sigPublicKid: 'mockSigPublicKid',
+    sigPrivateKey: 'mockSigPrivateKey',
+    encPublicKid: 'mockEncPublicKid',
+    encPrivateKey: 'mockEncPublicKey',
+    jwtAccessTokenSecret: 'mockAccessTokenSecret',
+    jwtAccessTokenExpirationDuration: 30,
+    jwtRefreshTokenSecret: 'mock',
+    jwtDownloadTokenExpirationDuration: 30,
+    jwtVerifyTokenExpirationDurationYears: 1,
+    jwtRefreshTokenExpirationDuration: 30,
+    jwtVerifyTokenSecret: 'mockVerifyTokenSecret',
+  },
+  notificationConfig: {
+    emailBlackListDurationInDays: 14,
+    emailToggleSend: FEATURE_TOGGLE.ON,
+    senderAddress: 'mockEmailAddress',
+    sgNotifyToggleSend: FEATURE_TOGGLE.ON,
+    sgNotifyRetrievalPageUrl: 'mockUrl',
+  },
+  awsConfig: {
+    staticConfigBucketName: 'bucketname',
+    toBeUpdatedQueueUrl: 'mockToBeUpdatedQueue',
+    coreEventsQueueUrl: 'mockCoreEventsQueue',
+    toBeMovedQueueUrl: 'mockToBeMovedQueue',
+    transferEventsQueueUrl: 'mockTransferEventsQueue',
+    sesEventQueueUrl: 'mockSesEventQueue',
+  },
+  systemConfig: {
+    env: 'env',
+    pollingSleepTimeInSeconds: 2,
+    toggleActivityAcknowledgementReset: FEATURE_TOGGLE.OFF,
+    fileSGBaseURL: 'mockUrl',
+  },
+  nonSingpassAuthConfig: {
+    max1FaVerificationAttemptCount: 10,
+    jwt1FATokenExpirationDuration: 10,
+    jwtContentRetrievalTokenExpirationDurationSeconds: 1,
+    jwtContentRetrievalTokenWarningDurationSeconds: 2,
+  },
+  otpConfig: {
+    otpLength: 6,
+    otpExpirySeconds: 60 * 3,
+    resendWaitSeconds: 60,
+    maxValidationAttemptCount: 3,
+    redisRecordExpiryBuffer: 60,
+    maxAllowedOtpSentPerCycle: 6,
+    toggleMock: FEATURE_TOGGLE.OFF,
+  },
+  sessionConfig: {
+    toggleConcurrentSession: FEATURE_TOGGLE.ON,
+  },
+  singpassConfig: {
+    redirectUrl: 'test-redirect-url',
+    authUrl: 'test-auth-url',
+    clientId: 'test-client-id',
+  },
+  agencyConfig: {
+    icaApexAppId: 'test-pvt-apexid',
+    icaApexAppSecret: 'test-apex-secret',
+    cirisMmbsSystemId: 'test-id',
+  },
+  myinfoConfig: { attributes: ['attribute1', 'attribute2'] },
+  databaseConfig: {},
+  formSgConfig: {
+    formSgRecallIssuanceFormUrl: 'recall-issuance-form-url',
+    formSgIssuanceErrorScenariosDocUrl: 'issuance-error-scenarios-doc-url',
+  },
+};

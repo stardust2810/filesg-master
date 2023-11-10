@@ -1,0 +1,3 @@
+bucket = "s3-fsg2-devnana-tfstate"
+key = "params/postscan/uat/terraform.tfstate"
+region = "ap-southeast-1"

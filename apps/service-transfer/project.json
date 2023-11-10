@@ -1,0 +1,60 @@
+{
+  "name": "service-transfer",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "version": "0.0.0",
+  "sourceRoot": "apps/service-transfer/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/service-transfer",
+        "main": "apps/service-transfer/src/main.ts",
+        "tsConfig": "apps/service-transfer/tsconfig.app.json",
+        "generatePackageJson": true,
+        "target": "node",
+        "compiler": "tsc"
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "inspect": false
+        }
+      }
+    },
+    "build-swagger": {
+      "executor": "@nrwl/node:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "apps/service-transfer/dist",
+        "main": "apps/service-transfer/src/standalone/generate-swagger-doc.ts",
+        "tsConfig": "apps/service-transfer/tsconfig.app.json",
+        "outputFileName": "generate-swagger-doc.js",
+        "sourceMap": false
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/node:node",
+      "options": {
+        "buildTarget": "service-transfer:build"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/service-transfer/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/service-transfer"],
+      "options": {
+        "jestConfig": "apps/service-transfer/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": ["backend"]
+}

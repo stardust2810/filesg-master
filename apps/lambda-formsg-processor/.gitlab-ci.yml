@@ -1,0 +1,39 @@
+include:
+  - local: .gitlab-ci/COMMON.gitlab-ci.yml
+
+lambda-formsg-processor-deploy-dev:
+  extends: .lambda-formsg-processor-deploy-dev
+  stage: deploy-to-dev-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: lambda-formsg-processor-build
+
+lambda-formsg-processor-deploy-stg:
+  extends: .lambda-formsg-processor-deploy-stg
+  stage: deploy-to-stg-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: lambda-formsg-processor-build
+
+lambda-formsg-processor-deploy-uat:
+  extends: .lambda-formsg-processor-deploy-uat
+  stage: deploy-to-uat-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: lambda-formsg-processor-build
+
+lambda-formsg-processor-deploy-prd:
+  extends: .lambda-formsg-processor-deploy-prd
+  stage: deploy-to-prd-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: lambda-formsg-processor-build
+    - job: lambda-formsg-processor-deploy-stg

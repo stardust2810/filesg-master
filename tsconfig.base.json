@@ -1,0 +1,35 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "es2021",
+    "module": "esnext",
+    "lib": ["es2021", "dom"],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "baseUrl": ".",
+    "paths": {
+      "@filesg/aws": ["libs/backend/aws/src/index.ts"],
+      "@filesg/backend-common": ["libs/backend/common/src/index.ts"],
+      "@filesg/common": ["libs/common/common/src/index.ts"],
+      "@filesg/design-system": ["libs/frontend/design-system/src/index.ts"],
+      "@filesg/excel": ["libs/backend/document-manipulator/excel/src/index.ts"],
+      "@filesg/formsg": ["libs/backend/formsg/src/index.ts"],
+      "@filesg/logger": ["libs/backend/logger/src/index.ts"],
+      "@filesg/pdf": ["libs/backend/document-manipulator/pdf/src/index.ts"],
+      "@filesg/redis": ["libs/backend/redis/src/index.ts"],
+      "@filesg/sg-notify": ["libs/backend/sg-notify/src/index.ts"],
+      "@filesg/zipper": ["libs/backend/zipper/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "tmp"]
+}

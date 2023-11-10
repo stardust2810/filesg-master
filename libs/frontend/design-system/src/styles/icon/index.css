@@ -1,0 +1,234 @@
+.fsg-icon {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'fsg-icons' !important;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.fsg-icon-arrow-downright:before {
+  content: "\e900";
+}
+.fsg-icon-circle-check-solid:before {
+  content: "\e901";
+}
+.fsg-icon-circle-check:before {
+  content: "\e902";
+}
+.fsg-icon-circle-cross-solid:before {
+  content: "\e903";
+}
+.fsg-icon-circle-cross:before {
+  content: "\e904";
+}
+.fsg-icon-circle-info-solid:before {
+  content: "\e905";
+}
+.fsg-icon-circle-warning-solid:before {
+  content: "\e906";
+}
+.fsg-icon-coding:before {
+  content: "\e907";
+}
+.fsg-icon-countdown:before {
+  content: "\e908";
+}
+.fsg-icon-dependent-pass:before {
+  content: "\e909";
+}
+.fsg-icon-device-platform:before {
+  content: "\e90a";
+}
+.fsg-icon-downward-caret:before {
+  content: "\e90b";
+}
+.fsg-icon-gridview:before {
+  content: "\e90c";
+}
+.fsg-icon-home-ica:before {
+  content: "\e90d";
+}
+.fsg-icon-home-solid:before {
+  content: "\e90e";
+}
+.fsg-icon-loading-solid:before {
+  content: "\e90f";
+}
+.fsg-icon-loading:before {
+  content: "\e910";
+}
+.fsg-icon-ltvp-pass:before {
+  content: "\e911";
+}
+.fsg-icon-maximise:before {
+  content: "\e912";
+}
+.fsg-icon-notification-solid:before {
+  content: "\e913";
+}
+.fsg-icon-person-solid:before {
+  content: "\e914";
+}
+.fsg-icon-personal-particulars:before {
+  content: "\e915";
+}
+.fsg-icon-scan-qr:before {
+  content: "\e916";
+}
+.fsg-icon-settings-solid:before {
+  content: "\e917";
+}
+.fsg-icon-share-arrow:before {
+  content: "\e918";
+}
+.fsg-icon-sort:before {
+  content: "\e919";
+}
+.fsg-icon-student-pass:before {
+  content: "\e91a";
+}
+.fsg-icon-triangle-warning-solid:before {
+  content: "\e91b";
+}
+.fsg-icon-upward-caret:before {
+  content: "\e91c";
+}
+.fsg-icon-user-group-solid:before {
+  content: "\e91d";
+}
+.fsg-icon-user-group:before {
+  content: "\e91e";
+}
+.fsg-icon-verified-solid:before {
+  content: "\e91f";
+}
+.fsg-icon-verified:before {
+  content: "\e920";
+}
+.fsg-icon-logout:before {
+  content: "\e921"
+}
+.fsg-icon-business:before {
+  content: "\e922"
+}
+.fsg-icon-cert:before {
+  content: "\e923"
+}
+
+/*---------------------------------------------------------------------
+File type
+These SVGs have multiple colours, not feasible to alter.
+---------------------------------------------------------------------*/
+.fsg-icon-folder-outline {
+  content: url('../../assets/file-icons/fsg-icon-folder-outline.svg');
+}
+
+.fsg-icon-folder-solid {
+  content: url('../../assets/file-icons/fsg-icon-folder-solid.svg');
+}
+
+.fsg-icon-file-excel-mini {
+  content: url('../../assets/file-icons/fsg-icon-file-excel-mini.svg');
+}
+
+.fsg-icon-file-excel-outline {
+  content: url('../../assets/file-icons/fsg-icon-file-excel-outline.svg');
+}
+
+.fsg-icon-file-excel-solid {
+  content: url('../../assets/file-icons/fsg-icon-file-excel-solid.svg');
+}
+
+.fsg-icon-file-jpg-mini {
+  content: url('../../assets/file-icons/fsg-icon-file-jpg-mini.svg');
+}
+
+.fsg-icon-file-jpg-outline {
+  content: url('../../assets/file-icons/fsg-icon-file-jpg-outline.svg');
+}
+
+.fsg-icon-file-jpg-solid {
+  content: url('../../assets/file-icons/fsg-icon-file-jpg-solid.svg');
+}
+
+.fsg-icon-file-opencert-mini {
+  content: url('../../assets/file-icons/fsg-icon-file-opencert-mini.svg');
+}
+
+.fsg-icon-file-opencert-outline {
+  content: url('../../assets/file-icons/fsg-icon-file-opencert-outline.svg');
+}
+
+.fsg-icon-file-opencert-solid {
+  content: url('../../assets/file-icons/fsg-icon-file-opencert-solid.svg');
+}
+
+.fsg-icon-file-pdf-mini {
+  content: url('../../assets/file-icons/fsg-icon-file-pdf-mini.svg');
+}
+
+.fsg-icon-file-pdf-outline {
+  content: url('../../assets/file-icons/fsg-icon-file-pdf-outline.svg');
+}
+
+.fsg-icon-file-pdf-solid {
+  content: url('../../assets/file-icons/fsg-icon-file-pdf-solid.svg');
+}
+
+.fsg-icon-file-word-mini {
+  content: url('../../assets/file-icons/fsg-icon-file-word-mini.svg');
+}
+
+.fsg-icon-file-word-outline {
+  content: url('../../assets/file-icons/fsg-icon-file-word-outline.svg');
+}
+
+.fsg-icon-file-word-solid {
+  content: url('../../assets/file-icons/fsg-icon-file-word-solid.svg');
+}
+
+.fsg-icon-file-unknown-outline {
+  content: url('../../assets/file-icons/fsg-icon-file-unknown-outline.svg');
+}
+
+.fsg-icon-file-unknown-solid {
+  content: url('../../assets/file-icons/fsg-icon-file-unknown-solid.svg');
+}
+
+.fsg-icon-file-openattest-mini {
+  content: url('../../assets/file-icons/fsg-icon-file-openattest-mini.svg');
+}
+
+.fsg-icon-file-openattest-outline {
+  content: url('../../assets/file-icons/fsg-icon-file-openattest-outline.svg');
+}
+
+.fsg-icon-file-openattest-solid {
+  content: url('../../assets/file-icons/fsg-icon-file-openattest-solid.svg');
+}
+
+.fsg-icon-file-png-mini {
+  content: url('../../assets/file-icons/fsg-icon-file-png-mini.svg');
+}
+
+.fsg-icon-file-png-outline {
+  content: url('../../assets/file-icons/fsg-icon-file-png-outline.svg');
+}
+
+.fsg-icon-file-png-solid {
+  content: url('../../assets/file-icons/fsg-icon-file-png-solid.svg');
+}
+
+.fsg-icon-file-zip-solid {
+  content: url('../../assets/file-icons/fsg-icon-file-zip-solid.svg');
+}
+
+.fsg-icon-file-zip-outline {
+  content: url('../../assets/file-icons/fsg-icon-file-zip-outline.svg');
+}

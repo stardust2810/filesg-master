@@ -1,0 +1,33 @@
+{
+  "name": "pdf",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/document-manipulator/pdf/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/backend/document-manipulator/pdf",
+        "main": "libs/backend/document-manipulator/pdf/src/index.ts",
+        "tsConfig": "libs/backend/document-manipulator/pdf/tsconfig.lib.json"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/backend/document-manipulator/pdf/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/backend/document-manipulator/pdf/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": ["backend"]
+}

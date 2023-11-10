@@ -1,0 +1,55 @@
+/**
+* Override SGDS defaults
+*/
+// Color theme
+$primary: purple;
+$secondary: darkgrey;
+$warning: #ff5656;
+
+// Breakpoint
+$tablet: 600px;
+$widescreen: 1280px;
+$fullhd: 1440px;
+
+// You must override this variable!
+// See https://www.designsystem.tech.gov.sg/docs/customise-sgds/ for details
+$sgds-font-path: '../../../../../../node_modules/sgds-govtech/fonts';
+
+// Import all of sgds
+@import '~sgds-govtech/sgds/sass/sgds.scss';
+
+
+html {
+    // Scrolling handled by page
+    overflow-y: auto;
+
+    //To hide scroll bar
+    -ms-overflow-style: none; /* IE and Edge */
+      scrollbar-width: none; /* Firefox */
+
+    &::-webkit-scrollbar {
+      display: none; /* Chrome, Safari and Opera */
+    }
+}
+
+.nav-link:hover {
+  color: 'rgba(0, 0, 0)';
+}
+
+/* To hide arrow for input type 'number' */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.branchIndicator {
+  width: 100%;
+  background-color: #1d3557;
+  color: #ced4da;
+  text-align: center;
+}
+
+.noscroll {
+  overflow: hidden !important;
+}

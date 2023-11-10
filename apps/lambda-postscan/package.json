@@ -1,0 +1,12 @@
+{
+  "name": "lambda-postscan",
+  "version": "1.0.0",
+  "description": "holds the code for post virus scan lambda",
+  "scripts": {
+    "docker:build": "docker build -f ../../Dockerfile.lambda -t lambda-postscan ../.. --build-arg LAMBDA_NAME=postscan",
+    "env:get:local": "../../scripts/get-env-variables.sh postscan local",
+    "env:get:dev": "../../scripts/get-env-variables.sh postscan dev",
+    "env:get:stg": "../../scripts/get-env-variables.sh postscan stg",
+    "env:apply:local": "../../bin/tf-run.sh terraform local init && ../../bin/tf-run.sh terraform local apply -target aws_ssm_parameter.this"
+  }
+}

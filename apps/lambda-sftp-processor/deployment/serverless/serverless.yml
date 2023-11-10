@@ -1,0 +1,89 @@
+# app and org for use with dashboard.serverless.com
+# org: your-org-name
+# app: fsg
+service: ${env:bamboo_SERVICE}
+useDotenv: true
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+frameworkVersion: '3'
+
+plugins:
+  - serverless-plugin-lambda-dead-letter
+
+custom:
+  lambdaSftpProcessorImage: ${env:LAMBDA_IMAGE}
+  lambdaSftpProcessorReservedConcurrency: ${env:bamboo_LAMBDA_SFTP_PROCESSOR_RESERVED_CONCURRENCY}
+  lambdaSftpProcessorProvisionedConcurrency: ${env:bamboo_LAMBDA_SFTP_PROCESSOR_PROVISIONED_CONCURRENCY}
+  lambdaSftpProcessorMemorySize: ${env:bamboo_LAMBDA_SFTP_PROCESSOR_MEMORY_SIZE}
+  lambdaSftpProcessorEphemeralStorageSize: ${env:bamboo_LAMBDA_SFTP_PROCESSOR_EPHEMERAL_STORAGE_SIZE}
+  lambdaSftpProcessorTimeOut: ${env:bamboo_LAMBDA_SFTP_PROCESSOR_TIMEOUT}
+
+  lambdaSftpProcessorIamRole: ${env:LAMBDA_SFTP_PROCESSOR_IAM_ROLE}
+  lambdaSftpProcessorEventTriggerSqsArn: ${env:LAMBDA_SFTP_PROCESSOR_EVENT_TRIGGER_SQS_ARN}
+  lambdaSftpProcessorSqsBatchSize: ${env:LAMBDA_SFTP_PROCESSOR_SQS_BATCH_SIZE}
+  lambdaDeploymentBucket: ${env:LAMBDA_DEPLOYMENT_BUCKET}
+  lambdaAppSubnetId1: ${env:LAMBDA_APP_SUBNET_ID_1}
+  lambdaAppSubnetId2: ${env:LAMBDA_APP_SUBNET_ID_2}
+  lambdaSecurityGroupId: ${env:LAMBDA_SECURITY_GROUP_ID}
+  # iamPolicyPermissionBoundary: arn:aws:iam::${aws:accountId}:policy/GCCIAccountBoundary
+
+provider:
+  deploymentBucket:
+    name: ${self:custom.lambdaDeploymentBucket}
+  name: aws
+  stage: dev
+  region: ap-southeast-1
+  stackName: cfn-${env:bamboo_PROJ_CODE}-${env:bamboo_ENV}ezapp-${env:bamboo_SERVICE}
+  # iam:
+  #   # role: arn:aws:iam::${aws:accountId}:role/iam-role-fsg-${sls:stage}ezapp-backend-scan-lambda
+  #   deploymentRole: arn:aws:iam::${aws:accountId}:role/iam-role-fsg-devezapp-backend-scan-lambda-attach-s3-event
+  # Default memory size for functions
+  memorySize: ${self:custom.lambdaSftpProcessorMemorySize}
+  # Default timeout for functions (default: 6 seconds)
+  # Note: API Gateway has a maximum timeout of 30 seconds
+  timeout: ${self:custom.lambdaSftpProcessorTimeOut}
+
+# No deadletter queue is configured because retry mechanism depends on SQS
+functions:
+  sftpProcessor:
+    name: lambda-${env:bamboo_PROJ_CODE}-${env:bamboo_ENV}ezapp-${env:bamboo_SERVICE}
+    image:
+      uri: ${self:custom.lambdaSftpProcessorImage}
+      command:
+        - sftp-processor.handler
+    maximumRetryAttempts: 0 # Lambda handles message from SQS, will disable retry here, but depend on SQS receive count to retry
+    events:
+      - sqs:
+          arn: ${self:custom.lambdaSftpProcessorEventTriggerSqsArn}
+          batchSize: ${self:custom.lambdaSftpProcessorSqsBatchSize}
+          maximumBatchingWindow: 0 # do not wait for batch size to be achieved, immediately process any message received
+    memorySize: ${self:custom.lambdaSftpProcessorMemorySize}
+    ephemeralStorageSize: ${self:custom.lambdaSftpProcessorEphemeralStorageSize}
+    timeout: ${self:custom.lambdaSftpProcessorTimeOut}
+    # Reserve a maximum number of concurrent instances (default: account limit)
+    reservedConcurrency: ${self:custom.lambdaSftpProcessorReservedConcurrency}
+    # Provision a minimum number of concurrent instances (default: 0)
+    provisionedConcurrency: ${self:custom.lambdaSftpProcessorProvisionedConcurrency}
+    role: ${self:custom.lambdaSftpProcessorIamRole}
+    vpc:
+      securityGroupIds:
+        - ${self:custom.lambdaSecurityGroupId}
+      subnetIds:
+        - ${self:custom.lambdaAppSubnetId1}
+        - ${self:custom.lambdaAppSubnetId2}
+    # Override the IAM role to use for this function
+    # Environment variable for the function (Uses env variables from .env file in pipeline)
+    environment:
+      ENV: ${env:ENV}
+      NODE_ENV: ${env:NODE_ENV}
+      LOG_LEVEL: ${env:LOG_LEVEL}
+      USE_LOCALSTACK: ${env:USE_LOCALSTACK}
+      CORE_SERVICE_URL: ${env:CORE_SERVICE_URL}
+      TRANSFER_SERVICE_URL: ${env:TRANSFER_SERVICE_URL}
+      # AWS_REGION: ${env:AWS_REGION} //reserved env var by lambda
+      AWS_SQS_SFTP_PROCESSOR: ${env:AWS_SQS_SFTP_PROCESSOR}
+      AWS_S3_BUCKET_SFTP: ${env:AWS_S3_BUCKET_SFTP}
+      AWS_IAM_SFTP_ROLE_ARN: ${env:AWS_IAM_SFTP_ROLE_ARN}
+      AWS_STS_ASSUME_ROLE_SESSION_DURATION: ${env:AWS_STS_ASSUME_ROLE_SESSION_DURATION}
+      SLIFT_DIR: ${env:SLIFT_DIR}

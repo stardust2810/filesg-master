@@ -1,0 +1,39 @@
+include:
+  - local: .gitlab-ci/COMMON.gitlab-ci.yml
+
+cron-delete-docs-deploy-dev:
+  extends: .cron-delete-docs-deploy-dev
+  stage: deploy-to-dev-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: cron-delete-docs-build
+
+cron-delete-docs-deploy-stg:
+  extends: .cron-delete-docs-deploy-stg
+  stage: deploy-to-stg-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: cron-delete-docs-build
+
+cron-delete-docs-deploy-uat:
+  extends: .cron-delete-docs-deploy-uat
+  stage: deploy-to-uat-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: cron-delete-docs-build
+
+cron-delete-docs-deploy-prd:
+  extends: .cron-delete-docs-deploy-prd
+  stage: deploy-to-prd-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: cron-delete-docs-build
+    - job: cron-delete-docs-deploy-stg

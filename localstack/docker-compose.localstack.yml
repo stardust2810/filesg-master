@@ -1,0 +1,22 @@
+# referenced from https://github.com/localstack/localstack/blob/master/docker-compose.yml
+version: '3.8'
+
+services:
+  localstack:
+    container_name: 'filesg-localstack'
+    image: localstack/localstack:1.4
+    ports:
+      - '4566:4566' # LocalStack Gateway
+      - '4510-4559:4510-4559' # external services port range
+    environment:
+      - DEBUG=${DEBUG-}
+      - LAMBDA_EXECUTOR=${LAMBDA_EXECUTOR-}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DEFAULT_REGION=ap-southeast-1
+    volumes:
+      - '${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack'
+      - ./init-scripts:/docker-entrypoint-initaws.d
+      - ../s3-static-files/agency-oa-schema:/docker-entrypoint-initaws.d/s3-static-files/agency-oa-schema
+    user: '1000'
+    group_add:
+      - '1000'

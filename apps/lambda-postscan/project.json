@@ -1,0 +1,54 @@
+{
+  "name": "lambda-postscan",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/lambda-postscan/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/lambda-postscan",
+        "main": "apps/lambda-postscan/src/main.ts",
+        "tsConfig": "apps/lambda-postscan/tsconfig.app.json",
+        "additionalEntryPoints": [
+          {
+            "entryName": "postscan",
+            "entryPath": "apps/lambda-postscan/src/post-scan.ts"
+          }
+        ],
+        "generatePackageJson": true,
+        "target": "node",
+        "compiler": "tsc"
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "inspect": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/node:node",
+      "options": {
+        "buildTarget": "lambda-postscan:build"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/lambda-postscan/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/lambda-postscan"],
+      "options": {
+        "jestConfig": "apps/lambda-postscan/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": ["backend"]
+}

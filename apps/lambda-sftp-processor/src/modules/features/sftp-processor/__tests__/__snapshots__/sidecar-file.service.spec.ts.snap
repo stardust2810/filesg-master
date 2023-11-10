@@ -1,0 +1,428 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SidecarFileService CsvValidationException should be thrown when file path is empty inside agency password sidecar file 1`] = `
+Array [
+  ValidationError {
+    "children": Array [
+      ValidationError {
+        "children": Array [
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "isNotEmpty": "filePath should not be empty",
+            },
+            "property": "filePath",
+          },
+        ],
+        "property": "0",
+      },
+    ],
+    "property": "agencyPassword",
+  },
+]
+`;
+
+exports[`SidecarFileService CsvValidationException should be thrown when password is empty inside agency password sidecar file 1`] = `
+Array [
+  ValidationError {
+    "children": Array [
+      ValidationError {
+        "children": Array [
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "isNotEmpty": "password should not be empty",
+            },
+            "property": "password",
+          },
+        ],
+        "property": "0",
+      },
+    ],
+    "property": "agencyPassword",
+  },
+]
+`;
+
+exports[`SidecarFileService parseSidecarFiles CsvValidationException should be thrown when contact is missing but dob was provided 1`] = `
+Array [
+  ValidationError {
+    "children": Array [
+      ValidationError {
+        "children": Array [
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "EnhancedValidateIf": "dob must not be defined if contact is empty",
+            },
+            "property": "dob",
+          },
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "EnhancedValidateIf": "contact must be a non-empty, valid string when dob is non-empty",
+            },
+            "property": "contact",
+          },
+        ],
+        "property": "0",
+      },
+    ],
+    "property": "recipients",
+  },
+]
+`;
+
+exports[`SidecarFileService parseSidecarFiles CsvValidationException should be thrown when date fields are of wrong format 1`] = `
+Array [
+  ValidationError {
+    "children": Array [
+      ValidationError {
+        "children": Array [
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "EnhancedValidateIf": "dob must be a non-empty, valid, less than or equal to current date, and in the format of (yyyy-mm-dd) when contact is non-empty",
+            },
+            "property": "dob",
+          },
+        ],
+        "property": "0",
+      },
+    ],
+    "property": "recipients",
+  },
+  ValidationError {
+    "children": Array [
+      ValidationError {
+        "children": Array [
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "IsValidFileSGDate": "Date input must be valid, larger than current date, and in the format of (yyyy-mm-dd)",
+            },
+            "property": "expiry",
+          },
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "IsValidFileSGDate": "Date input must be valid, larger than current date, and in the format of (yyyy-mm-dd)",
+            },
+            "property": "deleteAt",
+          },
+        ],
+        "property": "0",
+      },
+    ],
+    "property": "files",
+  },
+]
+`;
+
+exports[`SidecarFileService parseSidecarFiles CsvValidationException should be thrown when date fields does not fulfil requirements 1`] = `
+Array [
+  ValidationError {
+    "children": Array [
+      ValidationError {
+        "children": Array [
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "EnhancedValidateIf": "dob must be a non-empty, valid, less than or equal to current date, and in the format of (yyyy-mm-dd) when contact is non-empty",
+            },
+            "property": "dob",
+          },
+        ],
+        "property": "0",
+      },
+    ],
+    "property": "recipients",
+  },
+  ValidationError {
+    "children": Array [
+      ValidationError {
+        "children": Array [
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "IsValidFileSGDate": "Date input must be valid, larger than current date, and in the format of (yyyy-mm-dd)",
+            },
+            "property": "expiry",
+          },
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "IsValidFileSGDate": "Date input must be valid, larger than current date, and in the format of (yyyy-mm-dd)",
+            },
+            "property": "deleteAt",
+          },
+        ],
+        "property": "0",
+      },
+    ],
+    "property": "files",
+  },
+]
+`;
+
+exports[`SidecarFileService parseSidecarFiles CsvValidationException should be thrown when dob is missing but contact was provided 1`] = `
+Array [
+  ValidationError {
+    "children": Array [
+      ValidationError {
+        "children": Array [
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "EnhancedValidateIf": "dob must be a non-empty, valid, less than or equal to current date, and in the format of (yyyy-mm-dd) when contact is non-empty",
+            },
+            "property": "dob",
+          },
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "EnhancedValidateIf": "contact must not be defined if dob is empty",
+            },
+            "property": "contact",
+          },
+        ],
+        "property": "0",
+      },
+    ],
+    "property": "recipients",
+  },
+]
+`;
+
+exports[`SidecarFileService parseSidecarFiles CsvValidationException should be thrown when duplicate notification channels is provided 1`] = `
+Array [
+  ValidationError {
+    "children": Array [],
+    "constraints": Object {
+      "arrayUnique": "All notifications's elements must be unique",
+    },
+    "property": "notifications",
+  },
+]
+`;
+
+exports[`SidecarFileService parseSidecarFiles CsvValidationException should be thrown when expiry date is later than delete date 1`] = `
+Array [
+  ValidationError {
+    "children": Array [
+      ValidationError {
+        "children": Array [
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "IsAfterDate": "Input must be after expiry date",
+            },
+            "property": "deleteAt",
+          },
+        ],
+        "property": "0",
+      },
+    ],
+    "property": "files",
+  },
+]
+`;
+
+exports[`SidecarFileService parseSidecarFiles CsvValidationException should be thrown when mandatory fields are missing 1`] = `
+Array [
+  ValidationError {
+    "children": Array [
+      ValidationError {
+        "children": Array [
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "isNotEmpty": "applicationType should not be empty",
+              "isString": "applicationType must be a string",
+            },
+            "property": "applicationType",
+          },
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "isNotEmpty": "transactionName should not be empty",
+              "isString": "transactionName must be a string",
+            },
+            "property": "transactionName",
+          },
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "isEnum": "transactionType must be one of the following values: upload, share, transfer, upload_share, upload_transfer, widget, revoke, expire, delete, recall",
+              "isNotEmpty": "transactionType should not be empty",
+            },
+            "property": "transactionType",
+          },
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "isBoolean": "isAcknowledgementRequired must be a boolean value",
+            },
+            "property": "isAcknowledgementRequired",
+          },
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "isNotEmpty": "clientId should not be empty",
+              "isString": "clientId must be a string",
+            },
+            "property": "clientId",
+          },
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "isNotEmpty": "clientSecret should not be empty",
+              "isString": "clientSecret must be a string",
+            },
+            "property": "clientSecret",
+          },
+        ],
+        "property": "0",
+      },
+    ],
+    "property": "transactions",
+  },
+  ValidationError {
+    "children": Array [
+      ValidationError {
+        "children": Array [
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "isNotEmpty": "uin should not be empty",
+              "isValidUin": "Input must be valid uin",
+            },
+            "property": "uin",
+          },
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "isNotEmpty": "fullName should not be empty",
+              "isString": "fullName must be a string",
+            },
+            "property": "fullName",
+          },
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "isEmail": "email must be an email",
+              "isNotEmpty": "email should not be empty",
+            },
+            "property": "email",
+          },
+        ],
+        "property": "0",
+      },
+    ],
+    "property": "recipients",
+  },
+  ValidationError {
+    "children": Array [
+      ValidationError {
+        "children": Array [
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "isNotEmpty": "name should not be empty",
+              "isString": "name must be a string",
+              "isValidFilename": "Input must be a valid filename",
+            },
+            "property": "name",
+          },
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "isHash": "checksum must be a hash of type sha256",
+              "isNotEmpty": "checksum should not be empty",
+              "isString": "checksum must be a string",
+            },
+            "property": "checksum",
+          },
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "isBoolean": "isPasswordEncryptionRequired must be a boolean value",
+            },
+            "property": "isPasswordEncryptionRequired",
+          },
+        ],
+        "property": "0",
+      },
+    ],
+    "property": "files",
+  },
+  ValidationError {
+    "children": Array [
+      ValidationError {
+        "children": Array [
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "isEnum": "channel must be one of the following values: EMAIL, SG_NOTIFY",
+              "isNotEmpty": "channel should not be empty",
+            },
+            "property": "channel",
+          },
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "isNotEmpty": "templateId should not be empty",
+              "isString": "templateId must be a string",
+            },
+            "property": "templateId",
+          },
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "isNotEmpty": "templateInput should not be empty",
+              "isRecord": "The templateInput must be a Record<string, string> where both the key and value are strings and should not be empty.",
+            },
+            "property": "templateInput",
+          },
+        ],
+        "property": "0",
+      },
+    ],
+    "property": "notifications",
+  },
+]
+`;
+
+exports[`SidecarFileService parseSidecarFiles CsvValidationException should be thrown when there is no notification channels 1`] = `
+Array [
+  ValidationError {
+    "children": Array [],
+    "constraints": Object {
+      "arrayMinSize": "notifications must contain at least 1 elements",
+    },
+    "property": "notifications",
+  },
+]
+`;
+
+exports[`SidecarFileService parseSidecarFiles CsvValidationException should be thrown when unknown notification channels is provided 1`] = `
+Array [
+  ValidationError {
+    "children": Array [
+      ValidationError {
+        "children": Array [
+          ValidationError {
+            "children": Array [],
+            "constraints": Object {
+              "isEnum": "channel must be one of the following values: EMAIL, SG_NOTIFY",
+            },
+            "property": "channel",
+          },
+        ],
+        "property": "0",
+      },
+    ],
+    "property": "notifications",
+  },
+]
+`;

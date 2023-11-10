@@ -1,0 +1,54 @@
+{
+  "name": "lambda-formsg-processor",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/lambda-formsg-processor/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/lambda-formsg-processor",
+        "main": "apps/lambda-formsg-processor/src/main.ts",
+        "tsConfig": "apps/lambda-formsg-processor/tsconfig.app.json",
+        "generatePackageJson": true,
+        "additionalEntryPoints": [
+          {
+            "entryName": "formsg-processor",
+            "entryPath": "apps/lambda-formsg-processor/src/formsg-processor.ts"
+          }
+        ]
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "inspect": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/js:node",
+      "options": {
+        "buildTarget": "lambda-formsg-processor:build"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/lambda-formsg-processor/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/lambda-formsg-processor/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": ["backend"]
+}

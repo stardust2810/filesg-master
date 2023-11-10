@@ -1,0 +1,39 @@
+include:
+  - local: .gitlab-ci/COMMON.gitlab-ci.yml
+
+backend-event-logs-deploy-dev:
+  extends: .backend-event-logs-deploy-dev
+  stage: deploy-to-dev-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-event-logs-build
+
+backend-event-logs-deploy-stg:
+  extends: .backend-event-logs-deploy-stg
+  stage: deploy-to-stg-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-event-logs-build
+
+backend-event-logs-deploy-uat:
+  extends: .backend-event-logs-deploy-uat
+  stage: deploy-to-uat-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-event-logs-build
+
+backend-event-logs-deploy-prd:
+  extends: .backend-event-logs-deploy-prd
+  stage: deploy-to-prd-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-event-logs-build
+    - job: backend-event-logs-deploy-stg

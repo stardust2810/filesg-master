@@ -1,0 +1,1 @@
+INSERT INTO user (`id`, `uuid`, `uin`, `name`, `email`, `phoneNumber`, `type`, `isOnboarded`, `status`, `role`) VALUES (4, 'user-uuid-4', 'a5UsyLyk0Aq5Tsj2iahmxph0cI90kz2WhdMEeytFymY=', 'Issuance Test Citizen User', 'useWhatevenEmailHere@@this.is.test.filesg', '+6599876543', 'citizen', true, 'active', 'CITIZEN');

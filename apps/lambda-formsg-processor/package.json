@@ -1,0 +1,13 @@
+{
+  "name": "lambda-formsg-processor",
+  "version": "1.0.0",
+  "description": "holds the code for file formsg processor lambda",
+  "scripts": {
+    "docker:build": "docker build -f ../../Dockerfile.lambda -t lambda-formsg-processor ../.. --build-arg LAMBDA_NAME=formsg-processor",
+    "env:get:local": "../../scripts/get-env-variables.sh formsg-processor local",
+    "env:get:dev": "../../scripts/get-env-variables.sh formsg-processor dev",
+    "env:get:stg": "../../scripts/get-env-variables.sh formsg-processor stg",
+    "env:get:uat": "../../scripts/get-env-variables.sh formsg-processor uat",
+    "env:apply:local": "../../bin/tf-run.sh terraform local init && ../../bin/tf-run.sh terraform local apply -target aws_ssm_parameter.this"
+  }
+}

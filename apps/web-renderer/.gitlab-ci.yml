@@ -1,0 +1,39 @@
+include:
+  - local: .gitlab-ci/COMMON.gitlab-ci.yml
+
+frontend-renderer-deploy-dev:
+  extends: .frontend-renderer-deploy-dev
+  stage: deploy-to-dev-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: frontend-renderer-build
+
+frontend-renderer-deploy-stg:
+  extends: .frontend-renderer-deploy-stg
+  stage: deploy-to-stg-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: frontend-renderer-build
+
+frontend-renderer-deploy-uat:
+  extends: .frontend-renderer-deploy-uat
+  stage: deploy-to-uat-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: frontend-renderer-build
+
+frontend-renderer-deploy-prd:
+  extends: .frontend-renderer-deploy-prd
+  stage: deploy-to-prd-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: frontend-renderer-build
+    - job: frontend-renderer-deploy-stg

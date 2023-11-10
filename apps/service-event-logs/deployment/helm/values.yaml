@@ -1,0 +1,26 @@
+replicaCount: 1
+
+imagePullSecrets: []
+nameOverride: "be-event-logs"
+fullnameOverride: "be-event-logs"
+
+serviceAccount:
+  create: false
+  name: "be-event-logs"
+
+podAnnotations: {}
+
+service:
+  type: ClusterIP
+  port: 3000
+
+# Resource cpu and memory are set in pipeline to allow flexibility in changing configuration. 
+# https://docs.aws.amazon.com/eks/latest/userguide/fargate-pod-configuration.html
+# Follow fargate guide, request and limit must be the same, and cpu and memory proportion is according to stated values
+# This values are estimated from observing last 30 days of maximum cpu and memory with some buffer 
+# resources: 
+
+autoscaling:
+  enabled: true
+  targetCPUUtilizationPercentage: 60
+  # Replicas are set in pipeline to allow flexibility in changing configuration. 

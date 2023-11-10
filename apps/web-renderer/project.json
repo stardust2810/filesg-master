@@ -1,0 +1,91 @@
+{
+  "name": "web-renderer",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/web-renderer/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "compiler": "swc",
+        "outputPath": "dist/apps/web-renderer",
+        "index": "apps/web-renderer/src/index.html",
+        "baseHref": "/",
+        "main": "apps/web-renderer/src/index.tsx",
+        "polyfills": "apps/web-renderer/src/polyfills.ts",
+        "tsConfig": "apps/web-renderer/tsconfig.app.json",
+        "assets": ["apps/web-renderer/src/public/favicon-filesg.ico", "apps/web-renderer/src/public/__ENV.js"],
+        "styles": [],
+        "scripts": [],
+        "webpackConfig": "webpack.react.config.js"
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "statsJson": false,
+          "outputHashing": "all",
+          "sourceMap": false,
+          "namedChunks": false,
+          "vendorChunk": false,
+          "assets": ["apps/web-renderer/src/public/favicon-filesg.ico"]
+        },
+        "development": {
+          "extractLicenses": false,
+          "optimization": false,
+          "sourceMap": true,
+          "vendorChunk": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "generate-env": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "react-env --dest src/public",
+        "cwd": "apps/web-renderer"
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/webpack:dev-server",
+      "options": {
+        "buildTarget": "web-renderer:build",
+        "hmr": true,
+        "proxyConfig": "proxy.conf.json",
+        "port": 3501
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "web-renderer:build:production",
+          "hmr": false
+        },
+        "development": {
+          "buildTarget": "web-renderer:build:development"
+        }
+      },
+      "dependsOn": [
+        {
+          "target": "generate-env",
+          "projects": "self"
+        }
+      ],
+      "defaultConfiguration": "development"
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/web-renderer/**/*.{ts,tsx,js,jsx}"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/web-renderer"],
+      "options": {
+        "jestConfig": "apps/web-renderer/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": ["frontend"]
+}

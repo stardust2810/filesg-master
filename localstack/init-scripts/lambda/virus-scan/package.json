@@ -1,0 +1,8 @@
+{
+  "name": "filesg",
+  "description": "This is the mock virus scan lambda (deployed on localstack) for local development",
+  "version": "1.0.0",
+  "dependencies": {
+    "@aws-sdk/client-sns": "^3.45.0"
+  }
+}

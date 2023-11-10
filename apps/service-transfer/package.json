@@ -1,0 +1,14 @@
+{
+  "name": "service-transfer",
+  "version": "1.0.0",
+  "description": "the transfer service of filesg which handles the uploading of documents to stg s3",
+  "scripts": {
+    "docker:build": "docker build -f ../../Dockerfile.app -t be-transfer ../.. --build-arg SERVICE_NAME=transfer",
+    "env:get:local": "../../scripts/get-env-variables.sh transfer local",
+    "env:get:dev": "../../scripts/get-env-variables.sh transfer dev",
+    "env:get:stg": "../../scripts/get-env-variables.sh transfer stg",
+    "env:get:uat": "../../scripts/get-env-variables.sh transfer uat",
+    "env:apply:local": "../../bin/tf-run.sh terraform local init && ../../bin/tf-run.sh terraform local apply -target aws_ssm_parameter.this",
+    "swagger:generate": "nx build-swagger service-transfer && node dist/generate-swagger-doc"
+  }
+}

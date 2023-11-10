@@ -1,0 +1,12 @@
+{
+  "name": "lambda-doc-encryption",
+  "version": "1.0.0",
+  "description": "holds the code for file doc-encryption lambda",
+  "scripts": {
+    "docker:build": "docker build -f ../../Dockerfile.lambda -t lambda-doc-encryption ../.. --build-arg LAMBDA_NAME=doc-encryption",
+    "env:get:local": "../../scripts/get-env-variables.sh doc-encryption local",
+    "env:get:dev": "../../scripts/get-env-variables.sh doc-encryption dev",
+    "env:get:stg": "../../scripts/get-env-variables.sh doc-encryption stg",
+    "env:apply:local": "../../bin/tf-run.sh terraform local init && ../../bin/tf-run.sh terraform local apply -target aws_ssm_parameter.this"
+  }
+}

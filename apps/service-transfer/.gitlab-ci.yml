@@ -1,0 +1,47 @@
+include:
+  - local: .gitlab-ci/COMMON.gitlab-ci.yml
+
+backend-transfer-deploy-dev:
+  extends: .backend-transfer-deploy-dev
+  stage: deploy-to-dev-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-transfer-build
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-transfer-gen-swagger
+
+backend-transfer-deploy-stg:
+  extends: .backend-transfer-deploy-stg
+  stage: deploy-to-stg-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-transfer-build
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-transfer-gen-swagger
+
+backend-transfer-deploy-uat:
+  extends: .backend-transfer-deploy-uat
+  stage: deploy-to-uat-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-transfer-build
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-transfer-gen-swagger
+
+backend-transfer-deploy-prd:
+  extends: .backend-transfer-deploy-prd
+  stage: deploy-to-prd-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-transfer-build
+    - pipeline: $PARENT_PIPELINE_ID
+      job: backend-transfer-gen-swagger
+    - job: backend-transfer-deploy-stg

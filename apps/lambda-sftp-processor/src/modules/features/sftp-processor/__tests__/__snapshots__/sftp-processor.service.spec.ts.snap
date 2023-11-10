@@ -1,0 +1,64 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SftpProcessorService getCreateTransactionPayload data should be transformed correctly 1`] = `
+Object {
+  "application": Object {
+    "externalRefId": "mockApplicationExternalRefId",
+    "type": "mockApplicationType",
+  },
+  "files": Array [
+    Object {
+      "checksum": "d2e5099b3cda2727f5f4df356ee3061b695113a311f11117de8c11713aa901b4",
+      "deleteAt": "2024-12-31",
+      "expiry": "2024-12-01",
+      "isPasswordEncryptionRequired": true,
+      "metadata": Object {
+        "hello": "world",
+      },
+      "name": "mockFileName1.pdf",
+    },
+    Object {
+      "checksum": "d2e5099b3cda2727f5f4df356ee3061b695113a311f11117de8c11713aa901b4",
+      "deleteAt": "2024-12-31",
+      "expiry": "2024-12-01",
+      "isPasswordEncryptionRequired": true,
+      "metadata": undefined,
+      "name": "mockFileName2.pdf",
+    },
+  ],
+  "transaction": Object {
+    "acknowledgementTemplateUuid": "mockAcknowledgementTemplateId",
+    "creationMethod": "sftp",
+    "customAgencyMessage": Object {
+      "notifications": undefined,
+      "transaction": Object {
+        "templateId": "transactioncustommessagetemplate-1655625225500-9c72b9eac3dc42f6",
+        "templateInput": undefined,
+      },
+    },
+    "isAcknowledgementRequired": true,
+    "name": "mockTransactionName",
+    "recipients": Array [
+      Object {
+        "contact": "+6598765432",
+        "dob": "1999-01-01",
+        "email": "test1@dummy.com",
+        "metadata": Object {
+          "hello": "world",
+        },
+        "name": "Mock Full Name 1",
+        "uin": "S1000000I",
+      },
+      Object {
+        "contact": "+6598111111",
+        "dob": "1999-00-00",
+        "email": "test2@dummy.com",
+        "metadata": undefined,
+        "name": "Mock Full Name 2",
+        "uin": "S1000001G",
+      },
+    ],
+    "type": "upload_transfer",
+  },
+}
+`;

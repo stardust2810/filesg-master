@@ -1,0 +1,26 @@
+replicaCount: 1
+
+imagePullSecrets: []
+nameOverride: 'cron-notification-failure-reporting'
+fullnameOverride: 'cron-notification-failure-reporting'
+
+serviceAccount:
+  create: false
+  name: 'cron-notification-failure-reporting'
+
+podAnnotations: {}
+
+# Resource cpu and memory are set in pipeline to allow flexibility in changing configuration.
+# https://docs.aws.amazon.com/eks/latest/userguide/fargate-pod-configuration.html
+# Follow fargate guide, request and limit must be the same, and cpu and memory proportion is according to stated values
+# This values are estimated from observing last 30 days of maximum cpu and memory with some buffer
+# resources:
+
+service:
+  enabled: false
+
+cronjob:
+  enabled: true
+  jobs:
+    - nameSuffix: four-hourly
+      schedule: '0 */4 * * *'

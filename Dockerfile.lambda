@@ -1,0 +1,123 @@
+# Using 16.14.2 because lambda-ric is having issue on 16.15.1
+# https://www.repost.aws/questions/QUtlb2BYIEQjyirCUWspC-CQ/exit-254-lambda-error-with-no-extra-explanations
+
+FROM nexus-docker.ship.gov.sg/node:18.18.1-bullseye as builder
+
+ARG LAMBDA_NAME
+
+#Install aws-lambda-cpp (aws-lamba-ric) build dependencies
+RUN apt-get update && \
+    apt-get install -y \
+    g++ \
+    make \
+    cmake \
+    unzip \
+    libcurl4-openssl-dev \
+    jq
+
+WORKDIR /build
+
+# Download Runtime Interface Emulator, for starting lambda on local in docker
+RUN curl "https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/latest/download/aws-lambda-rie" -o "aws-lambda-rie"
+RUN chmod 777 aws-lambda-rie
+
+COPY ./ .
+
+# Installing the root package.json dependencies, which is mainly NX
+RUN npm ci --legacy-peer-deps
+
+RUN npm run build lambda-${LAMBDA_NAME} -- --configuration=production
+
+# Using 16.14.2 because lambda-ric is having issue on 16.15.1
+# https://www.repost.aws/questions/QUtlb2BYIEQjyirCUWspC-CQ/exit-254-lambda-error-with-no-extra-explanations
+# RIC cannot be built with slim image, hence there is a builder2
+
+FROM nexus-docker.ship.gov.sg/node:18.18.1-bullseye as consolidator
+
+ARG LAMBDA_NAME
+ARG IS_SLIFT_BUILD=false
+ARG IS_PDF_ENCRYPT_BUILD=false
+
+# Argument used only when IS_SLIFT_BUILD=true or IS_PDF_ENCRYPT_BUILD=true
+ARG AWS_ACCESS_KEY_ID=""
+ARG AWS_SECRET_ACCESS_KEY=""
+ARG AWS_DEFAULT_REGION=""
+ARG AWS_SESSION_TOKEN=""
+ENV AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+ENV AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+ENV AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
+ENV AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
+
+# #Install aws-lambda-cpp (aws-lamba-ric) build dependencies
+RUN apt-get update && \
+    apt-get install -y \
+    g++ \
+    make \
+    cmake \
+    unzip \
+    libcurl4-openssl-dev \
+    awscli
+
+RUN mkdir -p /opt/slift && \
+    mkdir -p /opt/pdfbox
+
+RUN if [ "$IS_SLIFT_BUILD" = "true" ]; then \
+    aws s3 cp --recursive s3://s3-fsg2-devnana-miscellaneous-perm/slift /opt/slift/ && \
+    chmod 755 /opt/slift/*; \
+    fi
+
+RUN if [ "$IS_PDF_ENCRYPT_BUILD" = "true" ]; then \
+    aws s3 cp --recursive s3://s3-fsg2-devnana-miscellaneous-perm/pdfbox /opt/pdfbox/ && \
+    chmod 755 /opt/pdfbox/*; \
+    fi
+
+WORKDIR /app
+
+COPY --chown=node --from=builder /build/dist/apps/lambda-${LAMBDA_NAME} ./
+COPY --chown=node package-lock.json ./
+
+RUN npm ci --omit=dev --legacy-peer-deps
+
+RUN npm install aws-lambda-ric@2.0.0
+
+# Final image
+# Using 16.14.2 because lambda-ric is having issue on 16.15.1
+# https://www.repost.aws/questions/QUtlb2BYIEQjyirCUWspC-CQ/exit-254-lambda-error-with-no-extra-explanations
+# Not upgrading to version node@18.13.0 as PT was done at node@16.14.2
+FROM 087814769163.dkr.ecr.ap-southeast-1.amazonaws.com/ecr-commons-prdezapp-node-golden:nodejs-18.18.1-latest-bullseye as app
+
+ARG IS_SLIFT_BUILD=false
+ARG IS_PDF_ENCRYPT_BUILD=false
+
+# Install dependencies required for aws lambda runtime
+USER root
+RUN apt-get update && \
+    apt-get install -y \
+    libbrotli1=1.0.9-2+b2
+
+# Copy over the files (if any)
+COPY --from=consolidator /opt/slift*/ /opt/slift/
+COPY --from=consolidator /opt/pdfbox*/ /opt/pdfbox/
+
+# Install OpenJDK-17 JRE to support SLIFT Application
+RUN if [ "$IS_SLIFT_BUILD" = "true" ] || [ "$IS_PDF_ENCRYPT_BUILD" = "true" ]; then \
+    apt-get install -y \
+    wget=1.21-1+deb11u1 \
+    java-common=0.72 \
+    software-properties-common=0.96.20.2-2.1 \
+    gnupg=2.2.27-2+deb11u2 && \
+    wget -O - https://apt.corretto.aws/corretto.key | apt-key add - && \
+    add-apt-repository 'deb https://apt.corretto.aws stable main' && \
+    apt-get update && \
+    apt-get install -y java-17-amazon-corretto-jdk=1:17.0.9.8-1; \
+    fi
+
+COPY --from=builder ./build/aws-lambda-rie /usr/local/bin/aws-lambda-rie
+
+USER node
+WORKDIR /app
+
+COPY --chown=node --from=consolidator ./app ./
+COPY ./scripts/entry-lambda.sh ./
+
+ENTRYPOINT [ "./entry-lambda.sh" ]

@@ -1,0 +1,31 @@
+include:
+  - local: .gitlab-ci/COMMON.gitlab-ci.yml
+
+static-files-maintenance-deploy-dev:
+  extends: .static-files-maintenance-deploy-dev
+  stage: deploy-to-dev-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+
+static-files-maintenance-deploy-stg:
+  extends: .static-files-maintenance-deploy-stg
+  stage: deploy-to-stg-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+
+static-files-maintenance-deploy-uat:
+  extends: .static-files-maintenance-deploy-uat
+  stage: deploy-to-uat-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+
+static-files-maintenance-deploy-prd:
+  extends: .static-files-maintenance-deploy-prd
+  stage: deploy-to-prd-env
+  needs:
+    - pipeline: $PARENT_PIPELINE_ID
+      job: preparation
+    - job: static-files-maintenance-deploy-stg

@@ -1,0 +1,132 @@
+/* If need to accept color input
+
+.fsg-icon-loading::before {
+  display: inline-block;
+  width: inherit;
+  height: inherit;
+  content: "";
+  mask: url('../../../assets/fsg-icons/fsg-icon-loading.svg') no-repeat 50% 50%;
+  -webkit-mask: url('../../../assets/fsg-icons/fsg-icon-loading.svg') no-repeat 50% 50%;
+  mask-size: cover;
+  -webkit-mask-size: cover;
+}
+*/
+
+/*---------------------------------------------------------------------
+FileSG Add-ons
+---------------------------------------------------------------------*/
+.fsg-icon-loading {
+  content: url('../../../assets/fsg-icons/fsg-icon-loading.svg');
+}
+
+.fsg-icon-loading-solid {
+  content: url('../../../assets/fsg-icons/fsg-icon-loading-solid.svg');
+}
+
+.fsg-icon-circle-check-solid {
+  content: url('../../../assets/fsg-icons/fsg-icon-circle-check-solid.svg');
+}
+
+.fsg-icon-circle-cross-solid {
+  content: url('../../../assets/fsg-icons/fsg-icon-circle-cross-solid.svg');
+}
+
+.fsg-icon-circle-info-solid {
+  content: url('../../../assets/fsg-icons/fsg-icon-circle-info-solid.svg');
+}
+
+.fsg-icon-circle-warning-solid {
+  content: url('../../../assets/fsg-icons/fsg-icon-circle-warning-solid.svg');
+}
+
+.fsg-icon-triangle-warning-solid {
+  content: url('../../../assets/fsg-icons/fsg-icon-triangle-warning-solid.svg');
+}
+
+.fsg-icon-upward-caret {
+  content: url('../../../assets/fsg-icons/fsg-icon-upward-caret.svg');
+}
+
+.fsg-icon-downward-caret {
+  content: url('../../../assets/fsg-icons/fsg-icon-downward-caret.svg');
+}
+
+
+/*---------------------------------------------------------------------
+File type
+---------------------------------------------------------------------*/
+.fsg-icon-folder-outline {
+  content: url('../../../assets/fsg-icons/filetype/fsg-icon-folder-outline.svg')
+}
+
+.fsg-icon-folder-solid {
+  content: url('../../../assets/fsg-icons/filetype/fsg-icon-folder-solid.svg')
+}
+
+.fsg-icon-file-excel-mini {
+  content: url('../../../assets/fsg-icons/filetype/fsg-icon-file-excel-mini.svg')
+}
+
+.fsg-icon-file-excel-outline {
+  content: url('../../../assets/fsg-icons/filetype/fsg-icon-file-excel-outline.svg')
+}
+
+.fsg-icon-file-excel-solid {
+  content: url('../../../assets/fsg-icons/filetype/fsg-icon-file-excel-solid.svg')
+}
+
+.fsg-icon-file-jpg-mini {
+  content: url('../../../assets/fsg-icons/filetype/fsg-icon-file-jpg-mini.svg')
+}
+
+.fsg-icon-file-jpg-outline {
+  content: url('../../../assets/fsg-icons/filetype/fsg-icon-file-jpg-outline.svg')
+}
+
+.fsg-icon-file-jpg-solid {
+  content: url('../../../assets/fsg-icons/filetype/fsg-icon-file-jpg-solid.svg')
+}
+
+.fsg-icon-file-opencert-mini {
+  content: url('../../../assets/fsg-icons/filetype/fsg-icon-file-opencert-mini.svg')
+}
+
+.fsg-icon-file-opencert-outline {
+  content: url('../../../assets/fsg-icons/filetype/fsg-icon-file-opencert-outline.svg')
+}
+
+.fsg-icon-file-opencert-solid {
+  content: url('../../../assets/fsg-icons/filetype/fsg-icon-file-opencert-solid.svg')
+}
+
+.fsg-icon-file-pdf-mini {
+  content: url('../../../assets/fsg-icons/filetype/fsg-icon-file-pdf-mini.svg')
+}
+
+.fsg-icon-file-pdf-outline {
+  content: url('../../../assets/fsg-icons/filetype/fsg-icon-file-pdf-outline.svg')
+}
+
+.fsg-icon-file-pdf-solid {
+  content: url('../../../assets/fsg-icons/filetype/fsg-icon-file-pdf-solid.svg')
+}
+
+.fsg-icon-file-word-mini {
+  content: url('../../../assets/fsg-icons/filetype/fsg-icon-file-word-mini.svg')
+}
+
+.fsg-icon-file-word-outline {
+  content: url('../../../assets/fsg-icons/filetype/fsg-icon-file-word-outline.svg')
+}
+
+.fsg-icon-file-word-solid {
+  content: url('../../../assets/fsg-icons/filetype/fsg-icon-file-word-solid.svg')
+}
+
+.fsg-icon-file-unknown-outline {
+  content: url('../../../assets/fsg-icons/filetype/fsg-icon-file-unknown-outline.svg')
+}
+
+.fsg-icon-file-unknown-solid {
+  content: url('../../../assets/fsg-icons/filetype/fsg-icon-file-unknown-solid.svg')
+}
