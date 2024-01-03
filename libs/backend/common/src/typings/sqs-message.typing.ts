@@ -19,6 +19,7 @@ export type SqsCoreEventsMessage =
   | PostScanMessage
   | MoveMessage
   | DownloadMessage
+  | AgencyFilesDownloadMessage
   | DeleteMessage
   | FormSgIssuanceSuccessMessage
   | FormSgIssuanceFailureMessage;
@@ -145,6 +146,16 @@ export interface MoveMessagePayload {
 export interface DownloadMessage {
   event: EVENT.FILES_DOWNLOADED;
   payload: DownloadMessagePayload;
+}
+
+export interface AgencyFilesDownloadMessage {
+  event: EVENT.AGENCY_DOWNLOADED_FILES;
+  payload: AgencyFilesDownloadMessagePayload;
+}
+
+export interface AgencyFilesDownloadMessagePayload {
+  fileAssetIds: string[];
+  userUuid: string;
 }
 
 export interface DownloadMessagePayload {

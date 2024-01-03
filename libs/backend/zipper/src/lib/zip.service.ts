@@ -39,6 +39,7 @@ export class ZipService implements OnApplicationBootstrap {
   @LogMethod()
   public async zipToStream(input: ZippingFile[], password?: string, finalizesZip = true): Promise<ZipStream> {
     const taskMessage = 'Creating zip file';
+    this.logger.log(taskMessage);
 
     let zip: ZipStream;
 

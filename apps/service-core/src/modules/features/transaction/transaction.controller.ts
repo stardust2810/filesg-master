@@ -8,6 +8,7 @@ import {
   CreateFileTransactionResponse,
   ERROR_RESPONSE_DESC,
   ErrorResponse,
+  RetrieveActivityRetrievableOptionsResponse,
   RevokeTransactionRequest,
   RevokeTransactionResponseDto,
   ROLE,
@@ -15,7 +16,6 @@ import {
   UpdateRecipientInfoRequest,
   UpdateRecipientInfoResponse,
   UpdateUserEmailForTransactionRequest,
-  ValidateActivityNonSingpassRetrievableResponse,
 } from '@filesg/common';
 import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Param, Post, Query, Req, UseGuards, UseInterceptors } from '@nestjs/common';
 import {
@@ -43,7 +43,7 @@ import { JwtNonSingpassContentRetrievalAuthGuard } from '../../../common/guards/
 import { AppendTraceIdInterceptor } from '../../../common/interceptors/append-trace-id.interceptor';
 import { SWAGGER_AUTH_NAME } from '../../../consts';
 import { Activity } from '../../../entities/activity';
-import { NonSingpassContentRetrievalRequest, RequestWithSession } from '../../../typings/common';
+import { NonSingpassContentRetrievalRequest, RequestWithCitizenSession, RequestWithProgrammaticSession } from '../../../typings/common';
 import { generateExceptionsTableMarkdown } from '../../../utils/swagger-helpers';
 import { FileTransactionService } from './file-transaction.service';
 import { RecipientService } from './recipient.service';
@@ -82,7 +82,7 @@ export class TransactionController {
   @ApiForbiddenResponse({ description: ERROR_RESPONSE_DESC.FORBIDDEN_CLIENT_ONLY, type: ErrorResponse })
   @UseInterceptors(AppendTraceIdInterceptor)
   async createFileTransactionForProgrammaticUser(
-    @Req() req: RequestWithSession,
+    @Req() req: RequestWithProgrammaticSession,
     @Body() body: CreateFileTransactionRequest,
   ): Promise<CreateFileTransactionResponse> {
     this.logger.log(`Client[${req.session.user.userId}] user creating file transaction`);
@@ -98,7 +98,7 @@ export class TransactionController {
   @ApiOkResponse({ type: ActivitiesResponse, description: "Retrieves user's activities" })
   @ApiUnauthorizedResponse({ description: ERROR_RESPONSE_DESC.UNAUTHORISED })
   @ApiNotFoundResponse({ description: ERROR_RESPONSE_DESC.NOT_FOUND_ACTIVITY })
-  async retrieveActivities(@Req() req: RequestWithSession, @Query() query: CompletedActivitiesRequestDto) {
+  async retrieveActivities(@Req() req: RequestWithCitizenSession, @Query() query: CompletedActivitiesRequestDto) {
     const { userId } = req.session.user;
     return await this.transactionActivityService.retrieveActivities(userId, query);
   }
@@ -115,7 +115,7 @@ export class TransactionController {
   @ApiUnauthorizedResponse({ description: ERROR_RESPONSE_DESC.UNAUTHORISED })
   @ApiForbiddenResponse({ description: ERROR_RESPONSE_DESC.FORBIDDEN_CITIZEN_ONLY })
   @ApiNotFoundResponse({ description: ERROR_RESPONSE_DESC.NOT_FOUND_ACTIVITY })
-  async retrieveActivityDetails(@Param('activityUuid') activityUuid: string, @Req() req: RequestWithSession) {
+  async retrieveActivityDetails(@Param('activityUuid') activityUuid: string, @Req() req: RequestWithCitizenSession) {
     const { userId } = req.session.user;
     return await this.transactionActivityService.retrieveActivityDetails(activityUuid, userId);
   }
@@ -151,7 +151,7 @@ export class TransactionController {
       },
     ]),
   })
-  async acknowledgeActivity(@Param('activityUuid') activityUuid: string, @Req() req: RequestWithSession) {
+  async acknowledgeActivity(@Param('activityUuid') activityUuid: string, @Req() req: RequestWithCitizenSession) {
     const { userId } = req.session.user;
     return await this.transactionActivityService.acknowledgeActivity(activityUuid, userId);
   }
@@ -219,7 +219,7 @@ export class TransactionController {
   @UseInterceptors(AppendTraceIdInterceptor)
   async updateActivityRecipientInfo(
     @Param('activityUuid') activityUuid: string,
-    @Req() req: RequestWithSession,
+    @Req() req: RequestWithProgrammaticSession,
     @Body() body: UpdateRecipientInfoRequest,
   ) {
     return await this.transactionActivityService.updateRecipientInfo(req.session.user.userId, activityUuid, body);
@@ -237,15 +237,15 @@ export class TransactionController {
     return await this.transactionActivityService.retrieveActivityDetails(activityUuid, userId);
   }
 
-  @Get('/non-singpass/activities/:activityUuid/validate')
+  @Get('/activities/:activityUuid/retrieval-options')
   @FileSGAuth({ auth_state: AUTH_STATE.NO_LOGGED_IN })
   @ApiOkResponse({
-    type: ValidateActivityNonSingpassRetrievableResponse,
-    description: 'Validates given activity if it is non singpass retrievable without any authentication.',
+    type: RetrieveActivityRetrievableOptionsResponse,
+    description: 'Get the activity retrieval options',
   })
   @ApiNotFoundResponse({ description: ERROR_RESPONSE_DESC.NOT_FOUND_ACTIVITY })
-  async validateActivityNonSingpassRetrievable(@Param('activityUuid') activityUuid: string) {
-    return await this.transactionActivityService.validateActivityNonSingpassRetrievable(activityUuid);
+  async retrieveActivityRetrievableOptions(@Param('activityUuid') activityUuid: string) {
+    return await this.transactionActivityService.retrieveActivityRetrievableOptions(activityUuid);
   }
 
   // ---------------------------------------------------------------------------
@@ -285,7 +285,7 @@ export class TransactionController {
   @ApiNotFoundResponse({ description: ERROR_RESPONSE_DESC.NOT_FOUND_TRANSACTION, type: ErrorResponse })
   async retrieveTransactionStatus(
     @Param('transactionUuid') transactionUuid: string,
-    @Req() req: RequestWithSession,
+    @Req() req: RequestWithProgrammaticSession,
   ): Promise<TransactionStatusResponse> {
     const userId = req.session.user.userId;
     return await this.transactionService.retrieveTransactionStatus(transactionUuid, userId);
@@ -306,7 +306,7 @@ export class TransactionController {
   @ApiOkResponse({ type: RevokeTransactionResponseDto, description: 'Revokes OA documents' })
   @ApiUnauthorizedResponse({ description: ERROR_RESPONSE_DESC.UNAUTHORISED, type: ErrorResponse })
   @ApiNotFoundResponse({ description: ERROR_RESPONSE_DESC.NOT_FOUND_ACTIVITY, type: ErrorResponse })
-  async revokeTransactionOa(@Req() req: RequestWithSession, @Body() body: RevokeTransactionRequest) {
+  async revokeTransactionOa(@Req() req: RequestWithProgrammaticSession, @Body() body: RevokeTransactionRequest) {
     const userId = req.session.user.userId;
 
     return await this.revokeTransactionService.createRevokeTransaction(userId, body);

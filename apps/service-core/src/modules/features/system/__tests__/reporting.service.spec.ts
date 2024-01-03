@@ -10,8 +10,6 @@ import uuid from 'uuid';
 import { ReportGenerationException } from '../../../../common/filters/custom-exceptions.filter';
 import { mockAgencyEntityService } from '../../../entities/agency/__mocks__/agency.entity.service.mock';
 import { AgencyEntityService } from '../../../entities/agency/agency.entity.service';
-import { mockApplicationEntityService } from '../../../entities/application/__mocks__/application.entity.service.mock';
-import { ApplicationEntityService } from '../../../entities/application/application.entity.service';
 import { mockAuditEventEntityService } from '../../../entities/audit-event/__mocks__/audit-event.entity.service.mock';
 import { AuditEventEntityService } from '../../../entities/audit-event/audit-event.entity.service';
 import { mockEserviceEntityService } from '../../../entities/eservice/__mocks__/eservice.entity.service.mock';
@@ -72,7 +70,8 @@ jest.mock('uuid', () => ({
 describe('ReportingService', () => {
   const activityFileName = 'activity-report.csv';
   const fileReportFileName = 'file-report.csv';
-  const fileDownloadReportFileName = 'file-download-report.csv';
+  const userFileDownloadReportFileName = 'user-file-download-report.csv';
+  const agencyFileDownloadReportFileName = 'agency-file-download-report.csv';
 
   const documentStatisticsReportName = 'document-statistics-report';
   const totalOnboardedCitizenUserCountReportName = 'total-onboarded-user-count-report';
@@ -92,7 +91,6 @@ describe('ReportingService', () => {
         { provide: UserEntityService, useValue: mockUserEntityService },
         { provide: EmailService, useValue: mockEmailService },
         { provide: ZipService, useValue: mockZipService },
-        { provide: ApplicationEntityService, useValue: mockApplicationEntityService },
       ],
     }).compile();
 
@@ -130,7 +128,8 @@ describe('ReportingService', () => {
       mockAgencyEntityService.retrieveAgencyByCode.mockResolvedValueOnce(mockAgency);
       getEserviceIdsToQuerySpy.mockResolvedValueOnce([mockEservice.id, mockEservice2.id]);
       generateFileDownloadReportSpy.mockResolvedValueOnce({
-        fileDownloadReportFileName,
+        userFileDownloadReportFileName,
+        agencyFileDownloadReportFileName,
         fileDownloadCountMap: mockFileDownloadCountMap,
       });
       generateActivityAndFileReportSpy.mockResolvedValueOnce({
@@ -169,7 +168,8 @@ describe('ReportingService', () => {
       const mockFilesToZip = [
         { name: `01-${activityFileName}`, body: 'mockData' },
         { name: `02-${fileReportFileName}`, body: 'mockData' },
-        { name: `03-${fileDownloadReportFileName}`, body: 'mockData' },
+        { name: `03-${userFileDownloadReportFileName}`, body: 'mockData' },
+        { name: `04-${agencyFileDownloadReportFileName}`, body: 'mockData' },
       ];
 
       await service.generateAgencyTransactionsReport({
@@ -276,7 +276,7 @@ describe('ReportingService', () => {
       expect(mockZipService.zipToStream).toBeCalledWith(mockFilesToZip);
     });
 
-    describe('generateFileSgIssuanceReport', () => {
+    describe('generateFileSgStatisticsReport', () => {
       it('should be defined', () => {
         expect(service.generateFileSgStatisticsReport).toBeDefined();
       });
@@ -575,6 +575,7 @@ describe('ReportingService', () => {
 
   describe('generateDocumentIssuanceStatisticsReport', () => {
     beforeEach(() => {
+      jest.clearAllMocks();
       mockFileAssetEntityService.retrieveCountAgencyIssuedFileAssetsGroupedByAgencyAndApplicationTypeAndActivatedStatuses.mockResolvedValueOnce(
         mockIssuedFileQueryResult,
       );
@@ -602,6 +603,7 @@ describe('ReportingService', () => {
               downloadCount: 1,
               printSaveCount: 1,
               viewCount: 1,
+              agencyDownloadCount: 1,
             },
             {
               agency: 'mockAgencyName2',
@@ -612,6 +614,7 @@ describe('ReportingService', () => {
               downloadCount: 1,
               printSaveCount: 1,
               viewCount: 1,
+              agencyDownloadCount: 1,
             },
           ],
           { prependHeader: true },
@@ -652,12 +655,6 @@ describe('ReportingService', () => {
       expect(createDefaultDocumentStatisticsReportEntrySpy).toBeCalledTimes(2);
       expect(mockFileAssetEntityService.retrieveCountAccessedAgencyIssuedFileAssets).toBeCalledWith(mockDateRange);
       expect(json2csvSpy).toBeCalledWith(mockDocumentIssuanceStatisticsReportData, { prependHeader: true });
-    });
-  });
-
-  describe('generateFileSgIssuanceReport', () => {
-    it('should be defined', () => {
-      expect(service.generateFileSgIssuanceReport).toBeDefined();
     });
   });
 
@@ -822,6 +819,7 @@ describe('ReportingService', () => {
           downloadCount: 0,
           printSaveCount: 0,
           viewCount: 0,
+          agencyDownloadCount: 0,
         },
       });
     });

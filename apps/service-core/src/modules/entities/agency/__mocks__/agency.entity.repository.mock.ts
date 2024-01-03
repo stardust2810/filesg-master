@@ -18,6 +18,7 @@ export const mockAgencyEntityRepository: MockRepository<AgencyEntityRepository> 
   findAllAgencyNamesAndCodes: jest.fn(),
   findCountAgencyAndEservices: jest.fn(),
   findAgencyByCodeWithTemplatesByNames: jest.fn(),
+  findIssuingAgenciesWithStatusesByUserId: jest.fn(),
   findAgencyByIdWithFormSgTransactionAndNotificationTemplates: jest.fn(),
   findAgenciesByCodes: jest.fn(),
 };

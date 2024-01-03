@@ -6,8 +6,27 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { mockClient } from 'aws-sdk-client-mock';
 
 import { SES_CLIENT } from '../../../typings/ses.typing';
-import { mockEmailContent, mockEmailTitle, mockReceivers, mockSender } from '../__mocks__/ses.service.mock';
+import { mockEmailAttachments, mockEmailContent, mockEmailTitle, mockReceivers, mockSender } from '../__mocks__/ses.service.mock';
 import { SesService } from '../ses.service';
+
+const mockUuid = 'mockUuid';
+const mockEmailRawContent = 'mockEmailRawContent';
+
+jest.mock('uuid', () => ({
+  v4: jest.fn(() => mockUuid),
+}));
+
+jest.mock('mimetext', () => ({
+  createMimeMessage: jest.fn(() => ({
+    setSubject: jest.fn(),
+    setSender: jest.fn(),
+    setTo: jest.fn(),
+    addMessage: jest.fn(),
+    setHeader: jest.fn(),
+    addAttachment: jest.fn(),
+    asRaw: jest.fn(() => mockEmailRawContent),
+  })),
+}));
 
 describe('SesService', () => {
   let service: SesService;
@@ -41,19 +60,12 @@ describe('SesService', () => {
     });
 
     it('should send SendEmailCommand with correct args', async () => {
-      await service.sendEmail(mockSender, mockReceivers(2), mockEmailTitle, mockEmailContent);
+      await service.sendEmail(mockSender, mockReceivers(2), mockEmailTitle, mockEmailContent, mockEmailAttachments);
 
       expect(mockBaseSesClient).toReceiveCommandWith(SendEmailCommand, {
         Content: {
-          Simple: {
-            Subject: {
-              Data: mockEmailTitle,
-            },
-            Body: {
-              Html: {
-                Data: mockEmailContent,
-              },
-            },
+          Raw: {
+            Data: Buffer.from(mockEmailRawContent),
           },
         },
         FromEmailAddress: mockSender,

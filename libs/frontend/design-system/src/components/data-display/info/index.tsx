@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 
 import { useShouldRender } from '../../../hooks/useShouldRender';
 import { FSG_DEVICES, RESPONSIVE_VARIANT, TEST_IDS } from '../../../utils/constants';
@@ -60,12 +60,12 @@ export const Info = ({ image, tagText, title, descriptions, className, isCentere
         )}
       </StyledTitleTagContainer>
       {descriptions && (
-        <StyledDescriptionContainer>
+        <StyledDescriptionContainer data-testid={`${TEST_IDS.INFO_DESCRIPTION}`}>
           {descriptions.map((description, index) => {
             return React.isValidElement(description) ? (
-              description
+              <Fragment key={`${TEST_IDS.INFO_DESCRIPTION}-${index}`}>{description}</Fragment>
             ) : (
-              <Typography variant="BODY" key={`${TEST_IDS.INFO_DESCRIPTION}-${index}`} data-testid={`${TEST_IDS.INFO_DESCRIPTION}`}>
+              <Typography variant="BODY" key={`${TEST_IDS.INFO_DESCRIPTION}-${index}`}>
                 {description}
               </Typography>
             );

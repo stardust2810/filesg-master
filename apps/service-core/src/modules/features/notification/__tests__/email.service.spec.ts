@@ -1,4 +1,11 @@
-import { NOTIFICATION_CHANNEL, NOTIFICATION_STATUS } from '@filesg/common';
+import { maskUin } from '@filesg/backend-common';
+import {
+  FORMSG_FAIL_CATEGORY,
+  NOTIFICATION_CHANNEL,
+  NOTIFICATION_STATUS,
+  TRANSACTION_CREATION_METHOD,
+  transformFirstLetterUppercase,
+} from '@filesg/common';
 import { FILESG_REDIS_CLIENT, RedisService } from '@filesg/redis';
 import { Test, TestingModule } from '@nestjs/testing';
 import { format } from 'date-fns';
@@ -9,6 +16,7 @@ import {
   FormSgTransactionEmailToAgencyTemplateArgs,
 } from '../../../../common/email-template/formsg-transaction-email-to-agency.class';
 import { EVENT_LOGS_SERVICE_API_CLIENT_PROVIDER } from '../../../../consts';
+import { Activity } from '../../../../entities/activity';
 import { EMAIL_TYPES } from '../../../../utils/email-template';
 import * as helpers from '../../../../utils/helpers';
 import { mockNotificationHistoryEntityService } from '../../../entities/notification-history/__mocks__/notification-history.entity.service.mock';
@@ -23,7 +31,6 @@ import { mockEmailBlackListService } from '../../email/__mocks__/email-black-lis
 import { EmailBlackListService } from '../../email/email-black-list.service';
 import {
   mockActivity,
-  mockActivityWithoutEmail,
   mockActivityWithoutNotificationMessageInput,
   mockBatchFailureMessageBody,
   mockBatchFailurePayload,
@@ -48,6 +55,7 @@ import {
   mockSuccessMessageBody,
   mockSuccessPayload,
   mockSuccessWithFailedNotificationMessageBody,
+  mockTransaction,
   mockTransactionWithoutNotificationMessageInput,
   TestEmailService,
 } from '../__mocks__/email.service.mock';
@@ -85,35 +93,118 @@ describe('EmailService', () => {
   });
 
   describe('sendNotification', () => {
-    const mockMessageId = 'mockMessageId';
-
-    let generateOutputFromTemplateSpy: jest.SpyInstance;
-    let sendEmailSpy: jest.SpyInstance;
+    let transactionalEmailHandlerSpy: jest.SpyInstance;
 
     beforeAll(() => {
-      generateOutputFromTemplateSpy = jest.spyOn(helpers, 'generateOutputFromTemplate');
-      sendEmailSpy = jest.spyOn(service, 'sendEmail');
-
-      sendEmailSpy.mockResolvedValue({ MessageId: mockMessageId });
-    });
-
-    afterAll(() => {
-      sendEmailSpy.mockRestore();
+      transactionalEmailHandlerSpy = jest.spyOn(service, 'transactionalEmailHandler');
     });
 
     it('should be defined', () => {
       expect(service.sendNotification).toBeDefined();
     });
 
-    it('should call methods with correct args', async () => {
-      const { email } = mockActivity.recipientInfo!;
-      const { notificationMessageTemplate, templateInput } = mockEmailNotificationMessageInput;
-      const agencyCode = mockActivity.transaction!.application!.eservice!.agency!.code;
-      const mockMessageId = 'mockMessageId';
-
+    it('should call transactionalEmailHandler once when there is email in the activity recipientInfo', async () => {
       await service.sendNotification(mockActivity, mockEmailNotificationMessageInput, mockEmailNotificationOptions);
 
-      expect(generateOutputFromTemplateSpy).toBeCalledWith(notificationMessageTemplate!.template, templateInput);
+      expect(transactionalEmailHandlerSpy).toBeCalledWith(
+        mockActivity.recipientInfo?.email,
+        mockActivity,
+        mockEmailNotificationMessageInput,
+        mockEmailNotificationOptions,
+      );
+      expect(transactionalEmailHandlerSpy).toBeCalledTimes(1);
+    });
+
+    it('should call transactionalEmailHandler multiple times when there are emails in the activity recipientInfo', async () => {
+      const mockEmails = ['test@gmail.com', 'test2@gmail.com'];
+      const activity = { ...mockActivity, recipientInfo: { name: 'mockUserName', emails: mockEmails } };
+
+      await service.sendNotification(activity, mockEmailNotificationMessageInput, mockEmailNotificationOptions);
+
+      mockEmails.forEach((email) => {
+        expect(transactionalEmailHandlerSpy).toBeCalledWith(
+          email,
+          activity,
+          mockEmailNotificationMessageInput,
+          mockEmailNotificationOptions,
+        );
+      });
+      expect(transactionalEmailHandlerSpy).toBeCalledTimes(mockEmails.length);
+    });
+
+    it('should log warn when there is neither email or emails from activity recipientInfo', async () => {
+      const activity = { ...mockActivity, recipientInfo: { name: 'mockName' } };
+
+      const loggerWarnSpy = jest.spyOn(service['logger'], 'warn');
+
+      await service.sendNotification(activity, mockEmailNotificationMessageInput, mockEmailNotificationOptions);
+
+      expect(loggerWarnSpy).toBeCalledWith(
+        `${transformFirstLetterUppercase(
+          mockEmailNotificationOptions.templateType,
+        )} email(s) failed to sent as email address(s) was undefined/null for activity: ${activity.uuid}`,
+      );
+      expect(transactionalEmailHandlerSpy).not.toBeCalled();
+    });
+  });
+
+  describe('constructTransactionalEmail', () => {
+    let generateOutputFromTemplateSpy: jest.SpyInstance;
+
+    beforeAll(() => {
+      generateOutputFromTemplateSpy = jest.spyOn(helpers, 'generateOutputFromTemplate');
+    });
+
+    it('should call methods with correct args', () => {
+      service.constructTransactionalEmail(mockEmailNotificationMessageInput, mockEmailNotificationOptions, mockActivity);
+
+      const { notificationMessageTemplate, templateInput } = mockEmailNotificationMessageInput;
+      expect(generateOutputFromTemplateSpy).toBeCalledWith(notificationMessageTemplate?.template, templateInput);
+
+      const customMessage = helpers
+        .generateOutputFromTemplate<string[]>(notificationMessageTemplate!.template, templateInput)
+        .filter((value) => !!value);
+
+      expect(emailBuildSpy).toBeCalledWith(EMAIL_TYPES.ISSUANCE, {
+        activity: mockActivity,
+        customMessage: customMessage,
+        fileSGConfigService: mockFileSGConfigService,
+        encryptionDetails: mockEmailNotificationOptions.encryptionDetailsList![0],
+      });
+    });
+
+    it('should create email with customAgencyMessage as custom message if no notificationMessageInput', async () => {
+      service.constructTransactionalEmail(null, mockEmailNotificationOptions, mockActivityWithoutNotificationMessageInput);
+
+      expect(generateOutputFromTemplateSpy).not.toBeCalled();
+      expect(emailBuildSpy).toBeCalledWith(EMAIL_TYPES.ISSUANCE, {
+        activity: mockActivityWithoutNotificationMessageInput,
+        customMessage: mockTransactionWithoutNotificationMessageInput.customAgencyMessage?.email,
+        fileSGConfigService: mockFileSGConfigService,
+        encryptionDetails: mockEmailNotificationOptions.encryptionDetailsList![0],
+      });
+    });
+  });
+
+  describe('transactionalEmailHandler', () => {
+    const { email } = mockActivity.recipientInfo!;
+
+    let sendEmailSpy: jest.SpyInstance;
+
+    beforeAll(() => {
+      sendEmailSpy = jest.spyOn(service, 'sendEmail');
+    });
+
+    it('should call methods with correct args', async () => {
+      const mockMessageId = 'mockMessageId';
+      const agencyCode = mockActivity.transaction!.application!.eservice!.agency!.code;
+
+      const constructTransactionalEmailSpy = jest.spyOn(service, 'constructTransactionalEmail');
+      sendEmailSpy.mockResolvedValueOnce({ MessageId: mockMessageId });
+
+      await service.transactionalEmailHandler(email!, mockActivity, mockEmailNotificationMessageInput, mockEmailNotificationOptions);
+
+      expect(constructTransactionalEmailSpy).toBeCalledWith(mockEmailNotificationMessageInput, mockEmailNotificationOptions, mockActivity);
       expect(sendEmailSpy).toBeCalledWith([email], mockEmailTitle, mockEmailContent, agencyCode);
       expect(mockNotificationHistoryEntityService.insertNotificationHistories).toBeCalledWith([
         {
@@ -126,23 +217,34 @@ describe('EmailService', () => {
       ]);
     });
 
-    // gd TODO: fix test
-    it.skip('should return if no email in recipientInfo', async () => {
-      await service.sendNotification(mockActivityWithoutEmail, mockEmailNotificationMessageInput, mockEmailNotificationOptions);
+    it('should send error event logs when error occurs and activity is created with formsg and of type receive transfer', async () => {
+      const transaction = { ...mockTransaction, creationMethod: TRANSACTION_CREATION_METHOD.FORMSG };
+      const activity: Activity = { ...mockActivity, transaction };
+      const errorMessage = 'some error';
 
-      expect(sendEmailSpy).not.toBeCalled();
-    });
+      sendEmailSpy.mockRejectedValueOnce(new Error(errorMessage));
+      const saveEventLogsSpy = jest.spyOn(service, 'saveEventLogs');
 
-    it('should create email with customAgencyMessage as custom message if no notificationMessageInput', async () => {
-      await service.sendNotification(mockActivityWithoutNotificationMessageInput, null, mockEmailNotificationOptions);
+      await service.transactionalEmailHandler(email!, activity, mockEmailNotificationMessageInput, mockEmailNotificationOptions);
 
-      expect(generateOutputFromTemplateSpy).not.toBeCalled();
-      expect(emailBuildSpy).toBeCalledWith(EMAIL_TYPES.ISSUANCE, {
-        activity: mockActivityWithoutNotificationMessageInput,
-        customMessage: mockTransactionWithoutNotificationMessageInput.customAgencyMessage?.email,
-        fileSGConfigService: mockFileSGConfigService,
-        encryptionDetails: mockEmailNotificationOptions.encryptionDetailsList![0],
-      });
+      const maskedUin = maskUin(activity.user!.uin!);
+      expect(saveEventLogsSpy).toBeCalledWith(
+        transaction.uuid,
+        activity.uuid,
+        maskedUin,
+        email!,
+        FORMSG_FAIL_CATEGORY.UNEXPECTED_ERROR,
+        errorMessage,
+      );
+      expect(mockNotificationHistoryEntityService.insertNotificationHistories).toBeCalledWith([
+        {
+          notificationChannel: NOTIFICATION_CHANNEL.EMAIL,
+          activity,
+          status: NOTIFICATION_STATUS.FAILED,
+          statusDetails: errorMessage,
+          messageId: null,
+        },
+      ]);
     });
   });
 

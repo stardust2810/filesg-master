@@ -1,4 +1,4 @@
-import { Verify1FaNonSingpassRequest, Verify2FaOtpNonSingpassRequest } from '@filesg/common';
+import { OTP_CHANNEL, Verify1FaNonSingpassRequest, Verify2FaOtpNonSingpassRequest } from '@filesg/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { NonSingpass2FaRequest } from '../../../../typings/common';
@@ -50,8 +50,8 @@ describe('NonSingpassVerificationController', () => {
         },
       } as NonSingpass2FaRequest;
 
-      await controller.sendOtpFor2Fa(mockRequest);
-      expect(mockNonSingpassVerificationService.sendOtpFor2Fa).toBeCalledWith(mockRequest.user.activityUuid);
+      await controller.sendOtpFor2Fa(mockRequest, { channel: OTP_CHANNEL.SMS });
+      expect(mockNonSingpassVerificationService.sendOtpFor2Fa).toBeCalledWith(mockRequest.user.activityUuid, OTP_CHANNEL.SMS);
     });
   });
 

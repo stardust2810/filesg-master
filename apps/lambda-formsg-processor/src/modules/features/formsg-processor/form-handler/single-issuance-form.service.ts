@@ -382,9 +382,9 @@ export class SingleIssuanceFormService {
         uuid: transactionUuid,
         name: transactionName,
         agencyFileAssets: files.map(({ name, uuid }, index) => ({ name, uuid, deleteAt: requestFiles[index].deleteAt })),
-        recipientActivities: recipients.map(({ activityUuid, uin }, index) => {
+        recipientActivities: recipients.map(({ activityUuid, uin, isNonSingpassRetrievable }, index) => {
           const { name, email, dob, contact } = requestRecipients[index];
-          return { uuid: activityUuid, name, maskedUin: maskUin(uin), email, dob, contact, isNonSingpassRetrievable: !!dob && !!contact };
+          return { uuid: activityUuid, name, maskedUin: maskUin(uin), email, dob, contact, isNonSingpassRetrievable };
         }),
       },
       transactionUuid: createFileTransactionResponse.transactionUuid,
@@ -576,13 +576,13 @@ export class SingleIssuanceFormService {
     const agencyFileAssets: FormSgProcessCreateTxnFailureAgencyFileAsset[] = files.map(({ name, deleteAt }) => ({ name, deleteAt }));
 
     const recipientActivities: FormSgProcessCreateTxnFailureRecipientActivity[] = transaction.recipients.map(
-      ({ uin, name, email, dob, contact }) => ({
+      ({ uin, name, email, dob, contact, isNonSingpassRetrievable }) => ({
         name,
         maskedUin: maskUin(uin),
         email,
         dob,
         contact,
-        isNonSingpassRetrievable: !!dob && !!contact,
+        isNonSingpassRetrievable,
       }),
     );
 
@@ -594,14 +594,14 @@ export class SingleIssuanceFormService {
     formSgFailSubType: string,
     recipients: IssuanceRecipientRecord[],
   ): FormSgProcessCreateTxnFailureRecipientActivity[] {
-    return recipients.map(({ uin, name, email, dob, contact }) => {
+    return recipients.map(({ uin, name, email, dob, contact, isNonSingpassRetrievable }) => {
       const obj: FormSgProcessCreateTxnFailureRecipientActivity = {
         name,
         maskedUin: maskUin(uin),
         email,
         dob,
         contact,
-        isNonSingpassRetrievable: !!dob && !!contact,
+        isNonSingpassRetrievable,
       };
 
       if (blacklistedEmails.includes(email)) {
@@ -618,14 +618,14 @@ export class SingleIssuanceFormService {
     formSgFailSubType: string,
     recipients: IssuanceRecipientRecord[],
   ): FormSgProcessCreateTxnFailureRecipientActivity[] {
-    return recipients.map(({ uin, name, email, dob, contact }) => {
+    return recipients.map(({ uin, name, email, dob, contact, isNonSingpassRetrievable }) => {
       const obj: FormSgProcessCreateTxnFailureRecipientActivity = {
         name,
         maskedUin: maskUin(uin),
         email,
         dob,
         contact,
-        isNonSingpassRetrievable: !!dob && !!contact,
+        isNonSingpassRetrievable,
       };
 
       if (duplicatedUins.includes(uin)) {
@@ -694,7 +694,7 @@ export class SingleIssuanceFormService {
         name: transaction.name,
         agencyFileAssets,
         recipientActivities: recipients.map(({ activityUuid, uin }, index) => {
-          const { name, email, dob, contact } = transaction.recipients[index];
+          const { name, email, dob, contact, isNonSingpassRetrievable } = transaction.recipients[index];
           return {
             uuid: activityUuid,
             name,
@@ -702,7 +702,7 @@ export class SingleIssuanceFormService {
             email,
             dob,
             contact,
-            isNonSingpassRetrievable: !!dob && !!contact,
+            isNonSingpassRetrievable,
           };
         }),
       },

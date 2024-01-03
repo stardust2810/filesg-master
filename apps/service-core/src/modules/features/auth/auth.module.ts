@@ -12,12 +12,13 @@ import { FileSGConfigModule } from '../../setups/config/config.module';
 import { FileSGConfigService } from '../../setups/config/config.service';
 import { AgencyClientModule } from '../agency-client/agency-client.module';
 import { AuthController } from './auth.controller';
+import { CorppassAuthController } from './auth.corppass.controller';
+import { CorppassAuthService } from './auth.corppass.service';
 import { AuthService } from './auth.service';
 import { CorppassProvider } from './corppass.provider';
-import { CorppassAuthController } from './corppass-auth.controller';
-import { CorppassAuthService } from './corppass-auth.service';
 import { MyinfoProvider } from './myinfo.provider';
 import { SingpassProvider } from './singpass.provider';
+
 @Module({
   imports: [
     UserEntityModule,
@@ -44,6 +45,6 @@ import { SingpassProvider } from './singpass.provider';
     MyinfoProvider,
   ],
   controllers: [AuthController, CorppassAuthController],
-  exports: [AuthService],
+  exports: [AuthService, CorppassAuthService],
 })
 export class AuthModule {}

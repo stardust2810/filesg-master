@@ -61,7 +61,7 @@ export class ViewableFileAssetResponse extends DetailFileAssetResponse {
   agencyCode: string;
 
   @ApiProperty()
-  ownerName: string;
+  ownerName: string | null;
 
   @ApiProperty()
   receiveTransferActivityUuid: string;
@@ -107,6 +107,8 @@ export class AllFileAssetsResponse {
   next: number | null;
 }
 
+export class RecentViewableFileAssetResponse extends ViewableFileAssetResponse {}
+
 export class AllFileAssetsFromAgencyResponse {
   @ApiProperty({ type: ViewableFileAssetResponse, isArray: true })
   items: ViewableFileAssetFromAgencyResponse[];
@@ -118,14 +120,25 @@ export class AllFileAssetsFromAgencyResponse {
   next: number | null;
 }
 
+export class AllRecentFileAssetsResponse {
+  @ApiProperty({ type: ViewableFileAssetResponse, isArray: true })
+  items: Pick<RecentViewableFileAssetResponse, 'lastViewedAt' | 'type' | 'name' | 'uuid'>[];
+
+  @ApiProperty()
+  count: number;
+
+  @ApiProperty({ type: Number, nullable: true })
+  next: number | null;
+}
+
 export class FileAssetStatusResponse {
-  @ApiProperty({ type: String })
+  @ApiProperty({ type: String, example: 'invoice.pdf' })
   name: string;
 
-  @ApiProperty({ enum: FILE_STATUS })
+  @ApiProperty({ enum: FILE_STATUS, example: FILE_STATUS.FAILED })
   status: FILE_STATUS;
 
-  @ApiProperty({ type: String, nullable: true })
+  @ApiProperty({ type: String, nullable: true, example: 'Virus found: [{"malware":"invoice.pdf","type":"Virus"}]' })
   failReason: string | null;
 
   @ApiProperty({ enum: FILE_FAIL_CATEGORY, nullable: true })
@@ -145,11 +158,14 @@ export interface FileInfo {
 }
 
 export class CreateFileTransactionRecipientResponse {
-  @ApiProperty()
+  @ApiProperty({ example: 'S7800000A' })
   uin: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: 'FSG-xxxxxxxxxxxxx-xxxxxxxxxxxxxxxx' })
   activityUuid: string;
+
+  @ApiProperty({ example: false })
+  isNonSingpassRetrievable: boolean;
 }
 
 export class FileUploadTransactionInfo {
@@ -176,14 +192,28 @@ export class CheckAndDeleteFileSessionResponse {
 }
 
 export class CreateTransactionFileResponse {
-  @ApiProperty({ type: String })
+  @ApiProperty({ type: String, example: 'invoice.pdf' })
   name: string;
 
-  @ApiProperty({ type: String })
+  @ApiProperty({ type: String, example: 'fileasset-xxxxxxxxxxxxx-xxxxxxxxxxxxxxxx' })
   uuid: string;
 }
 
 export class FileQrCodeResponse {
   @ApiProperty()
+  token: string;
+}
+
+export class GenerateFilesDownloadTokenForAgencyResponse {
+  @ApiProperty({
+    description: 'Insert this JSON Web Token (JWT) into the download file API to initiate the file download process.',
+    example:
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0cmFuc2FjdGlvblV1aWQiOiJ0cmFuc2FjdGlvbi14eHh4eHh4eHh4eHh4LXh4eHh4eHh4eHh4eHh4eHgiLCJ0eXBlIjoiZmlsZS11cGxvYWQiLCJpYXQiOjE3MDExNTI5NzcsImV4cCI6MTcwMTE1MzAzN30.TbM_04hA41dBNNiXrQNwFsIThIXLYO2-VrkS9KJz-1Y',
+  })
+  token: string;
+}
+
+export class GenerateFilesDownloadTokenResponse {
+  @ApiProperty({ description: 'Insert this JSON Web Token (JWT) into the download file API to initiate the file download process.' })
   token: string;
 }

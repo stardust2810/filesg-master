@@ -1,4 +1,4 @@
-import { InputValidationException } from '@filesg/backend-common';
+import { EntityNotFoundException, InputValidationException } from '@filesg/backend-common';
 import {
   ACTIVITY_STATUS,
   ACTIVITY_TYPE,
@@ -84,32 +84,31 @@ describe('RecallTransactionService', () => {
   });
 
   it('delete service should be called if there are files to be deleted', async () => {
-    jest.spyOn(mockDatabaseTransactionService, 'startTransaction').mockResolvedValue(mockDatabaseTransaction);
     jest.spyOn(service, 'createRecallTransaction').mockResolvedValue(mockTransaction);
     jest.spyOn(service, 'createRecallActivities').mockResolvedValue([]);
     jest.spyOn(service, 'updateTransactionsAndActivitiesStatus').mockResolvedValue();
     jest.spyOn(service, 'updateTransactionsAndActivitiesStatus').mockResolvedValue();
     jest.spyOn(service, 'updateFileAssetStatus').mockResolvedValue(['1']);
-    jest
-      .spyOn(mockTransactionEntityService, 'retrieveTransactionByUuidAndUserId')
-      .mockResolvedValueOnce(mockTransactionWithActivityAndFileAssets);
+
+    mockDatabaseTransactionService.startTransaction.mockResolvedValue(mockDatabaseTransaction);
+    mockTransactionEntityService.retrieveTransactionByUuidAndUserId.mockResolvedValueOnce(mockTransactionWithActivityAndFileAssets);
+
     await service.recallTransaction('mock-transaction-001', eserviceUserId, { creationMethod: TRANSACTION_CREATION_METHOD.API });
 
     expect(mockDeletionService.createFileSessionAndSendDeleteMsg).toBeCalledTimes(1);
   });
 
   it('email should be sent to agency immediately if there are files to be deleted', async () => {
-    jest.spyOn(mockDatabaseTransactionService, 'startTransaction').mockResolvedValue(mockDatabaseTransaction);
     jest.spyOn(service, 'createRecallTransaction').mockResolvedValue(mockTransaction);
     jest.spyOn(service, 'createRecallActivities').mockResolvedValue(fileAssetDeleteDetails);
     jest.spyOn(service, 'updateTransactionsAndActivitiesStatus').mockResolvedValue();
     jest.spyOn(service, 'updateTransactionsAndActivitiesStatus').mockResolvedValue();
     jest.spyOn(service, 'updateFileAssetStatus').mockResolvedValue([]);
-    jest
-      .spyOn(mockTransactionEntityService, 'retrieveTransactionByUuidAndUserId')
-      .mockResolvedValueOnce(mockTransactionWithActivityAndFileAssets);
 
-    jest.spyOn(mockActivityEntityService, 'retrieveActivitiesDetailsRequiredForEmail').mockResolvedValueOnce([mockActivity]);
+    mockDatabaseTransactionService.startTransaction.mockResolvedValue(mockDatabaseTransaction);
+    mockTransactionEntityService.retrieveTransactionByUuidAndUserId.mockResolvedValueOnce(mockTransactionWithActivityAndFileAssets);
+
+    mockActivityEntityService.retrieveRecallActivitiesDetailsRequiredForEmail.mockResolvedValueOnce([mockActivity]);
 
     await service.recallTransaction('mock-transaction-002', eserviceUserId, { creationMethod: TRANSACTION_CREATION_METHOD.API });
 
@@ -118,25 +117,27 @@ describe('RecallTransactionService', () => {
 
   describe('Recall transaction input validation', () => {
     it('should fail if the transaction info was not found', async () => {
-      jest.spyOn(mockTransactionEntityService, 'retrieveTransactionByUuidAndUserId').mockResolvedValueOnce(null);
+      mockTransactionEntityService.retrieveTransactionByUuidAndUserId.mockResolvedValueOnce(null);
+
       await expect(
         service.recallTransaction('mock-transaction-001', eserviceUserId, { creationMethod: TRANSACTION_CREATION_METHOD.API }),
-      ).rejects.toThrowError(InputValidationException);
+      ).rejects.toThrowError(EntityNotFoundException);
     });
 
     it('should fail if the transaction has the wrong type', async () => {
-      jest
-        .spyOn(mockTransactionEntityService, 'retrieveTransactionByUuidAndUserId')
-        .mockResolvedValueOnce({ type: TRANSACTION_TYPE.RECALL });
+      mockTransactionEntityService.retrieveTransactionByUuidAndUserId.mockResolvedValueOnce({ type: TRANSACTION_TYPE.RECALL });
+
       await expect(
         service.recallTransaction('mock-transaction-001', eserviceUserId, { creationMethod: TRANSACTION_CREATION_METHOD.API }),
       ).rejects.toThrowError(InputValidationException);
     });
 
     it('should fail if the transaction does not have a completed status', async () => {
-      jest
-        .spyOn(mockTransactionEntityService, 'retrieveTransactionByUuidAndUserId')
-        .mockResolvedValueOnce({ type: TRANSACTION_TYPE.RECALL, status: TRANSACTION_STATUS.RECALLED });
+      mockTransactionEntityService.retrieveTransactionByUuidAndUserId.mockResolvedValueOnce({
+        type: TRANSACTION_TYPE.RECALL,
+        status: TRANSACTION_STATUS.RECALLED,
+      });
+
       await expect(
         service.recallTransaction('mock-transaction-001', eserviceUserId, { creationMethod: TRANSACTION_CREATION_METHOD.API }),
       ).rejects.toThrowError(InputValidationException);

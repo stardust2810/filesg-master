@@ -2,6 +2,7 @@ import {
   AUDIT_EVENT_NAME,
   AUTH_TYPE,
   DateRange,
+  FileStatisticAuditEvent,
   PaginationOptions,
   USER_FILE_AUDIT_EVENTS,
   UserActionAuditEvent,
@@ -24,11 +25,12 @@ export type UserActionRawResult = {
   hasPerformedDocumentAction: boolean | null;
 } & Record<typeof eventNameColumnMap[UserFileAuditEvent | AUDIT_EVENT_NAME.USER_LOGIN], string>;
 
-const eventNameColumnMap: Record<UserActionAuditEvent, string> = {
+const eventNameColumnMap: Record<FileStatisticAuditEvent, string> = {
   [AUDIT_EVENT_NAME.USER_FILE_DOWNLOAD]: 'downloadCount',
   [AUDIT_EVENT_NAME.USER_FILE_PRINT_SAVE]: 'printSaveCount',
   [AUDIT_EVENT_NAME.USER_FILE_VIEW]: 'viewCount',
   [AUDIT_EVENT_NAME.USER_LOGIN]: 'loginCount',
+  [AUDIT_EVENT_NAME.AGENCY_FILE_DOWNLOAD]: 'agencyDownloadCount',
 };
 
 @Injectable()
@@ -95,7 +97,7 @@ export class AuditEventEntityRepository {
   // Document Issuance Statistics
   // ===========================================================================
   public async findAgencyAndApplicationTypeEventCountsByEventNames(
-    eventNames: UserFileAuditEvent[],
+    eventNames: FileStatisticAuditEvent[],
     queryOptions: DateRange,
     entityManager?: EntityManager,
   ) {
@@ -123,7 +125,7 @@ export class AuditEventEntityRepository {
         agency: string | undefined;
         applicationType: string | undefined;
         count: string;
-      } & Record<typeof eventNameColumnMap[UserFileAuditEvent], string>
+      } & Record<typeof eventNameColumnMap[FileStatisticAuditEvent], string>
     >();
   }
 
@@ -134,7 +136,7 @@ export class AuditEventEntityRepository {
     const { page, limit, startDate, endDate } = queryOptions;
     const skip = limit! * page! - limit!;
 
-    const eventNames = [...USER_FILE_AUDIT_EVENTS, AUDIT_EVENT_NAME.USER_LOGIN];
+    const eventNames: UserActionAuditEvent[] = [...USER_FILE_AUDIT_EVENTS, AUDIT_EVENT_NAME.USER_LOGIN];
 
     const query = this.getRepository(entityManager)
       .createQueryBuilder('auditEvent')
@@ -180,7 +182,7 @@ export class AuditEventEntityRepository {
     return `JSON_UNQUOTE(JSON_EXTRACT(auditEvent.data, "$.${key}")) AS ${key}`;
   }
 
-  private sumSubQueries(eventNames: AUDIT_EVENT_NAME[]) {
+  private sumSubQueries(eventNames: UserActionAuditEvent[] | FileStatisticAuditEvent[]) {
     return eventNames
       .map((eventName) => `SUM(IF(auditEvent.eventName = "${eventName}", 1, 0)) AS ${eventNameColumnMap[eventName]}`)
       .join(', ');

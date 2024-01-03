@@ -209,6 +209,7 @@ describe('FileTransactionService', () => {
           {
             activityUuid: mockReceiveTransferActivity.uuid,
             uin: mockCreateFileTransactionRequest.transaction.recipients[0].uin,
+            isNonSingpassRetrievable: true,
           },
         ],
       };
@@ -701,7 +702,6 @@ describe('FileTransactionService', () => {
         documentHash: checksum,
         issuerId,
         oaCertificate,
-        lastViewedAt: null,
       });
 
       expect(mockFileAssetEntityService.insertFileAssets).toBeCalledWith([mockInsertFileAssetsForTxnCreationFileAsset], mockEntityManager);

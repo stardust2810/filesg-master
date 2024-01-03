@@ -125,6 +125,43 @@ export class ActivityEntityService {
     return activity;
   }
 
+  public async retrieveActivityDetailsByFilters(
+    {
+      activityUuid,
+      status,
+      types,
+      userId,
+      agencyCodes,
+    }: {
+      activityUuid: string;
+      status: ACTIVITY_STATUS;
+      types: Array<ACTIVITY_TYPE>;
+      userId: number;
+      agencyCodes?: Array<string>;
+    },
+    entityManager?: EntityManager,
+  ) {
+    const activity = await this.activityRepository.findActivityByUuidAndStatusAndTypes(
+      activityUuid,
+      status,
+      types,
+      userId,
+      entityManager,
+      agencyCodes,
+    );
+
+    if (!activity) {
+      throw new EntityNotFoundException(
+        COMPONENT_ERROR_CODE.ACTIVITY_SERVICE,
+        Activity.name,
+        'uuid, status, agencyCodes, and types',
+        `${activityUuid}, ${status}, ${agencyCodes} and ${types}`,
+      );
+    }
+
+    return activity;
+  }
+
   public async retrieveActivityWithFileAssetsByUuid(uuid: string, entityManager?: EntityManager) {
     const activity = await this.activityRepository.findActivityWithFileAssetsByUuid(uuid, entityManager);
 
@@ -203,11 +240,15 @@ export class ActivityEntityService {
     opts: ServiceMethodOptions = { toThrow: false },
     entityManager?: EntityManager,
   ) {
-    const activities = await this.activityRepository.findActivityDetailsRequiredForEmail(uuids, activityType, entityManager);
+    const activities = await this.activityRepository.findActivitiesDetailsRequiredForEmail(uuids, activityType, entityManager);
     if (!activities.length && opts.toThrow) {
       throw new EntityNotFoundException(COMPONENT_ERROR_CODE.ACTIVITY_SERVICE, Activity.name, 'uuid', `${[uuids]}`);
     }
     return activities;
+  }
+
+  public async retrieveRecallActivitiesDetailsRequiredForEmail(ids: number[], entityManager?: EntityManager) {
+    return await this.activityRepository.findRecallActivitiesDetailsRequiredForEmail(ids, entityManager);
   }
 
   public async retrieveActivityAcknowledgementDetailsByUuidAndStatusAndTypes(

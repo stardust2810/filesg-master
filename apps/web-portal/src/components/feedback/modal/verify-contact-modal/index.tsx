@@ -25,7 +25,8 @@ interface Props {
 }
 
 const isUserBannedFromContactUpdate = (error: unknown) => isFileSGErrorType(error, EXCEPTION_ERROR_CODE.CONTACT_UPDATE_BAN);
-const isOtpMaxRetriesReached = (error: unknown) => isFileSGErrorType(error, EXCEPTION_ERROR_CODE.OTP_MAX_RETRIES_REACHED);
+const isOtpMaxVerificationAttemptCountReached = (error: unknown) =>
+  isFileSGErrorType(error, EXCEPTION_ERROR_CODE.OTP_MAX_VERIFICATION_ATTEMPT_COUNT_REACHED);
 
 const BanErrorText = () => {
   return (
@@ -37,7 +38,7 @@ const BanErrorText = () => {
       <br />
       <br />
       <Typography variant="BODY">
-        To unlock, please{' '}
+        Please try again after 1 hour. For assistance, please{' '}
         <TextLink endIcon="sgds-icon-external" font="PARAGRAPH" type="ANCHOR" to={ExternalLink.CONTACT_US} newTab>
           contact us
         </TextLink>
@@ -153,7 +154,7 @@ export const VerifyContactModal = forwardRef<HTMLDivElement, Props>(
               <StyledFooter>
                 <Button
                   label="Submit"
-                  disabled={otp.length !== 6 || isOtpMaxRetriesReached(verifyOtpError)}
+                  disabled={otp.length !== 6 || isOtpMaxVerificationAttemptCountReached(verifyOtpError)}
                   isLoading={isLoadingOtpVerify}
                   type="submit"
                 />

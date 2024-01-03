@@ -105,7 +105,6 @@ export const mockEmailNotificationMessageTemplate = createMockNotificationMessag
   type: NOTIFICATION_TEMPLATE_TYPE.ISSUANCE,
   notificationChannel: NOTIFICATION_CHANNEL.EMAIL,
   template: ['a', 'b', 'c', '', ''],
-  version: 1,
 });
 
 export const mockSgnotifyNotificationMessageTemplate = createMockNotificationMessageTemplate({
@@ -114,7 +113,6 @@ export const mockSgnotifyNotificationMessageTemplate = createMockNotificationMes
   type: NOTIFICATION_TEMPLATE_TYPE.ISSUANCE,
   notificationChannel: NOTIFICATION_CHANNEL.SG_NOTIFY,
   template: ['a', 'b', '', '', ''],
-  version: 1,
 });
 
 export const mockCreateTransactionV2Request: CreateTransactionV2Request = {

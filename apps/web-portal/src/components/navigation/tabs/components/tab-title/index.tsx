@@ -19,22 +19,24 @@ export const TabTitle = ({ title, index, active, disabled = false, setSelectedTa
   };
 
   return (
-    <li style={{ zIndex: 2 }} className={className} role="tab" aria-selected={active}>
-      <Button
-        className={`fsg-tab-title ${active ? 'fsg-tab-title-active' : undefined}`}
-        onClick={(e) => handleOnClick(e)}
-        active={active}
-        disabled={disabled}
-        data-testid={rest['data-testid']}
-      >
-        {isValidElement(title) ? (
-          title
-        ) : (
-          <Typography variant="BODY" bold={active ? 'FULL' : undefined}>
-            {title}
-          </Typography>
-        )}
-      </Button>
-    </li>
+    <Button
+      id={`tab-title-${index}`}
+      role="tab"
+      aria-selected={active}
+      className={`fsg-tab-title ${className} ${active ? 'fsg-tab-title-active' : undefined}`}
+      onClick={(e) => handleOnClick(e)}
+      active={active}
+      disabled={disabled}
+      data-testid={rest['data-testid']}
+      style={{ zIndex: 2 }}
+    >
+      {isValidElement(title) ? (
+        title
+      ) : (
+        <Typography variant="BODY" bold={active ? 'FULL' : undefined}>
+          {title}
+        </Typography>
+      )}
+    </Button>
   );
 };

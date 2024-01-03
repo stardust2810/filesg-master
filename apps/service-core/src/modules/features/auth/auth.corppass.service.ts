@@ -6,36 +6,38 @@ import {
   GetLoginContextResponse,
   isUinfinValid,
   redactUinfin,
-  SSO_ESERVICE,
   STATUS,
   USER_TYPE,
 } from '@filesg/common';
 import { FILESG_REDIS_CLIENT, RedisService } from '@filesg/redis';
-import { MyInfo, Util } from '@govtechsg/singpass-myinfo-oidc-helper';
+import { Util } from '@govtechsg/singpass-myinfo-oidc-helper';
 import { NdiOidcHelper } from '@govtechsg/singpass-myinfo-oidc-helper/dist/corppass';
+import { createClientAssertion } from '@govtechsg/singpass-myinfo-oidc-helper/dist/util/SigningUtil';
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import axios from 'axios';
+import { createPrivateKey } from 'crypto';
 import { addMinutes } from 'date-fns';
+import * as Jose from 'jose';
 
-import { SingpassNonceMatchError } from '../../../common/filters/custom-exceptions.filter';
+import { CorppassNonceMatchError } from '../../../common/filters/custom-exceptions.filter';
 import { LoginRequest } from '../../../dtos/auth/request';
 import { AuditEventCreationModel } from '../../../entities/audit-event';
 import { Corporate } from '../../../entities/corporate';
 import { CorporateUser } from '../../../entities/corporate-user';
-import { User } from '../../../entities/user';
-import { CORPPASS_PROVIDER, FileSGSession, MYINFO_PROVIDER, UserSessionAuditEventData } from '../../../typings/common';
+import { CORPPASS_PROVIDER, CorppassAuthInfoPayload, FileSGCorporateUserSession, UserSessionAuditEventData } from '../../../typings/common';
 import { generateUuid } from '../../../utils/helpers';
 import { AgencyEntityService } from '../../entities/agency/agency.entity.service';
 import { AuditEventEntityService } from '../../entities/audit-event/audit-event.entity.service';
-import { CitizenUserEntityService } from '../../entities/user/citizen-user.entity.service';
 import { CorporateEntityService } from '../../entities/user/corporate/corporate.entity.service';
 import { CorporateUserEntityService } from '../../entities/user/corporate-user/corporate-user.entity.service';
 import { FileSGConfigService } from '../../setups/config/config.service';
+
+const AGENCY_CACHE_REDIS_KEY = 'AgencyCode';
 
 @Injectable()
 export class CorppassAuthService {
   private readonly logger = new Logger(CorppassAuthService.name);
   constructor(
-    private readonly citizenUserEntityService: CitizenUserEntityService,
     private readonly corporateEntityService: CorporateEntityService,
     private readonly corporateUserEntityService: CorporateUserEntityService,
     private redisService: RedisService,
@@ -43,7 +45,6 @@ export class CorppassAuthService {
     private auditEventEntityService: AuditEventEntityService,
     private readonly agencyEntityService: AgencyEntityService,
     @Inject(CORPPASS_PROVIDER) private corppassHelper: NdiOidcHelper,
-    @Inject(MYINFO_PROVIDER) private myInfoHelper: MyInfo.Helper,
   ) {
     Util.LoggerUtil.setLogger({
       error: (msg) => this.logger.error(redactUinfin(msg)),
@@ -55,68 +56,122 @@ export class CorppassAuthService {
     });
   }
 
-  public getLoginContext(): GetLoginContextResponse {
+  public async getLoginContext(): Promise<GetLoginContextResponse> {
     const { clientId, redirectUrl, authUrl } = this.fileSGConfigService.corppassConfig;
+
     const state = generateUuid();
     const nonce = generateUuid();
+
     return {
       url: `${authUrl}?scope=openid&response_type=code&redirect_uri=${redirectUrl}&state=${state}&nonce=${nonce}&client_id=${clientId}`,
     };
   }
 
-  public async ndiLogin(session: FileSGSession, { authCode, nonce }: LoginRequest) {
-    const tokens = await this.corppassHelper.getTokens(authCode);
-    this.logger.log(`[Corppass] Received Token`);
+  public async ndiLogin(session: FileSGCorporateUserSession, { authCode, nonce }: LoginRequest) {
+    this.logger.log(`[Corppass] Retrieving tokens using auth code ${authCode}`);
 
-    const tokenPayload = await this.corppassHelper.getIdTokenPayload(tokens);
-    this.logger.log(`[Corppass] Extracted payload from token`);
+    try {
+      /**********************
+       * Testing code start
+       *********************/
 
-    if (tokenPayload.nonce !== nonce) {
-      throw new SingpassNonceMatchError(COMPONENT_ERROR_CODE.AUTH_SERVICE);
+      const { openIdDiscoveryUrl, clientId, redirectUrl } = this.fileSGConfigService.corppassConfig;
+      const {
+        encPrivateKey: encPrivateKeyPEM,
+        sigPrivateKey: sigPrivateKeyPEM,
+        sigPublicKid,
+        encPublicKid,
+      } = this.fileSGConfigService.authConfig;
+      this.logger.log(`[Corppass] Retrieving get token endpoint and issuer`);
+
+      const {
+        data: { issuer, token_endpoint },
+      } = await axios.get(openIdDiscoveryUrl);
+
+      this.logger.log(`[Corppass] Token endpoint received ${token_endpoint} with issuer ${issuer}`);
+
+      const ALGO = 'ES512';
+      const KEY_FORMAT = 'json';
+
+      const sigPrivKey = createPrivateKey(sigPrivateKeyPEM);
+      const signPrivJWK = await Jose.exportJWK(sigPrivKey);
+      signPrivJWK.kid = sigPublicKid;
+      signPrivJWK.use = 'sig';
+      signPrivJWK.alg = ALGO;
+
+      const encPrivKey = createPrivateKey(encPrivateKeyPEM);
+      const encPrivJWK = await Jose.exportJWK(encPrivKey);
+      encPrivJWK.kid = encPublicKid;
+      encPrivJWK.use = 'enc';
+      encPrivJWK.alg = 'ECDH-ES+A256KW';
+
+      const assertion = await createClientAssertion({
+        issuer: clientId,
+        subject: clientId,
+        audience: issuer,
+        key: { key: JSON.stringify(signPrivJWK), alg: ALGO, format: KEY_FORMAT },
+      });
+      this.logger.log(`Assertion-------------, ${assertion}`);
+      const params = new URLSearchParams({
+        grant_type: 'authorization_code',
+        code: authCode,
+        client_id: clientId,
+        redirect_uri: redirectUrl,
+        client_assertion_type: 'urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer',
+        client_assertion: assertion,
+      });
+
+      const body = params.toString();
+
+      this.logger.log(`[Corppass] Getting tokens with params ${body}`);
+
+      const response = await axios
+        .post(token_endpoint, body, { headers: { 'content-type': 'application/x-www-form-urlencoded' } })
+        .catch((error) => {
+          this.logger.error(JSON.stringify(error));
+          if (error.response) {
+            this.logger.error(error.response.data); // => the response payload
+          }
+          throw error;
+        });
+
+      this.logger.log(`[Corppass] Token retrieval successful with token: ${JSON.stringify(response)}`);
+
+      /**********************
+       * Testing code end
+       *********************/
+
+      const token = await this.corppassHelper.getTokens(authCode);
+      this.logger.log(`[Corppass] Received Token`);
+
+      this.getCorporateUserRoles(token.access_token);
+
+      const tokenPayload = await this.corppassHelper.getIdTokenPayload(token);
+      this.logger.log(`[Corppass] Extracted payload from token`);
+
+      if (tokenPayload.nonce !== nonce) {
+        throw new CorppassNonceMatchError(COMPONENT_ERROR_CODE.AUTH_SERVICE);
+      }
+
+      const payload = this.corppassHelper.extractInfoFromIdTokenSubject(tokenPayload);
+      this.logger.log(`[Corppass] Extracted Info from payload`, payload);
+    } catch (error) {
+      this.logger.error(JSON.stringify(error));
+      if ((error as any).response) {
+        this.logger.error((error as any).response.data); // => the response payload
+      }
+      throw error;
     }
-
-    const payload = this.corppassHelper.extractInfoFromIdTokenSubject(tokenPayload);
-    this.logger.log(`[Corppass] Extracted Info from payload`, payload);
-  }
-
-  async updateSession(user: User, session: FileSGSession, ssoEservice?: SSO_ESERVICE) {
-    this.logger.log(`Creating session for user ${user.id}|${user.uuid}|${user.name}`);
-    const { sessionLengthInSecs, extendSessionWarningDurationInSecs, absoluteSessionExpiryInMins } = this.fileSGConfigService.sessionConfig;
-
-    await this.redisService.set(FILESG_REDIS_CLIENT.USER, user.uuid, session.id);
-
-    const currentTime = new Date();
-
-    session.user = {
-      userId: user.id,
-      userUuid: user.uuid,
-      type: USER_TYPE.CITIZEN,
-      name: user.name,
-      maskedUin: maskUin(user.uin!),
-      role: user.role,
-      isOnboarded: user.isOnboarded,
-      lastLoginAt: user.lastLoginAt,
-      createdAt: currentTime,
-      expiresAt: addMinutes(currentTime, absoluteSessionExpiryInMins),
-      sessionLengthInSecs,
-      extendSessionWarningDurationInSecs,
-      ssoEservice: ssoEservice ?? null,
-      hasPerformedDocumentAction: false,
-      corporateUen: null,
-      corporateName: null,
-      accessibleAgencies: null,
-    };
-    this.logger.log(`Session created for user ${user.id}|${user.uuid}|${user.name}`);
   }
 
   async updateCorporateUserSession(
     corporate: Corporate,
     corporateUser: CorporateUser,
-    session: FileSGSession,
+    session: FileSGCorporateUserSession,
     accessibleAgencies: AccessibleAgency[],
   ) {
     const { user, lastLoginAt } = corporateUser;
-    const { id, uuid, role } = user!;
+    const { id, uuid, role, isOnboarded } = user!;
 
     this.logger.log(`Creating session for corporate user with base user info of ${id}|${uuid}`);
     const { sessionLengthInSecs, extendSessionWarningDurationInSecs, absoluteSessionExpiryInMins } = this.fileSGConfigService.sessionConfig;
@@ -132,22 +187,24 @@ export class CorppassAuthService {
       maskedUin: maskUin(corporateUser.uin),
       name: corporateUser.name,
       role: role,
-      isOnboarded: null,
+      isOnboarded,
       lastLoginAt,
       createdAt: currentTime,
       expiresAt: addMinutes(currentTime, absoluteSessionExpiryInMins),
       sessionLengthInSecs,
       extendSessionWarningDurationInSecs,
-      ssoEservice: null,
       hasPerformedDocumentAction: false,
       corporateUen: corporate.uen,
       corporateName: corporate.name,
+      corporateBaseUserId: corporate.user!.id,
+      corporateBaseUserUuid: corporate.user!.uuid,
       accessibleAgencies,
     };
     this.logger.log(`Session created for corporate user with base user info of ${id}|${uuid}`);
   }
 
   // gd TODO: unit test to be done when proper login implemented in case any changes
+  // TODO: determine when to update isOnboarded to true
   public async getOrCreateCorporateAndCorporateUser(uen: string, uin: string) {
     if (!isUinfinValid(uin)) {
       throw new InputValidationException(COMPONENT_ERROR_CODE.AUTH_SERVICE, 'Invalid UIN');
@@ -157,10 +214,10 @@ export class CorppassAuthService {
     let corporateUser: CorporateUser | null;
 
     // check if corporate user exists with the uen, create if not
-    corporate = await this.corporateEntityService.retrieveCorporateByUen(uen, { toThrow: false });
+    corporate = await this.corporateEntityService.retrieveCorporateWithBaseUserByUen(uen, { toThrow: false });
 
     if (!corporate) {
-      corporate = await this.corporateEntityService.saveCorporateWithBaseUser({ uen, user: { status: STATUS.ACTIVE } });
+      corporate = await this.corporateEntityService.saveCorporateWithBaseUser({ uen, user: { status: STATUS.ACTIVE, isOnboarded: true } });
     }
 
     // check if corppass user exists with the uin and uen, create if not
@@ -179,14 +236,8 @@ export class CorppassAuthService {
     return { corporate, corporateUser };
   }
 
-  public async citizenLogout(id: number, session: FileSGSession) {
-    this.logger.log(`Logging out citizen with id: ${id} and session ${session.id}`);
-
-    // Remove previous MyInfo details if user not onboarded
-    const isOnboarded = session.user.isOnboarded;
-    if (!isOnboarded) {
-      await this.citizenUserEntityService.updateCitizenUserById(id, { name: null, email: null, phoneNumber: null });
-    }
+  public async logout(id: number, session: FileSGCorporateUserSession) {
+    this.logger.log(`Logging out corporate user with id: ${id} and session ${session.id}`);
 
     session.destroy((err: any) => {
       if (err) {
@@ -211,7 +262,10 @@ export class CorppassAuthService {
       return accessibleAgencies;
     }
 
-    const agencyNamesFromRedis = await this.redisService.mget(FILESG_REDIS_CLIENT.CORPPASS_AGENCY, agencyCodes);
+    const agencyNamesFromRedis = await this.redisService.mget(
+      FILESG_REDIS_CLIENT.CORPPASS_AGENCY,
+      agencyCodes.map((code) => `{${AGENCY_CACHE_REDIS_KEY}}${code}`),
+    );
 
     agencyNamesFromRedis.forEach((name, index) => {
       if (name !== null) {
@@ -234,10 +288,15 @@ export class CorppassAuthService {
       const promises = agencies.map(({ code, name }) => {
         accessibleAgencies.push({ code, name });
 
-        // use set with loop instead of mset because mset does not support setting of expiration
+        /**
+         * Use set with loop instead of mset because mset does not support setting of expiration.
+         * Tagging the redis key because if not tagged, during insertion the record will be inserted into different nodes in
+         * redis clusters, which results in failure when trying to do mget operation which requires all keys to be retrieved to be
+         * in the same node. Hence, with tagging on the key, records will be inserted into the same node thus allowing mget.
+         */
         return this.redisService.set(
           FILESG_REDIS_CLIENT.CORPPASS_AGENCY,
-          code,
+          `{${AGENCY_CACHE_REDIS_KEY}}${code}`,
           name,
           undefined,
           this.fileSGConfigService.authConfig.corppassAgencyCacheExpirySeconds,
@@ -257,5 +316,13 @@ export class CorppassAuthService {
       data,
     };
     await this.auditEventEntityService.insertAuditEvents([userSessionAuditEventModel]);
+  }
+
+  private async getCorporateUserRoles(accessToken: string) {
+    const { authInfoUrl } = this.fileSGConfigService.corppassConfig;
+    this.logger.log(`[Corppass] Extracting user auth info`);
+    // TODO: FIX TYPINGS OF CorppassAuthInfoPayload
+    const { data } = await axios.post<CorppassAuthInfoPayload>(authInfoUrl, null, { headers: { Authorization: `Bearer ${accessToken}` } });
+    this.logger.log(`[Corppass] User auth info`, data);
   }
 }

@@ -4,7 +4,7 @@ import { CreationAttributes } from '../typings/common';
 import { TimestampableEntity } from './base-model';
 import { NotificationMessageTemplate } from './notification-message-template';
 
-type OptionalAttributes = 'requiredFields' | 'externalTemplateId';
+type OptionalAttributes = 'requiredFields' | 'externalTemplateId' | 'copyRecipientSubjectAffix';
 type OmitAttributes = 'id';
 export type NotificationMessageTemplateAuditCreationModel = CreationAttributes<
   NotificationMessageTemplateAudit,
@@ -32,4 +32,7 @@ export class NotificationMessageTemplateAudit extends TimestampableEntity {
 
   @ManyToOne(() => NotificationMessageTemplate, (notificationMessageTemplate) => notificationMessageTemplate.audits, { nullable: false })
   notificationMessageTemplate?: NotificationMessageTemplate;
+
+  @Column({ type: 'varchar', nullable: true })
+  copyRecipientSubjectAffix: string | null;
 }

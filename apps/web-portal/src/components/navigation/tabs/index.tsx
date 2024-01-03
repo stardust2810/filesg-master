@@ -17,17 +17,17 @@ type Props = {
 export const Tabs = ({ children, style, className, tabsName, onTitleClickHandler, onTabClick, delayCalculation = false }: Props) => {
   const [selectedTab, setSelectedTab] = useState(0);
   const selectorRef = useRef<HTMLDivElement>(null);
-  const tabTitleContainerRef = useRef<HTMLUListElement>(null);
+  const tabTitleContainerRef = useRef<HTMLDivElement>(null);
 
   const calculateSelectorWidth = useCallback(() => {
     if (selectorRef.current) {
-      selectorRef.current.style.width = `${tabTitleContainerRef.current!.querySelectorAll('li')[selectedTab].clientWidth}px`;
+      selectorRef.current.style.width = `${tabTitleContainerRef.current!.querySelectorAll('button')[selectedTab].clientWidth}px`;
     }
   }, [selectedTab]);
 
   const calculateSelectorOffsetLeft = useCallback(() => {
     if (selectorRef.current) {
-      selectorRef.current.style.left = `${tabTitleContainerRef.current!.querySelectorAll('li')[selectedTab].offsetLeft}px`;
+      selectorRef.current.style.left = `${tabTitleContainerRef.current!.querySelectorAll('button')[selectedTab].offsetLeft}px`;
     }
   }, [selectedTab]);
 
@@ -57,9 +57,25 @@ export const Tabs = ({ children, style, className, tabsName, onTitleClickHandler
     }
     calculateSelectorWidth();
   };
+  const getAriaOwns = () => {
+    const tabCount = React.Children.count(children);
+    let ariaOwns = '';
+    for (let i = 0; i <= tabCount; i++) {
+      if (i !== tabCount) {
+        ariaOwns = ariaOwns.concat(`tab-title-${i} `);
+      }
+    }
+    return ariaOwns;
+  };
   return (
     <Container style={style} className={className} data-testid={`${TEST_IDS.TABS}-${tabsName && toKebabCase(tabsName)}`}>
-      <TabTitleContainer onClick={onTitleClickHandler} ref={tabTitleContainerRef} className="fsg-tab-title-container" role="tablist">
+      <TabTitleContainer
+        onClick={onTitleClickHandler}
+        ref={tabTitleContainerRef}
+        className="fsg-tab-title-container"
+        role="tablist"
+        aria-owns={getAriaOwns()}
+      >
         {React.Children.map(children, (item, index) => (
           <TabTitle
             className={`${className}`}

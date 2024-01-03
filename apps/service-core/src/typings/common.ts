@@ -9,6 +9,7 @@ import {
   EserviceUserRole,
   NOTIFICATION_CHANNEL,
   NOTIFICATION_TEMPLATE_TYPE,
+  OTP_CHANNEL,
   ROLE,
   SSO_ESERVICE,
   STATUS,
@@ -82,63 +83,150 @@ export type CreationAttributesNoOptional<T extends TimestampableEntity, O extend
 
 type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
-export interface AuthUser {
+export type AuthUser = CitizenAuthUser | CorporateUserAuthUser | ProgrammaticAuthUser;
+
+// =============================================================================
+// Session
+// =============================================================================
+export interface BaseAuthUser {
   // user related
   userId: number;
   userUuid: string;
   type: USER_TYPE;
   name: string | null;
-  maskedUin: string | null;
   role: ROLE;
-  isOnboarded: boolean | null;
+  isOnboarded: boolean;
+
   // session related
   lastLoginAt: Date | null;
   createdAt: Date | null;
   expiresAt: Date;
   sessionLengthInSecs: number;
   extendSessionWarningDurationInSecs: number;
-  ssoEservice: SSO_ESERVICE | null;
   hasPerformedDocumentAction: boolean;
-  eserviceId?: number;
-  // corporate related
-  corporateUen: string | null;
-  corporateName: string | null;
-  accessibleAgencies: AccessibleAgency[] | null;
 }
 
-export type FileSGSession = Session & {
-  user: AuthUser;
+export interface CitizenAuthUser extends BaseAuthUser {
+  type: USER_TYPE.CITIZEN;
+  role: ROLE.CITIZEN;
+
+  maskedUin: string;
+  ssoEservice: SSO_ESERVICE | null;
+  eserviceId?: number;
+}
+
+export interface CorporateUserAuthUser extends BaseAuthUser {
+  type: USER_TYPE.CORPORATE_USER;
+  role: ROLE.CORPORATE_USER;
+
+  maskedUin: string;
+  corporateUen: string;
+  corporateName: string | null;
+  corporateBaseUserId: number;
+  corporateBaseUserUuid: string;
+  accessibleAgencies: AccessibleAgency[];
+}
+
+export interface ProgrammaticAuthUser extends BaseAuthUser {
+  type: USER_TYPE.PROGRAMMATIC;
+  role: ROLE.PROGRAMMATIC_WRITE | ROLE.PROGRAMMATIC_READ | ROLE.SYSTEM | ROLE.PROGRAMMATIC_SYSTEM_INTEGRATION;
+}
+
+export type FileSGCitizenSession = Session & {
+  user: CitizenAuthUser;
   csrfToken: string;
 };
 
-export type FileSGWidgetSession = {
-  sessionId: string;
+export type FileSGCorporateUserSession = Session & {
+  user: CorporateUserAuthUser;
+  csrfToken: string;
 };
 
-export interface RequestWithSession extends Request {
-  session: FileSGSession;
+export type FileSGProgrammaticSession = Session & {
+  user: ProgrammaticAuthUser;
+  csrfToken: string;
+};
+
+export interface BaseRequestWithSession extends Request {
   queryRunner: QueryRunner;
 }
 
-export interface RequestHeaderWithClient extends RequestWithSession {
+export interface RequestWithCitizenSession extends BaseRequestWithSession {
+  session: FileSGCitizenSession;
+}
+
+export interface RequestWithCorporateUserSession extends BaseRequestWithSession {
+  session: FileSGCorporateUserSession;
+}
+
+export interface RequestWithProgrammaticSession extends BaseRequestWithSession {
+  session: FileSGProgrammaticSession;
+}
+
+export interface RequestHeaderWithClient extends RequestWithProgrammaticSession {
   headers: {
     'x-client-id': string;
     'x-client-secret': string;
   };
 }
 
-export interface OtpDetails {
+// =============================================================================
+// OTP
+// =============================================================================
+export type OtpDetails = NonSingpassRetrievalOtpDetails | ContactVerificationOtpDetails;
+
+export interface BaseOtpDetails {
   otp: string;
   verificationAttemptCount: number;
   expireAt: Date;
   allowResendAt: Date | null;
-  totalOTPSentPerCycleCount: number;
+  otpSentCount: number;
 }
 
-export interface ContactVerificationOtpDetails extends OtpDetails {
+export type NonSingpassRetrievalOtpDetails = BaseOtpDetails;
+
+export interface ContactVerificationOtpDetails extends BaseOtpDetails {
   contact: string;
 }
 
+export type GenerateOtpDetails = GenerateNonSingpassRetrievalOtpDetails | GenerateContactVerificationOtpDetails;
+
+export interface BaseGenerateOtpDetails {
+  otpDetails: OtpDetails;
+  hasReachedOtpMaxResend: boolean;
+  hasSentOtp: boolean;
+}
+
+export interface GenerateNonSingpassRetrievalOtpDetails extends BaseGenerateOtpDetails {
+  otpDetails: NonSingpassRetrievalOtpDetails;
+}
+
+export interface GenerateContactVerificationOtpDetails extends BaseGenerateOtpDetails {
+  otpDetails: ContactVerificationOtpDetails;
+}
+
+export type VerifyOtpDetails =
+  | VerifyOtpMaxResendAndVerifyReachedDetails
+  | VerifyNonSingpassRetrivalOtpDetails
+  | VerifyContactVerificationOtpDetails;
+
+export interface VerifyOtpMaxResendAndVerifyReachedDetails {
+  hasReachedBothMaxResendAndVerify: true;
+  otpDetails: null;
+}
+
+export interface VerifyNonSingpassRetrivalOtpDetails {
+  hasReachedBothMaxResendAndVerify: false;
+  otpDetails: NonSingpassRetrievalOtpDetails;
+}
+
+export interface VerifyContactVerificationOtpDetails {
+  hasReachedBothMaxResendAndVerify: false;
+  otpDetails: ContactVerificationOtpDetails;
+}
+// =============================================================================
+// Etc
+// =============================================================================
 export interface DatabasePoolOptions {
   waitForConnections: boolean;
   connectionLimit: number;
@@ -152,6 +240,7 @@ export interface ActivityRecipientInfo {
   email?: string;
   failedAttempts?: number;
   emails?: string[];
+  isCopy?: boolean;
 }
 
 export interface AcknowledgementTemplateContent {
@@ -163,6 +252,7 @@ export interface NonSingpass2FaJwtPayload extends JwtPayload {
 }
 
 export interface NonSingpass2FaRequest extends Request {
+  channel?: OTP_CHANNEL;
   user: Omit<NonSingpass2FaJwtPayload, 'type'>;
 }
 
@@ -249,6 +339,7 @@ export interface DocumentStatisticsReportEntry {
   accessedCount: number;
   downloadCount: number;
   printSaveCount: number;
+  agencyDownloadCount: number;
   viewCount: number;
 }
 
@@ -267,16 +358,34 @@ interface BaseUserSessionAuditEventData {
 export interface UserSsoSessionAuditEventData extends BaseUserSessionAuditEventData {
   authType: AUTH_TYPE.SINGPASS_SSO;
   ssoEservice: SSO_ESERVICE;
+  corporateId?: never;
 }
 
 export interface UserNonSsoSessionAuditEventData extends BaseUserSessionAuditEventData {
   authType: AUTH_TYPE.SINGPASS | AUTH_TYPE.NON_SINGPASS | AUTH_TYPE.CORPPASS;
   ssoEservice?: never;
+  corporateId?: never;
 }
+
+export interface UserCorporateSessionAuditEventData extends BaseUserSessionAuditEventData {
+  authType: AUTH_TYPE.SINGPASS | AUTH_TYPE.NON_SINGPASS | AUTH_TYPE.CORPPASS;
+  ssoEservice?: never;
+  corporateId: number;
+}
+
+export type CitizenUserSessionAuditEventData = UserSsoSessionAuditEventData | UserNonSsoSessionAuditEventData;
 
 export type UserSessionAuditEventData = {
   hasPerformedDocumentAction: boolean;
-} & (UserSsoSessionAuditEventData | UserNonSsoSessionAuditEventData);
+} & (UserSsoSessionAuditEventData | UserNonSsoSessionAuditEventData | UserCorporateSessionAuditEventData);
+
+export type CorppassAuthInfoPayload = {
+  aud: string;
+  iss: string;
+  iat: number;
+  exp: number;
+  AuthInfo: JSON;
+};
 
 export type UserFilesAuditEventData = {
   fileAssetUuid: string;
@@ -284,10 +393,19 @@ export type UserFilesAuditEventData = {
   applicationType?: string;
   agency?: string;
   eservice?: string;
-} & (UserSsoSessionAuditEventData | UserNonSsoSessionAuditEventData);
+} & (UserSsoSessionAuditEventData | UserNonSsoSessionAuditEventData | UserCorporateSessionAuditEventData);
 
-export type AuditEventData = UserFilesAuditEventData | UserSessionAuditEventData;
+export type AgencyFilesDownloadAuditEvent = {
+  fileAssetUuid: string;
+  fileName: string;
+  eservice: string;
+  userUuid: string;
+  isUserCopy: boolean;
+  agency?: string;
+  applicationType?: string;
+};
 
+export type AuditEventData = UserFilesAuditEventData | UserSessionAuditEventData | AgencyFilesDownloadAuditEvent;
 // =============================================================================
 // Entity Query Options
 // =============================================================================

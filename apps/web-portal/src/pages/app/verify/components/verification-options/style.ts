@@ -67,11 +67,8 @@ export const StyledTabs = styled(Tabs)`
     border-bottom: none;
     transition: color 500ms ease-in-out;
 
-    /* background-color: ${({ theme }) => theme.FSG_COLOR.PRIMARY.DEFAULT}; */
-
     &:hover {
       border-bottom: none;
-      /* background-color: ${({ theme }) => theme.FSG_COLOR.PRIMARY.DEFAULT}; */
     }
   }
 
@@ -93,4 +90,7 @@ export const StyledDropzone = styled(Dropzone)`
 
 export const StyledTextButton = styled(TextButton)`
   display: inline;
+  @media screen and (max-width: calc(${({ theme }) => theme.FSG_BREAKPOINTS.SMALL_MOBILE})) {
+    display: flex;
+  }
 `;

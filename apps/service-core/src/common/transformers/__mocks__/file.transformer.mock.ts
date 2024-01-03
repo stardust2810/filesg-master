@@ -1,9 +1,10 @@
-import { ACTIVITY_STATUS, ACTIVITY_TYPE, FILE_STATUS, FILE_TYPE, STATUS } from '@filesg/common';
+import { ACTIVITY_STATUS, ACTIVITY_TYPE, FILE_ASSET_ACTION, FILE_STATUS, FILE_TYPE, STATUS } from '@filesg/common';
 
 import { createMockActivity } from '../../../modules/entities/activity/__mocks__/activity.mock';
 import { createMockAgency } from '../../../modules/entities/agency/__mocks__/agency.mock';
 import { createMockEservice } from '../../../modules/entities/eservice/__mocks__/eservice.mock';
 import { createMockFileAsset } from '../../../modules/entities/file-asset/__mocks__/file-asset.mock';
+import { createMockFileAssetHistory } from '../../../modules/entities/file-asset-history/__mocks__/file-asset-history.mock';
 import { createMockCitizenUser, createMockProgrammaticUser } from '../../../modules/entities/user/__mocks__/user.mock';
 import { FILE_ASSET_TYPE } from '../../../typings/common';
 const mockReceiveRevokeActivity = createMockActivity({
@@ -38,6 +39,12 @@ const mockIssuer = createMockProgrammaticUser({
   clientSecret: 'user-client-secret-1',
   eservices: [mockEservice],
 });
+
+const mockFileAssetViewedHistory = createMockFileAssetHistory({
+  type: FILE_ASSET_ACTION.VIEWED,
+  lastViewedAt: new Date(),
+});
+
 export const nonSingpassReceiveRevokeFileAsset = createMockFileAsset({
   type: FILE_ASSET_TYPE.TRANSFERRED,
   status: FILE_STATUS.REVOKED,
@@ -51,4 +58,5 @@ export const nonSingpassReceiveRevokeFileAsset = createMockFileAsset({
   issuer: {
     ...mockIssuer,
   },
+  histories: [mockFileAssetViewedHistory],
 });

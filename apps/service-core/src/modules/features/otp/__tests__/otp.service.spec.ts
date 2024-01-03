@@ -7,7 +7,7 @@ import {
   OtpDoesNotExistException,
   OtpExpiredException,
   OtpInvalidException,
-  OtpMaxRetriesReachedException,
+  OtpMaxVerificationCountReachedException,
 } from '../../../../common/filters/custom-exceptions.filter';
 import { OtpDetails } from '../../../../typings/common';
 import { mockActivityEntityService } from '../../../entities/activity/__mocks__/activity.entity.service.mock';
@@ -41,7 +41,7 @@ const mockOtpDetails: OtpDetails = {
   verificationAttemptCount: 0,
   expireAt: add(new Date(), { seconds: mockFileSGConfigService.otpConfig.otpExpirySeconds }),
   allowResendAt: add(new Date(), { seconds: mockFileSGConfigService.otpConfig.resendWaitSeconds }),
-  totalOTPSentPerCycleCount: 0,
+  otpSentCount: 0,
 };
 
 describe('OTP Service', () => {
@@ -51,7 +51,6 @@ describe('OTP Service', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OtpService,
-        { provide: FileSGConfigService, useValue: mockFileSGConfigService },
         { provide: FileSGConfigService, useValue: mockFileSGConfigService },
         { provide: RedisService, useValue: mockFileSGRedisService },
         { provide: EmailService, useValue: mockEmailService },
@@ -114,8 +113,8 @@ describe('OTP Service', () => {
     });
 
     it('should return hasReachedOtpMaxResend as true and not sending sms when total otp sent has reached max allowed otp sent', async () => {
-      const { maxAllowedOtpSentPerCycle } = mockFileSGConfigService.otpConfig;
-      const variedOtpDetails: OtpDetails = { ...mockOtpDetails, totalOTPSentPerCycleCount: maxAllowedOtpSentPerCycle };
+      const { maxAllowedOtpSendCount } = mockFileSGConfigService.otpConfig;
+      const variedOtpDetails: OtpDetails = { ...mockOtpDetails, otpSentCount: maxAllowedOtpSendCount };
       mockFileSGRedisService.get.mockResolvedValueOnce(JSON.stringify(variedOtpDetails));
 
       const response = await service.generateOtp(mockActivityUuid, OTP_TYPE.NON_SINGPASS_VERIFICATION, OTP_CHANNEL.SMS, mockMobileNumber);
@@ -158,7 +157,7 @@ describe('OTP Service', () => {
       mockFileSGRedisService.get.mockResolvedValueOnce(JSON.stringify(variedOtpDetails));
 
       await expect(service.verifyOtp(mockActivityUuid, '123456', OTP_TYPE.NON_SINGPASS_VERIFICATION, OTP_CHANNEL.SMS)).rejects.toThrow(
-        OtpMaxRetriesReachedException,
+        OtpMaxVerificationCountReachedException,
       );
     });
 
@@ -188,11 +187,11 @@ describe('OTP Service', () => {
     });
 
     it('should return hasReachedBothMaxResendAndVerify as true when the otp has reaches both max otp send and verification attempt on last invalid attempt', async () => {
-      const { maxAllowedOtpSentPerCycle, maxValidationAttemptCount } = mockFileSGConfigService.otpConfig;
+      const { maxAllowedOtpSendCount, maxValidationAttemptCount } = mockFileSGConfigService.otpConfig;
       const variedOtpDetails = {
         ...mockOtpDetails,
         verificationAttemptCount: maxValidationAttemptCount - 1,
-        totalOTPSentPerCycleCount: maxAllowedOtpSentPerCycle,
+        otpSentCount: maxAllowedOtpSendCount,
       };
       mockFileSGRedisService.get.mockResolvedValueOnce(JSON.stringify(variedOtpDetails));
 

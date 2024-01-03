@@ -1,4 +1,4 @@
-import { DateRange, PaginationOptions, UserFileAuditEvent } from '@filesg/common';
+import { DateRange, FileStatisticAuditEvent, PaginationOptions, UserFileAuditEvent } from '@filesg/common';
 import { Injectable, Logger } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 
@@ -48,7 +48,7 @@ export class AuditEventEntityService {
   }
 
   public async retrieveAgencyAndApplicationTypeEventCountsByEventNames(
-    eventNames: UserFileAuditEvent[],
+    eventNames: UserFileAuditEvent[] | FileStatisticAuditEvent[],
     queryOptions: DateRange,
     entityManager?: EntityManager,
   ) {

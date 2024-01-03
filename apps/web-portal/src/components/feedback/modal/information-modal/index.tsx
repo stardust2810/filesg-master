@@ -7,11 +7,12 @@ interface Props extends FileSGProps {
   title: string;
   information: React.ReactNode;
   onClose: () => void;
+  onRouteChange?: () => void;
 }
 
-export const InformationModal = ({ title, information, onClose, ...rest }: Props) => {
+export const InformationModal = ({ title, information, onClose, onRouteChange, ...rest }: Props) => {
   return (
-    <Modal onBackdropClick={onClose} data-testid={rest['data-testid'] ?? TEST_IDS.INFORMATION_MODAL}>
+    <Modal onBackdropClick={onClose} onRouteChange={onRouteChange} data-testid={rest['data-testid'] ?? TEST_IDS.INFORMATION_MODAL}>
       <Modal.Card>
         <StyledModalHeader onCloseButtonClick={onClose}>
           <Modal.Title>{title}</Modal.Title>

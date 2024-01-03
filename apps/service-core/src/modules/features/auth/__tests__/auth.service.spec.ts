@@ -22,20 +22,12 @@ import {
 import { AgencyUser, CitizenUser, User } from '../../../../entities/user';
 import { DB_QUERY_ERROR, MYINFO_PROVIDER, SINGPASS_PROVIDER } from '../../../../typings/common';
 import * as helpers from '../../../../utils/helpers';
-import { mockAgencyEntityService } from '../../../entities/agency/__mocks__/agency.entity.service.mock';
-import { AgencyEntityService } from '../../../entities/agency/agency.entity.service';
 import { mockAuditEventEntityService } from '../../../entities/audit-event/__mocks__/audit-event.entity.service.mock';
 import { AuditEventEntityService } from '../../../entities/audit-event/audit-event.entity.service';
 import { mockCitizenUserEntityService } from '../../../entities/user/__mocks__/citizen-user.entity.service.mock';
-import { mockCorporateEntityService } from '../../../entities/user/__mocks__/corporate/corporate.entity.service.mock';
-import { mockCorporateUserEntityService } from '../../../entities/user/__mocks__/corporate-user/corporate-user.entity.service.mock';
 import { mockProgrammaticUserEntityService } from '../../../entities/user/__mocks__/programmatic-user.entity.service.mock';
-import { mockUserEntityService } from '../../../entities/user/__mocks__/user.entity.service.mock';
 import { CitizenUserEntityService } from '../../../entities/user/citizen-user.entity.service';
-import { CorporateEntityService } from '../../../entities/user/corporate/corporate.entity.service';
-import { CorporateUserEntityService } from '../../../entities/user/corporate-user/corporate-user.entity.service';
 import { ProgrammaticUserEntityService } from '../../../entities/user/programmatic-user.entity.service';
-import { UserEntityService } from '../../../entities/user/user.entity.service';
 import { mockFileSGConfigService } from '../../../setups/config/__mocks__/config.service.mock';
 import { FileSGConfigService } from '../../../setups/config/config.service';
 import { mockFileSGRedisService } from '../../../setups/redis/__mocks__/redis.service.mock';
@@ -43,7 +35,7 @@ import { mockAgencyClientV2Service } from '../../agency-client/__mocks__/agency-
 import { AgencyClientV2Service } from '../../agency-client/agency-client.v2.service';
 import {
   IdTokenPayload,
-  mockAuthUser,
+  mockCitizenAuthUser,
   mockLoginReq,
   mockMyIcaToken,
   mockSession,
@@ -65,9 +57,6 @@ describe('Authentication Service', () => {
       providers: [
         AuthService,
         { provide: FileSGConfigService, useValue: mockFileSGConfigService },
-        { provide: UserEntityService, useValue: mockUserEntityService },
-        { provide: CorporateEntityService, useValue: mockCorporateEntityService },
-        { provide: CorporateUserEntityService, useValue: mockCorporateUserEntityService },
         { provide: ProgrammaticUserEntityService, useValue: mockProgrammaticUserEntityService },
         { provide: CitizenUserEntityService, useValue: mockCitizenUserEntityService },
         { provide: getRepositoryToken(User), useValue: {} },
@@ -79,7 +68,6 @@ describe('Authentication Service', () => {
         { provide: RedisService, useValue: mockFileSGRedisService },
         { provide: AgencyClientV2Service, useValue: mockAgencyClientV2Service },
         { provide: AuditEventEntityService, useValue: mockAuditEventEntityService },
-        { provide: AgencyEntityService, useValue: mockAgencyEntityService },
       ],
     }).compile();
 
@@ -118,13 +106,13 @@ describe('Authentication Service', () => {
       mockSingpassHelper.getTokens.mockResolvedValue(mockTokens);
       mockSingpassHelper.getIdTokenPayload.mockResolvedValue(mockTokenPayload);
       mockSingpassHelper.extractNricAndUuidFromPayload.mockReturnValue({ nric: mockUser.uin });
-      mockUserEntityService.retrieveUserByUin.mockResolvedValueOnce(mockUser);
+      mockCitizenUserEntityService.retrieveCitizenUserByUin.mockResolvedValueOnce(mockUser);
       mockCitizenUserEntityService.updateCitizenUserById.mockResolvedValueOnce(mockUser);
 
       const response = await authService.ndiLogin(mockSession, mockLoginReq);
       expect(mockSingpassHelper.getTokens).toBeCalledWith(mockLoginReq.authCode);
       expect(mockSingpassHelper.getIdTokenPayload).toBeCalledWith(mockTokens);
-      expect(mockUserEntityService.retrieveUserByUin).toBeCalledWith(mockUser.uin, { toThrow: false });
+      expect(mockCitizenUserEntityService.retrieveCitizenUserByUin).toBeCalledWith(mockUser.uin, { toThrow: false });
       expect(mockFileSGRedisService.set).toBeCalledWith(FILESG_REDIS_CLIENT.USER, mockUser.uuid, mockSession.id);
       expect(response).toBeUndefined;
     });
@@ -138,14 +126,14 @@ describe('Authentication Service', () => {
       mockSingpassHelper.getTokens.mockResolvedValue(mockTokens);
       mockSingpassHelper.getIdTokenPayload.mockResolvedValue(mockTokenPayload);
       mockSingpassHelper.extractNricAndUuidFromPayload.mockReturnValue({ nric: mockUser.uin });
-      mockUserEntityService.retrieveUserByUin.mockResolvedValueOnce(mockUser);
+      mockCitizenUserEntityService.retrieveCitizenUserByUin.mockResolvedValueOnce(mockUser);
       mockCitizenUserEntityService.updateCitizenUserById.mockResolvedValueOnce(mockUser);
       mockFileSGRedisService.get.mockResolvedValueOnce(mockSession);
 
       const response = await authService.ndiLogin(mockSession, mockLoginReq);
       expect(mockSingpassHelper.getTokens).toBeCalledWith(mockLoginReq.authCode);
       expect(mockSingpassHelper.getIdTokenPayload).toBeCalledWith(mockTokens);
-      expect(mockUserEntityService.retrieveUserByUin).toBeCalledWith(mockUser.uin, { toThrow: false });
+      expect(mockCitizenUserEntityService.retrieveCitizenUserByUin).toBeCalledWith(mockUser.uin, { toThrow: false });
       expect(mockFileSGRedisService.set).toBeCalledWith(FILESG_REDIS_CLIENT.USER, mockUser.uuid, mockSession.id);
       expect(response).toBeUndefined;
     });
@@ -157,14 +145,14 @@ describe('Authentication Service', () => {
       mockSingpassHelper.getTokens.mockResolvedValue(mockTokens);
       mockSingpassHelper.getIdTokenPayload.mockResolvedValue(mockTokenPayload);
       mockSingpassHelper.extractNricAndUuidFromPayload.mockReturnValue({ nric: mockNamelessUser.uin });
-      mockUserEntityService.retrieveUserByUin.mockResolvedValueOnce(mockNamelessUser);
+      mockCitizenUserEntityService.retrieveCitizenUserByUin.mockResolvedValueOnce(mockNamelessUser);
       jest.spyOn(authService, 'getUserDetailsFromMyInfo').mockResolvedValue({ name: 'testName' } as MyInfoUserDetailsResponse);
       mockCitizenUserEntityService.updateCitizenUserById.mockResolvedValueOnce({ ...mockNamelessUser, name: 'testName' });
 
       const response = await authService.ndiLogin(mockSessionWithNamelessUser, mockLoginReq);
       expect(mockSingpassHelper.getTokens).toBeCalledWith(mockLoginReq.authCode);
       expect(mockSingpassHelper.getIdTokenPayload).toBeCalledWith(mockTokens);
-      expect(mockUserEntityService.retrieveUserByUin).toBeCalledWith(mockNamelessUser.uin, { toThrow: false });
+      expect(mockCitizenUserEntityService.retrieveCitizenUserByUin).toBeCalledWith(mockNamelessUser.uin, { toThrow: false });
       expect(mockCitizenUserEntityService.updateCitizenUserById).toBeCalledWith(mockNamelessUser.id, { name: 'testName' });
       expect(mockFileSGRedisService.set).toBeCalledWith(FILESG_REDIS_CLIENT.USER, mockNamelessUser.uuid, mockSessionWithNamelessUser.id);
       expect(response).toBeUndefined;
@@ -177,13 +165,13 @@ describe('Authentication Service', () => {
       mockSingpassHelper.getTokens.mockResolvedValue(mockTokens);
       mockSingpassHelper.getIdTokenPayload.mockResolvedValue(mockTokenPayload);
       mockSingpassHelper.extractNricAndUuidFromPayload.mockReturnValue({ nric: mockUser.uin });
-      mockUserEntityService.retrieveUserByUin.mockResolvedValueOnce(mockUnonboardedUser);
+      mockCitizenUserEntityService.retrieveCitizenUserByUin.mockResolvedValueOnce(mockUnonboardedUser);
       mockCitizenUserEntityService.updateCitizenUserById.mockResolvedValue(mockUnonboardedUser);
 
       const response = await authService.ndiLogin(mockSessionWithNonOnboardedUser, mockLoginReq);
       expect(mockSingpassHelper.getTokens).toBeCalledWith(mockLoginReq.authCode);
       expect(mockSingpassHelper.getIdTokenPayload).toBeCalledWith(mockTokens);
-      expect(mockUserEntityService.retrieveUserByUin).toBeCalledWith(mockUnonboardedUser.uin, { toThrow: false });
+      expect(mockCitizenUserEntityService.retrieveCitizenUserByUin).toBeCalledWith(mockUnonboardedUser.uin, { toThrow: false });
       expect(mockCitizenUserEntityService.updateCitizenUserById).toHaveBeenNthCalledWith(1, mockUnonboardedUser.id, {
         name: null,
         email: null,
@@ -200,7 +188,7 @@ describe('Authentication Service', () => {
     it(`should save user login audit event when login successfully`, async () => {
       mockSingpassHelper.getIdTokenPayload.mockResolvedValue(mockTokenPayload);
       mockSingpassHelper.extractNricAndUuidFromPayload.mockReturnValue({ nric: mockUser.uin });
-      mockUserEntityService.retrieveUserByUin.mockResolvedValueOnce(mockUser);
+      mockCitizenUserEntityService.retrieveCitizenUserByUin.mockResolvedValueOnce(mockUser);
 
       await authService.ndiLogin(mockSession, mockLoginReq);
 
@@ -280,7 +268,7 @@ describe('Authentication Service', () => {
 
       // mock return
       mockAgencyClientV2Service.retrieveUinFromMyIca.mockResolvedValueOnce(mockUin);
-      mockUserEntityService.retrieveUserByUin.mockResolvedValueOnce(mockUser);
+      mockCitizenUserEntityService.retrieveCitizenUserByUin.mockResolvedValueOnce(mockUser);
       // mockCitizenUserEntityService.buildCitizenUser.mockResolvedValue(mockUser);
       // mockCitizenUserEntityService.saveCitizenUser.mockResolvedValue(mockUser);
 
@@ -295,7 +283,7 @@ describe('Authentication Service', () => {
 
       // mock return
       mockAgencyClientV2Service.retrieveUinFromMyIca.mockResolvedValue(mockUin);
-      mockUserEntityService.retrieveUserByUin.mockResolvedValue({ ...mockUser, isOnboarded: false });
+      mockCitizenUserEntityService.retrieveCitizenUserByUin.mockResolvedValue({ ...mockUser, isOnboarded: false });
       mockCitizenUserEntityService.buildCitizenUser.mockResolvedValue(mockUser);
       mockCitizenUserEntityService.saveCitizenUser.mockResolvedValue(mockUser);
 
@@ -311,7 +299,7 @@ describe('Authentication Service', () => {
 
     it(`should save user login audit event when login successfully`, async () => {
       mockAgencyClientV2Service.retrieveUinFromMyIca.mockResolvedValueOnce(mockUser.uin);
-      mockUserEntityService.retrieveUserByUin.mockResolvedValueOnce(mockUser);
+      mockCitizenUserEntityService.retrieveCitizenUserByUin.mockResolvedValueOnce(mockUser);
 
       await authService.icaSso(mockMyIcaToken, mockSession);
 
@@ -336,7 +324,7 @@ describe('Authentication Service', () => {
       expect(authService.updateUserFromMcc).toBeDefined();
     });
     it('should throw error is user is onboarded', async () => {
-      await expect(authService.updateUserFromMcc({ ...mockAuthUser, isOnboarded: true })).rejects.toThrowError(
+      await expect(authService.updateUserFromMcc({ ...mockCitizenAuthUser, isOnboarded: true })).rejects.toThrowError(
         UserAlreadyOnboardedException,
       );
     });
@@ -352,7 +340,7 @@ describe('Authentication Service', () => {
       mockCitizenUserEntityService.retrieveCitizenUserById.mockResolvedValue(mockUser);
       mockAgencyClientV2Service.retrieveUserInfoFromMcc.mockResolvedValue(mockMccResponse);
 
-      expect(await authService.updateUserFromMcc({ ...mockAuthUser, isOnboarded: false }));
+      expect(await authService.updateUserFromMcc({ ...mockCitizenAuthUser, isOnboarded: false }));
       expect(await mockAgencyClientV2Service.retrieveUserInfoFromMcc).toBeCalledWith(mockUser.uin);
       expect(await mockCitizenUserEntityService.updateCitizenUserById).toHaveBeenNthCalledWith(1, mockUserId, {
         name: 'testSurname testName',
@@ -369,7 +357,7 @@ describe('Authentication Service', () => {
       expect(authService.updateUserNameFromMyInfo).toBeDefined();
     });
     it('should throw error is user is onboarded', async () => {
-      await expect(authService.updateUserDetailsFromMyInfo({ ...mockAuthUser, isOnboarded: true })).rejects.toThrowError(
+      await expect(authService.updateUserDetailsFromMyInfo({ ...mockCitizenAuthUser, isOnboarded: true })).rejects.toThrowError(
         UserAlreadyOnboardedException,
       );
     });
@@ -379,7 +367,7 @@ describe('Authentication Service', () => {
       mockCitizenUserEntityService.retrieveCitizenUserById.mockResolvedValue(mockUser);
       mockMyInfoHelper.getPersonBasic.mockRejectedValue('anything');
 
-      await expect(authService.updateUserDetailsFromMyInfo({ ...mockAuthUser, isOnboarded: false })).rejects.toThrow(
+      await expect(authService.updateUserDetailsFromMyInfo({ ...mockCitizenAuthUser, isOnboarded: false })).rejects.toThrow(
         new MyInfoException(COMPONENT_ERROR_CODE.AUTH_SERVICE, maskUin(mockUser.uin!), 'error'),
       );
     });
@@ -396,14 +384,14 @@ describe('Authentication Service', () => {
       mockCitizenUserEntityService.retrieveCitizenUserById.mockResolvedValue(mockUser);
       mockMyInfoHelper.getPersonBasic.mockResolvedValue(mockMyInfoResponse);
 
-      await authService.updateUserDetailsFromMyInfo({ ...mockAuthUser, isOnboarded: false });
+      await authService.updateUserDetailsFromMyInfo({ ...mockCitizenAuthUser, isOnboarded: false });
       expect(mockMyInfoHelper.getPersonBasic).toBeCalledWith(mockUser.uin, mockFileSGConfigService.myinfoConfig.attributes);
-      expect(mockCitizenUserEntityService.retrieveCitizenUserById).toBeCalledWith(mockAuthUser.userId);
-      expect(mockCitizenUserEntityService.updateCitizenUserById).toHaveBeenNthCalledWith(1, mockAuthUser.userId, {
+      expect(mockCitizenUserEntityService.retrieveCitizenUserById).toBeCalledWith(mockCitizenAuthUser.userId);
+      expect(mockCitizenUserEntityService.updateCitizenUserById).toHaveBeenNthCalledWith(1, mockCitizenAuthUser.userId, {
         name: mockUser.name,
         phoneNumber: mockUser.phoneNumber,
       });
-      expect(mockCitizenUserEntityService.updateCitizenUserById).toHaveBeenNthCalledWith(2, mockAuthUser.userId, {
+      expect(mockCitizenUserEntityService.updateCitizenUserById).toHaveBeenNthCalledWith(2, mockCitizenAuthUser.userId, {
         email: mockUser.email,
       });
     });
@@ -424,14 +412,14 @@ describe('Authentication Service', () => {
         throw new QueryFailedError('update', undefined, { code: DB_QUERY_ERROR.DuplicateEntryError });
       });
 
-      const response = await authService.updateUserDetailsFromMyInfo({ ...mockAuthUser, isOnboarded: false });
+      const response = await authService.updateUserDetailsFromMyInfo({ ...mockCitizenAuthUser, isOnboarded: false });
       expect(await mockMyInfoHelper.getPersonBasic).toBeCalledWith(mockUser.uin, mockFileSGConfigService.myinfoConfig.attributes);
-      expect(await mockCitizenUserEntityService.retrieveCitizenUserById).toBeCalledWith(mockAuthUser.userId);
-      expect(await mockCitizenUserEntityService.updateCitizenUserById).toHaveBeenNthCalledWith(1, mockAuthUser.userId, {
+      expect(await mockCitizenUserEntityService.retrieveCitizenUserById).toBeCalledWith(mockCitizenAuthUser.userId);
+      expect(await mockCitizenUserEntityService.updateCitizenUserById).toHaveBeenNthCalledWith(1, mockCitizenAuthUser.userId, {
         name: mockUser.name,
         phoneNumber: mockUser.phoneNumber,
       });
-      expect(await mockCitizenUserEntityService.updateCitizenUserById).toHaveBeenNthCalledWith(2, mockAuthUser.userId, {
+      expect(await mockCitizenUserEntityService.updateCitizenUserById).toHaveBeenNthCalledWith(2, mockCitizenAuthUser.userId, {
         email: mockUser.email,
       });
 
@@ -443,18 +431,18 @@ describe('Authentication Service', () => {
     it('getOrCreateUserUsingUin should throw exception when uinfin is not valid', async () => {
       // mock data
       const mockUserWithInvalidFin = { ...mockUser, uin: 'S3002610T' };
-      mockUserEntityService.retrieveUserByUin.mockResolvedValue(null);
+      mockCitizenUserEntityService.retrieveCitizenUserByUin.mockResolvedValue(null);
 
-      await expect(authService.getOrCreateUserUsingUin(mockUserWithInvalidFin.uin)).rejects.toThrow(
+      await expect(authService.getOrCreateCitizenUserUsingUin(mockUserWithInvalidFin.uin)).rejects.toThrow(
         new InputValidationException(COMPONENT_ERROR_CODE.AUTH_SERVICE, 'Invalid UIN'),
       );
     });
 
     it('getOrCreateUserUsingUin should save user if citizen with valid uin does not exist in system', async () => {
       // mock data
-      mockUserEntityService.retrieveUserByUin.mockResolvedValue(null);
+      mockCitizenUserEntityService.retrieveCitizenUserByUin.mockResolvedValue(null);
 
-      await authService.getOrCreateUserUsingUin(mockUser.uin!);
+      await authService.getOrCreateCitizenUserUsingUin(mockUser.uin!);
       expect(mockCitizenUserEntityService.saveCitizenUser).toBeCalledWith({ uin: mockUser.uin, status: STATUS.ACTIVE });
     });
   });

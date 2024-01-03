@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsString } from 'class-validator';
 
 export class LoginRequest {
   @IsNotEmpty()
@@ -24,10 +24,11 @@ export class MockCorppassLoginRequest {
   @ApiProperty()
   uen: string;
 
+  @ApiProperty({ required: false, isArray: true })
   @IsNotEmpty()
-  @IsString()
-  @ApiProperty()
-  role: string;
+  @IsArray()
+  @IsString({ each: true })
+  roles: string[];
 
   @IsNotEmpty()
   @IsString()

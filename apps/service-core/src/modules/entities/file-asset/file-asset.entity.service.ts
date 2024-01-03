@@ -18,10 +18,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import { startOfDay } from 'date-fns';
 import { EntityManager, LessThan, LessThanOrEqual, UpdateResult } from 'typeorm';
 
-import { AllFileAssetsRequestDto, AllFileAssetUuidsRequestDto } from '../../../dtos/file/request';
+import { AllFileAssetUuidsRequestDto } from '../../../dtos/file/request';
 import { FileAsset, FileAssetCreationModel, FileAssetUpdateModel } from '../../../entities/file-asset';
 import { generateEntityUUID } from '../../../utils/helpers';
 import { FileAssetEntityRepository } from './file-asset.entity.repository';
+import {
+  FindAndCountCorporateViewableFileAssetsInputs,
+  FindAndCountRecentFileAssetsInputs,
+  FindAndCountViewableFileAssetsInputs,
+} from './interface/file-asset.interface';
 
 interface UpdateFileStatusInput {
   status: FILE_STATUS;
@@ -76,8 +81,20 @@ export class FileAssetEntityService {
     return fileAsset;
   }
 
-  public async retrieveFileAssetByUuidAndUserUuid(uuid: string, userUuid: string, entityManager?: EntityManager) {
-    const fileAsset = await this.fileAssetEntityRepository.findFileAssetByUuidAndUserUuid(uuid, userUuid, entityManager);
+  public async retrieveFileAssetByUuidAndUserUuid(
+    uuid: string,
+    userUuid: string,
+    agencyCodes?: string[],
+    statuses?: FILE_STATUS[],
+    entityManager?: EntityManager,
+  ) {
+    const fileAsset = await this.fileAssetEntityRepository.findFileAssetByUuidAndUserUuid(
+      uuid,
+      userUuid,
+      agencyCodes,
+      statuses,
+      entityManager,
+    );
 
     if (!fileAsset) {
       throw new EntityNotFoundException(COMPONENT_ERROR_CODE.FILE_SERVICE, FileAsset.name, 'uuid and userUuid', `${uuid} and ${userUuid}`);
@@ -119,6 +136,29 @@ export class FileAssetEntityService {
     return fileAsset;
   }
 
+  public async retrieveAccessibleFileAssetByUuidAndUserId(uuid: string, userId: number, activityUuid?: string, opts?: ServiceMethodThrowOptions): Promise<FileAsset>; //prettier-ignore
+  public async retrieveAccessibleFileAssetByUuidAndUserId(uuid: string, userId: number, activityUuid?: string, opts?: ServiceMethodDontThrowOptions): Promise<FileAsset | null>; //prettier-ignore
+  public async retrieveAccessibleFileAssetByUuidAndUserId(
+    uuid: string,
+    userId: number,
+    activityUuid?: string,
+    opts: ServiceMethodOptions = { toThrow: true },
+  ) {
+    const fileAsset = await this.fileAssetEntityRepository.findAccessibleFileAssetByUuidAndUserId(uuid, userId, opts?.entityManager);
+
+    if (opts?.toThrow) {
+      if (!fileAsset) {
+        throw new EntityNotFoundException(COMPONENT_ERROR_CODE.FILE_SERVICE, FileAsset.name, 'uuid', uuid);
+      }
+
+      if (activityUuid && !fileAsset.activities!.some((activity) => activity.uuid === activityUuid)) {
+        throw new EntityNotFoundException(COMPONENT_ERROR_CODE.FILE_SERVICE, FileAsset.name, 'uuid', uuid);
+      }
+    }
+
+    return fileAsset;
+  }
+
   public async retrieveActivatedFileAssetsWithApplicationTypeByUuidsAndUserId(
     uuids: string[],
     userId: number,
@@ -145,9 +185,16 @@ export class FileAssetEntityService {
     uuids: string[],
     userUuid: string,
     activityUuid?: string,
+    agencyCodes?: string[],
     entityManager?: EntityManager,
   ) {
-    return await this.fileAssetEntityRepository.findDownloadableFileAssetsByUuidsAndUserUuid(uuids, userUuid, activityUuid, entityManager);
+    return await this.fileAssetEntityRepository.findDownloadableFileAssetsByUuidsAndUserUuid(
+      uuids,
+      userUuid,
+      activityUuid,
+      agencyCodes,
+      entityManager,
+    );
   }
 
   public async retrieveFileAssetsWithParentAndOaCertificateByUuids(uuids: string[], entityManager?: EntityManager) {
@@ -162,18 +209,39 @@ export class FileAssetEntityService {
     return await this.fileAssetEntityRepository.findViewableFileAssetsByStatusAndUserUuid(userUuid, query, entityManager);
   }
 
-  public async retrieveAllFileAssets(userId: number, query: AllFileAssetsRequestDto, agencyId?: number, entityManager?: EntityManager) {
-    if (!query.page) {
-      query.page = 1;
-    }
-    if (!query.limit) {
-      query.limit = 20;
-    }
+  public async retrieveFileAssetsByStatusAndCorporateUen(
+    corporateUen: string,
+    query: AllFileAssetUuidsRequestDto,
+    entityManager?: EntityManager,
+  ) {
+    return this.fileAssetEntityRepository.findViewableFileAssetsByStatusAndCorporateUen(corporateUen, query, entityManager);
+  }
+
+  public async retrieveRecentFileAssets(query: FindAndCountRecentFileAssetsInputs, entityManager?: EntityManager) {
+    const { page, limit } = query;
+
     // get files by ownerId
-    const [fileAssets, count] = await this.fileAssetEntityRepository.findAndCountViewableFileAssets(userId, query, agencyId, entityManager);
+    const [fileAssets, count] = await this.fileAssetEntityRepository.findAndCountRecentViewableFileAssets(query, entityManager);
+    const next = getNextPage(count, page!, limit!);
+    return { fileAssets, count, next };
+  }
 
-    const next = getNextPage(count, query.page, query.limit);
+  public async retrieveAllFileAssets(inputs: FindAndCountViewableFileAssetsInputs, entityManager?: EntityManager) {
+    const { query } = inputs;
 
+    // get files by ownerId
+    const [fileAssets, count] = await this.fileAssetEntityRepository.findAndCountViewableFileAssets(inputs, entityManager);
+    const next = getNextPage(count, query.page!, query.limit!);
+    return { fileAssets, count, next };
+  }
+
+  // TODO: REMOVE ME
+  public async retrieveAllCorporateFileAssets(inputs: FindAndCountCorporateViewableFileAssetsInputs, entityManager?: EntityManager) {
+    const { query } = inputs;
+
+    // get files by ownerId
+    const [fileAssets, count] = await this.fileAssetEntityRepository.findAndCountCorporateViewableFileAssets(inputs, entityManager);
+    const next = getNextPage(count, query.page!, query.limit!);
     return { fileAssets, count, next };
   }
 
@@ -225,12 +293,15 @@ export class FileAssetEntityService {
     return await this.fileAssetEntityRepository.findCountAccessedAgencyIssuedFileAssets(queryOption, entityManager);
   }
 
-  public async retrieveAgenciesIssuingFileAssetsWithStatusesByUserId(
-    userId: number,
-    statuses: FILE_STATUS[],
-    entityManager?: EntityManager,
-  ) {
-    return await this.fileAssetEntityRepository.findAgenciesIssuingFileAssetsWithStatusesByUserId(userId, statuses, entityManager);
+  public async retrieveFileAssetByFileAssetUuidAndUserId(fileAssetUuids: string[], userId: number, eserviceUserUuid: string) {
+    return await this.fileAssetEntityRepository.findFileAssetUsingFileAssetUuidAndUserId(fileAssetUuids, userId, eserviceUserUuid);
+  }
+
+  public async retrieveAgencyFileAssetByRecipientFileAssetUuidAndEserviceUserUuid(fileAssetUuids: string[], eserviceUserUuid: string) {
+    return await this.fileAssetEntityRepository.findAgencyFileAssetByRecipientFileAssetUuidAndEserviceUserUuid(
+      fileAssetUuids,
+      eserviceUserUuid,
+    );
   }
   // ===========================================================================
   // Update
@@ -260,10 +331,5 @@ export class FileAssetEntityService {
     entityManager?: EntityManager,
   ): Promise<UpdateResult> {
     return await this.updateFileAsset(uuid, fileStatus, entityManager);
-  }
-
-  public async updateFileAssetLastViewedAt(uuid: string, entityManager?: EntityManager): Promise<UpdateResult> {
-    const lastViewedAt = new Date();
-    return await this.updateFileAsset(uuid, { lastViewedAt }, entityManager);
   }
 }

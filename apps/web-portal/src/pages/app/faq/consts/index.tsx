@@ -271,6 +271,38 @@ export const FAQ_MASTER_OBJECT: Faq = {
         isTopCitizenFaq: true,
       },
       {
+        id: 'retrieve-documents-on-behalf',
+        title: 'How do I retrieve documents on behalf of the document recipient?',
+        content: [
+          {
+            type: FAQ_CONTENT_TYPE.CONTENT_ONLY,
+            content: [
+              'Only document recipients themselves can view their documents via Singpass login.',
+              "The document recipient's name is stated in the issuance email under 'Recipient Name'.",
+              'If you are retrieving a document on behalf of the document recipient, you will need to retrieve the document without a Singpass account:',
+            ],
+          },
+          {
+            type: FAQ_CONTENT_TYPE.CONTENT_ONLY,
+            contentFormat: 'ORDERED',
+            content: [
+              <Typography variant="PARAGRAPH">
+                Go to FileSG's{' '}
+                <TextLink font="PARAGRAPH" to={`${WebPage.RETRIEVE}`} type="LINK" newTab>
+                  Retrieve Your Documents
+                </TextLink>{' '}
+                page or via the file issuance email.
+              </Typography>,
+              'Enter the "Transaction ID" which can be found in the email and select "Submit".',
+              'Select "Retrieve without Singpass".',
+              `Enter the document recipient's personal particulars and select "Verify".`,
+              'If the particulars entered are accurate, you will receive a One-Time Password (OTP) SMS via the mobile number provided to the issuing government agency or from government records.',
+              'Enter the OTP. If it is valid, you will be directed to view and download the documents.',
+            ],
+          },
+        ],
+      },
+      {
         id: 'not-receiving-issuance-email',
         title: 'What should I do if I have not received the file issuance email?',
         content: [
@@ -590,12 +622,12 @@ export const FAQ_MASTER_OBJECT: Faq = {
               <Typography variant="PARAGRAPH">
                 If your document has been successfully issued, you will be able to find it in your FileSG account by logging in with
                 Singpass. If you are unable to find your document in your account, please email{' '}
-                <TextLink font="PARAGRAPH" to="mailto:ica_visit_pass@ica.gov.sg" type="ANCHOR">
-                  ica_visit_pass@ica.gov.sg
+                <TextLink font="PARAGRAPH" to="mailto:ICA_Visit_Pass@ica.gov.sg" type="ANCHOR">
+                  ICA_Visit_Pass@ica.gov.sg
                 </TextLink>{' '}
                 or{' '}
-                <TextLink font="PARAGRAPH" to="mailto:ica_stp1@ica.gov.sg" type="ANCHOR">
-                  ica_stp1@ica.gov.sg
+                <TextLink font="PARAGRAPH" to="mailto:ICA_STP1@ica.gov.sg" type="ANCHOR">
+                  ICA_STP1@ica.gov.sg
                 </TextLink>{' '}
                 (for STP) to check if your document has been issued.
               </Typography>,
@@ -613,12 +645,12 @@ export const FAQ_MASTER_OBJECT: Faq = {
             content: [
               <Typography variant="PARAGRAPH">
                 Please email{' '}
-                <TextLink font="PARAGRAPH" to="mailto:ica_visit_pass@ica.gov.sg" type="ANCHOR">
-                  ica_visit_pass@ica.gov.sg
+                <TextLink font="PARAGRAPH" to="mailto:ICA_Visit_Pass@ica.gov.sg" type="ANCHOR">
+                  ICA_Visit_Pass@ica.gov.sg
                 </TextLink>{' '}
                 or{' '}
-                <TextLink font="PARAGRAPH" to="mailto:ica_stp1@ica.gov.sg" type="ANCHOR">
-                  ica_stp1@ica.gov.sg
+                <TextLink font="PARAGRAPH" to="mailto:ICA_STP1@ica.gov.sg" type="ANCHOR">
+                  ICA_STP1@ica.gov.sg
                 </TextLink>{' '}
                 (for STP) to check if your document has been issued.
               </Typography>,
@@ -705,6 +737,49 @@ export const FAQ_MASTER_OBJECT: Faq = {
               'Passes that have the "Cancelled" status have been cancelled by ICA due to certain reasons and are no longer valid for use.',
               'Passes that have the "Expired" status have passed their expiry date and are no longer valid for use.',
               'Please contact ICA directly should you require any clarification on the cancellation or expiration of your pass.',
+            ],
+          },
+        ],
+      },
+      {
+        id: 'particulars-renewal-new-pass-issuance',
+        title:
+          'When I renew my digital LTVP/STP/DP or update my residential address, my current pass is cancelled and I am issued with a new pass. Why is this so?',
+        content: [
+          {
+            type: FAQ_CONTENT_TYPE.CONTENT_ONLY,
+            content: [
+              'Whenever there is a change in the information (e.g. residential address, pass issue date or pass expiry date) displayed on your digital LTP, the current pass which is no longer accurate has to be cancelled. A new pass will be issued with the updated information.',
+              'This is necessary as the digital LTP is issued in the OpenAttestation (OA) file format, which allows verification by authorities and third parties. As such, there is a need to ensure that  only one true copy of your digital pass which reflects your latest updated information, exists at any point in time.',
+            ],
+          },
+        ],
+      },
+      {
+        id: 'nonsp-contacts',
+        title:
+          '(Non-Singpass users) What should I do if I have changed my mobile number, or did not receive the OTP to verify my particulars?',
+        content: [
+          {
+            type: FAQ_CONTENT_TYPE.CONTENT_ONLY,
+            content: [
+              'Check that the partially masked mobile number displayed which the OTP has been sent to belongs to you.',
+              <Typography variant="PARAGRAPH">
+                If you have not changed your mobile number,{' '}
+                <TextLink font="PARAGRAPH" to={ExternalLink.CONTACT_US} type="ANCHOR" endIcon="sgds-icon-external" newTab={true}>
+                  contact us
+                </TextLink>
+                .
+              </Typography>,
+              <Typography variant="PARAGRAPH">
+                If you have changed your mobile number and no longer have access to the old mobile number you provided during application,
+                please email{' '}
+                <TextLink font="PARAGRAPH" to="mailto:ICA_Visit_Pass@ica.gov.sg" type="ANCHOR">
+                  ICA_Visit_Pass@ica.gov.sg
+                </TextLink>{' '}
+                to update your Singapore mobile number and provide your Application ID which can be found in the In-Principal Approval (IPA)
+                letter.
+              </Typography>,
             ],
           },
         ],

@@ -34,6 +34,7 @@ type OwnerId = number;
 
 interface RecipientData {
   activityRecipientInfo: ActivityRecipientInfo;
+  isNonSingpassRetrievable: boolean;
   fileAssetId: number[];
 }
 
@@ -147,7 +148,7 @@ export class ExpireDocumentsService {
       acc[issuanceTransactionId].allFileAssetIds.push(curr.id);
       acc[issuanceTransactionId].toCreatefileAssetHistories.push({
         fileAssetId: curr.id,
-        type: FILE_ASSET_ACTION.EXPIRE,
+        type: FILE_ASSET_ACTION.EXPIRED,
         actionById: issuerId,
         actionToId: ownerId,
       });
@@ -172,6 +173,7 @@ export class ExpireDocumentsService {
       if (!acc[issuanceTransactionId].recipients[ownerId]) {
         acc[issuanceTransactionId].recipients[ownerId] = {
           activityRecipientInfo: issuanceActivity!.recipientInfo!,
+          isNonSingpassRetrievable: issuanceActivity!.isNonSingpassRetrievable!,
           fileAssetId: [],
         };
       }
@@ -245,6 +247,7 @@ export class ExpireDocumentsService {
         userId: recipientId,
         parentId: agencyActivity.id,
         recipientInfo: recipients[recipientId].activityRecipientInfo,
+        isNonSingpassRetrievable: recipients[recipientId].isNonSingpassRetrievable,
       })),
       entityManager,
     );

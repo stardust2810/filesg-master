@@ -1,11 +1,11 @@
 {
   "announcements": [
     {
-      "id": "5930d0a0-71c5-4b13-963b-570507ff1070",
-      "title": "Scheduled maintenance",
-      "description": "Due to scheduled maintenance, you may experience intermittent issues with document access from: 01 Nov 2023 11:00 PM to 02 Nov 2023, 01:00 AM",
-      "displayStart": "2023-10-23T00:00:00.000+08:00",
-      "displayEnd": "2023-11-02T01:00:00.000+08:00"
+      "id": "e6905b2c-7136-4f60-b59a-c70c0747306b",
+      "title": "Long-Term Pass (LTP) retrieval",
+      "description": "Due to scheduled maintenance, you may experience intermittent issues with the retrieval of Long-Term Pass from: 07 Jan 2024, 12:00 AM to 07 Jan 2024, 02:00 AM",
+      "displayStart": "2023-12-27T00:00:00.000+08:00",
+      "displayEnd": "2023-12-30T02:00:00.000+08:00"
     }
   ]
 }

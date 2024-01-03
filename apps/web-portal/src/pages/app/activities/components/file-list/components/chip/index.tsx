@@ -1,12 +1,5 @@
 import { FILE_TYPE } from '@filesg/common';
-import {
-  Color,
-  FileIcon,
-  FileSGProps,
-  getFileExtensionAndLastChars,
-  getFileNameWithoutExtensionAndLastChars,
-  Typography,
-} from '@filesg/design-system';
+import { Color, FileIcon, FileSGProps, generateEllipsisFileNameParts, Typography } from '@filesg/design-system';
 import { forwardRef } from 'react';
 
 import { BaseDocumentLocationState } from '../../../../../document/components/document-renderer';
@@ -23,6 +16,8 @@ export type Props = {
 } & FileSGProps;
 
 const Chip = forwardRef<HTMLAnchorElement, Props>(({ label, to, state, disabled = false, type, style, ...rest }: Props, ref) => {
+  const { front, back } = generateEllipsisFileNameParts(label, 4);
+
   return (
     <StyledLink
       onClick={(e) => e.stopPropagation()}
@@ -37,11 +32,11 @@ const Chip = forwardRef<HTMLAnchorElement, Props>(({ label, to, state, disabled 
     >
       <FileIcon type={type} variant={'mini'} size="ICON_MINI" />
       <StyleFileLabel>
-        <Typography variant="SMALLER" color={Color.GREY80} isEllipsis ellipsisLine={1}>
-          {getFileNameWithoutExtensionAndLastChars(label, 4)}
+        <Typography variant="SMALLER" color={Color.GREY80} isEllipsis ellipsisLine={1} whitespace="pre-wrap">
+          {front}
         </Typography>
-        <Typography variant="SMALLER" color={Color.GREY80} noWrap>
-          {getFileExtensionAndLastChars(label, 4)}
+        <Typography variant="SMALLER" color={Color.GREY80} whitespace="pre">
+          {back}
         </Typography>
       </StyleFileLabel>
     </StyledLink>

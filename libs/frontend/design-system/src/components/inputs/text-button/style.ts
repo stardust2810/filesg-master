@@ -12,7 +12,7 @@ export const StyledButton = styled.button<StyledProps>`
   height: fit-content;
 
   align-items: center;
-  text-align: left;
+  text-align: inherit;
 
   border: none;
   background-color: transparent;

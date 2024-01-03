@@ -11,6 +11,8 @@ import { FileSGConfigModule } from '../../setups/config/config.module';
 import { AuthModule } from '../auth/auth.module';
 import { AwsModule } from '../aws/aws.module';
 import { FileController } from './file.controller';
+import { CorppassFileController } from './file.corppass.controller';
+import { CorppassFileService } from './file.corppass.service';
 import { FileService } from './file.service';
 
 @Module({
@@ -26,8 +28,8 @@ import { FileService } from './file.service';
     FileAssetHistoryEntityModule,
     FileAssetAccessEntityModule,
   ],
-  controllers: [FileController],
-  providers: [FileService],
-  exports: [FileService],
+  controllers: [FileController, CorppassFileController],
+  providers: [FileService, CorppassFileService],
+  exports: [FileService, CorppassFileService],
 })
 export class FileModule {}

@@ -1,5 +1,6 @@
 import {
   ERROR_RESPONSE_DESC,
+  Send2FaOtpNonSingpassRequest,
   Send2FaOtpNonSingpassResponse,
   Verify1FaNonSingpassRequest,
   Verify1FaNonSingpassResponse,
@@ -40,8 +41,8 @@ export class NonSingpassVerificationController {
   @ApiBearerAuth(SWAGGER_AUTH_NAME.BEARER_AUTH_NON_SINGPASS_2FA)
   @ApiOkResponse({ type: Send2FaOtpNonSingpassResponse, description: 'OTP sent' })
   @ApiUnauthorizedResponse({ description: ERROR_RESPONSE_DESC.JWT_UNAUTHORISED })
-  async sendOtpFor2Fa(@Req() req: NonSingpass2FaRequest) {
-    return await this.nonSingpassVerificationService.sendOtpFor2Fa(req.user.activityUuid);
+  async sendOtpFor2Fa(@Req() req: NonSingpass2FaRequest, @Body() { channel }: Send2FaOtpNonSingpassRequest) {
+    return await this.nonSingpassVerificationService.sendOtpFor2Fa(req.user.activityUuid, channel);
   }
 
   @Post('verify-otp')

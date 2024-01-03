@@ -85,6 +85,7 @@ export const Tooltip = ({
         data-for={identifier}
         aria-describedby={identifier}
         data-testid={rest['data-testid'] ?? `${TEST_IDS.TOOLTIP}-${identifier}`}
+        type="button"
       >
         {isValidElement(uiTriggerComponent) ? (
           uiTriggerComponent

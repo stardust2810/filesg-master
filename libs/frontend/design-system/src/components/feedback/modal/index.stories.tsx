@@ -28,9 +28,6 @@ export default {
         action: 'clicked',
       },
     },
-    allowScrollLock: {
-      description: 'Whether to enable html scroll lock',
-    },
     // this is not modal props but story props to toggle between templates
     allowHide: {
       table: {
@@ -68,7 +65,6 @@ const Template: Story<StoryProps> = (args): JSX.Element => {
 export const Basic: Story<StoryProps> = Template.bind({});
 Basic.args = {
   allowHide: false,
-  allowScrollLock: true,
   size: 'MEDIUM',
 };
 

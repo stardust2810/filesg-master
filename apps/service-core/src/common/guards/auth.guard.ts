@@ -1,4 +1,4 @@
-import { EntityNotFoundException, UnauthorizedRequestException, UserRoleErrorException } from '@filesg/backend-common';
+import { EntityNotFoundException, ForbiddenException, UnauthorizedRequestException, UserRoleErrorException } from '@filesg/backend-common';
 import { COMPONENT_ERROR_CODE, FEATURE_TOGGLE, ROLE, USER_TYPE } from '@filesg/common';
 import { FILESG_REDIS_CLIENT, RedisService } from '@filesg/redis';
 import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common';
@@ -11,8 +11,7 @@ import { ProgrammaticUserEntityService } from '../../modules/entities/user/progr
 import { UserEntityService } from '../../modules/entities/user/user.entity.service';
 import { AuthService } from '../../modules/features/auth/auth.service';
 import { FileSGConfigService } from '../../modules/setups/config/config.service';
-import { APPLICATION_REDIS_PREFIX, FileSGWidgetSession, RequestHeaderWithClient, RequestWithSession } from '../../typings/common';
-import { hash } from '../../utils/encryption';
+import { RequestHeaderWithClient, RequestWithCitizenSession, RequestWithCorporateUserSession } from '../../typings/common';
 import { AUTH_KEY, AUTH_STATE, AuthInterface } from '../decorators/filesg-auth.decorator';
 import { AuthDecoratorMissingException, DuplicateSessionException, InvalidSessionException } from '../filters/custom-exceptions.filter';
 
@@ -52,8 +51,8 @@ export class AuthGuard implements CanActivate {
       case AUTH_STATE.CITIZEN_LOGGED_IN:
         userUuid = await this.checkCitizenUserSession(req, auth.requireOnboardedUser);
         break;
-      case AUTH_STATE.AGENCY_LOGGED_IN:
-        userUuid = await this.checkAgencyUserSession(req);
+      case AUTH_STATE.CORPORATE_USER_LOGGED_IN:
+        userUuid = await this.checkCorporateUserSession(req);
         break;
       case AUTH_STATE.PROGRAMMATIC_LOGGED_IN:
         userUuid = await this.checkProgrammaticUser(req);
@@ -72,9 +71,24 @@ export class AuthGuard implements CanActivate {
   // Private methods
   // ===========================================================================
 
-  private async checkCitizenUserSession(req: RequestWithSession, requireOnboardedUser = true) {
+  private async checkCitizenUserSession(req: RequestWithCitizenSession, requireOnboardedUser = true) {
     if (!req || !req.session || !req.session.cookie || !req.session.user) {
       const internalLog = `Citizen user request doesnt contain any session information`;
+      throw new InvalidSessionException(COMPONENT_ERROR_CODE.AUTH_GUARD, internalLog);
+    }
+
+    const { type, expiresAt } = req.session.user;
+    const isNotCitizenUserLogin = type !== USER_TYPE.CITIZEN;
+
+    if (isNotCitizenUserLogin) {
+      const internalLog = `User is not of type citizen`;
+      throw new ForbiddenException(COMPONENT_ERROR_CODE.AUTH_GUARD, internalLog);
+    }
+
+    const hasSessionExpired = new Date() > expiresAt;
+
+    if (hasSessionExpired) {
+      const internalLog = 'User session has expired';
       throw new InvalidSessionException(COMPONENT_ERROR_CODE.AUTH_GUARD, internalLog);
     }
 
@@ -84,8 +98,7 @@ export class AuthGuard implements CanActivate {
     if (
       this.fileSGConfigService.systemConfig.toggleOnboardingReset === FEATURE_TOGGLE.OFF &&
       requireOnboardedUser &&
-      !req.session.user.isOnboarded &&
-      req.session.user.type === USER_TYPE.CITIZEN // gd TODO: temporarily putting this condition here until we add session validation handler for corporateUser
+      !req.session.user.isOnboarded
     ) {
       const internalLog = `Non-Onboarded users are not allowed to invoke path ${req.path}`;
       throw new InvalidSessionException(COMPONENT_ERROR_CODE.AUTH_GUARD, internalLog);
@@ -94,24 +107,31 @@ export class AuthGuard implements CanActivate {
     return req.session.user.userUuid;
   }
 
-  private async checkAgencyUserSession(req: RequestWithSession) {
-    const { applicationId, sessionKey } = req.body;
-    const widgetSessionData = await this.redisService.get(
-      FILESG_REDIS_CLIENT.WIDGET_SESSION,
-      `${APPLICATION_REDIS_PREFIX}${applicationId}`,
-    );
-    if (!applicationId || !sessionKey || !widgetSessionData) {
-      const internalLog = `Agency user request doesnt contain any session information`;
+  private async checkCorporateUserSession(req: RequestWithCorporateUserSession) {
+    if (!req || !req.session || !req.session.cookie || !req.session.user) {
+      const internalLog = `Corporate user request doesnt contain any session information`;
       throw new InvalidSessionException(COMPONENT_ERROR_CODE.AUTH_GUARD, internalLog);
     }
 
-    // by using applicationId to fetch sessionId from redis,
-    // we ensure that both the applicationId and sessionId given are valid
-    const sessionObj: FileSGWidgetSession = JSON.parse(widgetSessionData);
-    if (hash('sha256', sessionObj.sessionId) !== sessionKey) {
-      const internalLog = `Session id provided is not valid.`;
+    const { user } = req.session;
+    const isNotCorppassUserLogin = user.type !== USER_TYPE.CORPORATE_USER;
+
+    if (isNotCorppassUserLogin) {
+      const internalLog = `User is not of type corporate-user`;
+      throw new ForbiddenException(COMPONENT_ERROR_CODE.AUTH_GUARD, internalLog);
+    }
+
+    const { expiresAt } = user;
+
+    const hasSessionExpired = new Date() > expiresAt;
+
+    if (hasSessionExpired) {
+      const internalLog = 'User session has expired';
       throw new InvalidSessionException(COMPONENT_ERROR_CODE.AUTH_GUARD, internalLog);
     }
+
+    await this.checkForDuplicateSession(req);
+
     return req.session.user.userUuid;
   }
 
@@ -139,7 +159,6 @@ export class AuthGuard implements CanActivate {
       userId: programmaticUser.id,
       userUuid: programmaticUser.uuid,
       name: programmaticUser.name,
-      maskedUin: null,
       type: USER_TYPE.PROGRAMMATIC,
       role: programmaticUser.role,
       isOnboarded: programmaticUser.isOnboarded,
@@ -148,12 +167,9 @@ export class AuthGuard implements CanActivate {
       expiresAt,
       sessionLengthInSecs,
       extendSessionWarningDurationInSecs,
-      ssoEservice: null,
       hasPerformedDocumentAction: false,
-      corporateUen: null,
-      corporateName: null,
-      accessibleAgencies: null,
     };
+
     return programmaticUser.uuid;
   }
 
@@ -175,7 +191,7 @@ export class AuthGuard implements CanActivate {
     }
   }
 
-  private async checkForDuplicateSession(req: RequestWithSession) {
+  private async checkForDuplicateSession(req: RequestWithCitizenSession | RequestWithCorporateUserSession) {
     if (!req.session.user) {
       return;
     }

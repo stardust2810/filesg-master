@@ -44,8 +44,7 @@ function Verify() {
         description={VERIFICATION_PAGE_DESCRIPTION}
         image={verifyFileImg}
       />
-
-      <PublicPageContainer>
+      <PublicPageContainer columnSize={oaBlob ? 12 : undefined}>
         {oaBlob ? (
           <VerificationResults
             oaBlob={oaBlob}

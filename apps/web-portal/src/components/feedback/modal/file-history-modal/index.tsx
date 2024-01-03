@@ -95,10 +95,10 @@ export const FileHistoryModal = ({ fileAssetId, onClose }: iFileHistoryProps) =>
     [FILE_ASSET_ACTION.REVOKED]: (historicalRecord) => {
       return displayMapForRevocationType[historicalRecord.revocationType!]!(historicalRecord);
     },
-    [FILE_ASSET_ACTION.EXPIRE]: (historicalRecord) => {
+    [FILE_ASSET_ACTION.EXPIRED]: (historicalRecord) => {
       return displayMapForRevocationType[historicalRecord.revocationType!]!(historicalRecord);
     },
-    [FILE_ASSET_ACTION.DOWNLOAD]: (historicalRecord) => {
+    [FILE_ASSET_ACTION.DOWNLOADED]: (historicalRecord) => {
       return (
         <>
           <Bold type="FULL">{historicalRecord.actionBy}</Bold> downloaded the document.
@@ -125,7 +125,7 @@ export const FileHistoryModal = ({ fileAssetId, onClose }: iFileHistoryProps) =>
                 <Typography
                   variant="SMALL"
                   bold="FULL"
-                  data-testid={`${fileHistoryRecord.id}-record-date-description`}
+                  data-testid={`${fileHistoryRecord.uuid}-record-date-description`}
                   color={Color.GREY60}
                 >
                   {formatDate(`${fileHistoryRecord.createdAt}`, DATE_FORMAT_PATTERNS.DATE)}
@@ -143,12 +143,12 @@ export const FileHistoryModal = ({ fileAssetId, onClose }: iFileHistoryProps) =>
   }
 
   function renderDisplayPic(fileHistoryRecord: FileHistory) {
-    const { id, actionBy, actionByType } = fileHistoryRecord;
+    const { uuid, actionBy, actionByType } = fileHistoryRecord;
 
     if (actionByType !== USER_TYPE.CITIZEN) {
       return (
         <Avatar
-          data-testid={`${fileHistoryRecord.id}-record-display-icon-description`}
+          data-testid={`${fileHistoryRecord.uuid}-record-display-icon-description`}
           imageUrl={`/assets/images/icons/agency/${actionBy.toLocaleLowerCase()}/emblem.png`}
           alt={`${actionBy} Logo`}
         />
@@ -156,7 +156,7 @@ export const FileHistoryModal = ({ fileAssetId, onClose }: iFileHistoryProps) =>
     }
 
     return (
-      <UserDisplayText data-testid={`${id}-record-display-icon-char-description`}>
+      <UserDisplayText data-testid={`${uuid}-record-display-icon-char-description`}>
         <Typography variant="PARAGRAPH" bold="FULL" style={{ lineHeight: '2rem' }}>
           {actionBy[0]}
         </Typography>
@@ -165,13 +165,13 @@ export const FileHistoryModal = ({ fileAssetId, onClose }: iFileHistoryProps) =>
   }
 
   function renderFileHistoryContent(fileHistoryRecord: FileHistory) {
-    const { id, type, createdAt } = fileHistoryRecord;
+    const { uuid, type, createdAt } = fileHistoryRecord;
     return (
       <StyledFileHistoryContent>
-        <Typography variant="BODY" data-testid={`${id}-content-description`}>
+        <Typography variant="BODY" data-testid={`${uuid}-content-description`}>
           {displayTextMapFileActionType[type]!(fileHistoryRecord)}
         </Typography>
-        <Typography variant="SMALLER" data-testid={`${id}-record-time-description`} color={Color.GREY60}>
+        <Typography variant="SMALLER" data-testid={`${uuid}-record-time-description`} color={Color.GREY60}>
           {formatDate(`${createdAt}`, DATE_FORMAT_PATTERNS.TIME)}
         </Typography>
       </StyledFileHistoryContent>

@@ -1,12 +1,15 @@
+import { FEATURE_TOGGLE } from '@filesg/common';
 import { AppLayoutTemplate } from '@filesg/design-system';
 import { compose } from '@reduxjs/toolkit';
 
+import { config } from '../../../config/app-config';
 import { FOOTER_BOTTOM_SECTION_LINKS, FOOTER_DETAILS, FOOTER_SITEMAP_LINKS, FOOTER_TOP_SECTION_LINKS } from '../../../consts';
 import { useAppLayoutItems } from '../../../hooks/common/useAppLayoutItems';
 import { useScrollToTop } from '../../../hooks/common/useScrollToTop';
 import { useUserAgentCheck } from '../../../hooks/common/useUserAgentCheck';
 import { CenteredSpinner } from '../../feedback/centered-spinner';
 import AuthenticationModal from '../../feedback/modal/authentication-modal';
+import { MockLoginModal } from '../../feedback/modal/mock-login-modal';
 import { ProfileMenu } from '../../navigation/profile-menu';
 import { Router } from '../../router';
 import { withAuthentication } from '../../router/components/withAuthentication';
@@ -33,14 +36,20 @@ const AppLayout = ({ isUserSessionDetailsLoading = false }: Props) => {
     headerUncollapsibleItems,
     hasMasthead,
     showBetaBanner,
+    showMockLoginModal,
+    setShowMockLoginModal,
   } = useAppLayoutItems();
 
   useScrollToTop();
   useUserAgentCheck();
 
+  const onCloseAuthenticationModal = () => {
+    setShowLoginModal(false);
+  };
   return (
     <>
-      {showLoginModal && <AuthenticationModal showSingpassOptionsOnly={true} onCloseModal={() => setShowLoginModal(false)} />}
+      {showMockLoginModal && config.mockAuth === FEATURE_TOGGLE.ON && <MockLoginModal onClose={() => setShowMockLoginModal(false)} />}
+      {showLoginModal && <AuthenticationModal showSingpassOptionsOnly={true} onCloseModal={onCloseAuthenticationModal} />}
       {showProfileMenu && <ProfileMenu items={profileMenuItems} btnAnchorEl={profileMenuBtnEl} onClose={onProfileMenuClose} />}
       {isUserSessionDetailsLoading ? (
         <CenteredSpinner />

@@ -3,10 +3,14 @@
 // =============================================================================
 
 import { CreateRecipientV2Request } from '../dtos/transaction/request';
-import { ActivatedFileStatus, UserFileAuditEvent, ViewableFileStatus } from '../typings/common';
+import { ActivatedFileStatus, FileStatisticAuditEvent, UserFileAuditEvent, ViewableFileStatus } from '../typings/common';
 
 // Common
-export enum SORT_BY {
+export enum ACTIVITY_SORT_BY {
+  CREATED_AT = 'createdAt',
+}
+
+export enum FILE_ASSET_SORT_BY {
   CREATED_AT = 'createdAt',
   NAME = 'name',
   LAST_VIEWED_AT = 'lastViewedAt',
@@ -110,11 +114,9 @@ export enum FILE_FAIL_CATEGORY {
 export enum FILE_ASSET_ACTION {
   ISSUED = 'issued',
   REVOKED = 'revoked',
-  UPLOAD = 'upload',
-  RENAME = 'rename',
-  DELETE = 'delete',
-  DOWNLOAD = 'download',
-  EXPIRE = 'expire',
+  DELETED = 'deleted',
+  DOWNLOADED = 'downloaded',
+  EXPIRED = 'expired',
   VIEWED = 'viewed',
 }
 
@@ -185,6 +187,12 @@ export enum ACTIVITY_TYPE {
   RECEIVE_RECALL = 'receive_recall',
 }
 
+export enum ACTIVITY_RETRIEVAL_OPTIONS {
+  CORPPASS = 'CORPPASS',
+  NON_SINGPASS = 'NON_SINGPASS',
+  SINGPASS = 'SINGPASS',
+}
+
 // OTP
 export enum OTP_TYPE {
   NON_SINGPASS_VERIFICATION = 'non-singpass-verification',
@@ -217,6 +225,7 @@ export enum EVENT {
   FILE_DELETE_FAILED = 'file_delete_failed',
   // file history
   FILES_DOWNLOADED = 'file_downloaded',
+  AGENCY_DOWNLOADED_FILES = 'agency_downloaded_files',
   FORMSG_ISSUANCE_SUCCESS = 'formsg_issuance_success',
   FORMSG_ISSUANCE_FAILURE = 'formsg_issuance_failure',
 }
@@ -473,7 +482,7 @@ export enum EXCEPTION_ERROR_CODE {
   NON_SINGPASS_VERIFICATION_INVALID_CREDENTIAL = '002',
   DUPLICATE_EMAIL = '004',
   OTP_DOES_NOT_EXIST = '005',
-  OTP_MAX_RETRIES_REACHED = '006',
+  OTP_MAX_VERIFICATION_ATTEMPT_COUNT_REACHED = '006',
   OTP_EXPIRED = '007',
   OTP_INVALID = '008',
   NON_SINGPASS_VERIFICATION_BAN = '009',
@@ -496,6 +505,7 @@ export enum EXCEPTION_ERROR_CODE {
 }
 
 export enum AUDIT_EVENT_NAME {
+  AGENCY_FILE_DOWNLOAD = 'agency-file-download',
   USER_FILE_DOWNLOAD = 'user-file-download',
   USER_FILE_PRINT_SAVE = 'user-file-print-save',
   USER_FILE_VIEW = 'user-file-view',
@@ -511,6 +521,7 @@ export enum ERROR_RESPONSE_DESC {
   FORBIDDEN_ADMIN_ONLY = 'Forbidden. Requires admin rights.',
   FORBIDDEN_CLIENT_ONLY = 'Forbidden. Requires client rights.',
   FORBIDDEN_CITIZEN_ONLY = 'Forbidden. Requires citizen rights.',
+  FORBIDDEN_CORPORATE_ONLY = 'Forbidden. Requires corporate rights',
   NOT_FOUND_UINFIN = 'Requested uinfin could not be found.',
   NOT_FOUND_CERTIFICATE = 'Requested certificateId could not be found.',
   NOT_FOUND_ACTIVITY = 'Requested activityId could not be found',
@@ -602,6 +613,12 @@ export const USER_FILE_AUDIT_EVENTS: UserFileAuditEvent[] = [
   AUDIT_EVENT_NAME.USER_FILE_VIEW,
 ];
 
+export const FILE_STATISTICS_AUDIT_EVENTS: FileStatisticAuditEvent[] = [
+  ...USER_FILE_AUDIT_EVENTS,
+  AUDIT_EVENT_NAME.USER_LOGIN,
+  AUDIT_EVENT_NAME.AGENCY_FILE_DOWNLOAD,
+];
+
 export enum TEMPLATE_TYPE {
   TRANSACTION_CUSTOM_MESSAGE = 'TRANSACTION_CUSTOM_MESSAGE',
   NOTIFICATION_MESSAGE = 'NOTIFICATION_MESSAGE',
@@ -616,6 +633,10 @@ export const URL_REGEX = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA
 
 export const TRANSACTION_TEMPLATE_REGEX = /^(transactioncustommessagetemplate-)(\d{13})(-[a-zA-Z0-9]{16})$/;
 export const NOTIFICATION_TEMPLATE_REGEX = /^(notificationmessagetemplate-)(\d{13})(-[a-zA-Z0-9]{16})$/;
+
+export const FILE_ASSET_UUID_SIGNATURE_REGEX = /^(fileasset-)(\d{13})(-[a-zA-Z0-9]{16})$/;
+export const USER_UUID_SIGNATURE_REGEX = /^(citizenuser-)(\d{13})(-[a-zA-Z0-9]{16})$/;
+export const FILE_ACCESS_TOKEN_SIGNATURE_REGEX = /^\d{13}:[0-9a-fA-F]{128}$/;
 
 // =============================================================================
 // Notification Channels

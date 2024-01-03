@@ -2,6 +2,7 @@ export enum FORM_IDS {
   RETRIEVAL_ACTIVITY_ID_VERIFICATION = 'retrieval-activity-id-verification-form',
   // NON_SINGPASS_RETRIEVAL
   NON_SINGPASS_FIRST_FA_FORM = 'non-singpass-first-fa-form',
+  NON_SINGPASS_OTP_RETRIEVAL = 'non-singpass-otp-retrieval',
   NON_SINGPASS_SECOND_FA_FORM = 'non-singpass-second-fa-form',
 }
 

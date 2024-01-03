@@ -1,5 +1,5 @@
 import { EntityNotFoundException, ServiceMethodDontThrowOptions } from '@filesg/backend-common';
-import { COMPONENT_ERROR_CODE, DateRange, STATUS, TEMPLATE_TYPE } from '@filesg/common';
+import { COMPONENT_ERROR_CODE, DateRange, FILE_STATUS, STATUS, TEMPLATE_TYPE } from '@filesg/common';
 import { Injectable } from '@nestjs/common';
 import { EntityManager, FindOneOptions } from 'typeorm';
 
@@ -66,6 +66,15 @@ export class AgencyEntityService {
     }
 
     return agency;
+  }
+
+  public async retrieveIssuingAgenciesWithStatusesByUserId(
+    userId: number,
+    statuses: FILE_STATUS[],
+    agencyCodes?: Array<string>,
+    entityManager?: EntityManager,
+  ) {
+    return this.agencyRepository.findIssuingAgenciesWithStatusesByUserId(userId, statuses, agencyCodes, entityManager);
   }
 
   public async retrieveAgencyByIdWithFormSgTransactionAndNotificationTemplates(id: number) {

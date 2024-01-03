@@ -28,6 +28,9 @@ export class CorppassConfigService {
   get jwksUrl() {
     return this.configService.get('CORPPASS_JWKS_ENDPOINT', { infer: true })!;
   }
+  get authInfoUrl() {
+    return this.configService.get('CORPPASS_AUTH_INFO_URL', { infer: true })!;
+  }
 }
 
 export class CorppassEnvironmentVariables {
@@ -58,4 +61,8 @@ export class CorppassEnvironmentVariables {
   @Expose()
   @IsString()
   CORPPASS_JWKS_ENDPOINT: string;
+
+  @Expose()
+  @IsString()
+  CORPPASS_AUTH_INFO_URL: string;
 }

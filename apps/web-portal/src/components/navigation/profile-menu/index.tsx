@@ -46,6 +46,7 @@ export const ProfileMenu = ({ btnAnchorEl, onClose, items }: Props) => {
   return (
     <StyledMenu
       onClose={onClose}
+      onRouteChange={onClose}
       anchorEl={btnAnchorEl}
       anchorPadding={{ vertical: 19 }}
       anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}

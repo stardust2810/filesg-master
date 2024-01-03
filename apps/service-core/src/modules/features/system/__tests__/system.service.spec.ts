@@ -1,9 +1,12 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 import { ACTIVITY_STATUS, VIEWABLE_ACTIVITY_TYPES } from '@filesg/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { ActivityNotBannedException } from '../../../../common/filters/custom-exceptions.filter';
 import { mockActivityEntityService } from '../../../entities/activity/__mocks__/activity.entity.service.mock';
 import { ActivityEntityService } from '../../../entities/activity/activity.entity.service';
+import { mockApplicationEntityService } from '../../../entities/application/__mocks__/application.entity.service.mock';
+import { ApplicationEntityService } from '../../../entities/application/application.entity.service';
 import { mockEmailBlackListEntityService } from '../../../entities/email-black-list/__mocks__/email-black-list.entity.service.mock';
 import { EmailBlackListEntityService } from '../../../entities/email-black-list/email-black-list.entity.service';
 import { mockFileSGConfigService } from '../../../setups/config/__mocks__/config.service.mock';
@@ -28,6 +31,8 @@ describe('SystemService', () => {
         { provide: NotificationService, useValue: mockNotificationService },
         { provide: EmailBlackListEntityService, useValue: mockEmailBlackListEntityService },
         { provide: FileSGConfigService, useValue: mockFileSGConfigService },
+        { provide: FileSGConfigService, useValue: mockFileSGConfigService },
+        { provide: ApplicationEntityService, useValue: mockApplicationEntityService },
       ],
     }).compile();
 
@@ -46,6 +51,12 @@ describe('SystemService', () => {
   // ===========================================================================
   // Public methods
   // ===========================================================================
+  describe('resendNotification', () => {
+    it('should be defined', () => {
+      expect(service.resendNotification).toBeDefined();
+    });
+  });
+
   describe('lift1FaBan', () => {
     it('should be defined', () => {
       expect(service.lift1FaBan).toBeDefined();
@@ -134,6 +145,12 @@ describe('SystemService', () => {
         ACTIVITY_STATUS.COMPLETED,
         VIEWABLE_ACTIVITY_TYPES,
       );
+    });
+  });
+
+  describe('issuanceQuery', () => {
+    it('should be defined', () => {
+      expect(service.issuanceQuery).toBeDefined();
     });
   });
 });

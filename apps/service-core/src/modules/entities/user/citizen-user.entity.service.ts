@@ -1,4 +1,10 @@
-import { EntityNotFoundException } from '@filesg/backend-common';
+import {
+  EntityNotFoundException,
+  maskUin,
+  ServiceMethodDontThrowOptions,
+  ServiceMethodOptions,
+  ServiceMethodThrowOptions,
+} from '@filesg/backend-common';
 import { COMPONENT_ERROR_CODE } from '@filesg/common';
 import { Injectable, Logger } from '@nestjs/common';
 import { EntityManager, UpdateResult } from 'typeorm';
@@ -52,6 +58,22 @@ export class CitizenUserEntityService {
     }
 
     return citizenUser;
+  }
+
+  public async retrieveCitizenUserByUin(uin: string, opts?: ServiceMethodThrowOptions): Promise<CitizenUser>;
+  public async retrieveCitizenUserByUin(uin: string, opts?: ServiceMethodDontThrowOptions): Promise<CitizenUser | null>;
+  public async retrieveCitizenUserByUin(uin: string, opts: ServiceMethodOptions = { toThrow: true }) {
+    const existingUser = await this.citizenUserEntityRepository.getRepository(opts.entityManager).findOne({
+      where: {
+        uin,
+      },
+    });
+
+    if (!existingUser && opts.toThrow) {
+      throw new EntityNotFoundException(COMPONENT_ERROR_CODE.USER_SERVICE, CitizenUser.name, 'uin', maskUin(uin));
+    }
+
+    return existingUser;
   }
 
   // ===========================================================================

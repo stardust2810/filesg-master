@@ -8,7 +8,7 @@ import { AUTH_STATE, FileSGAuth } from '../../../common/decorators/filesg-auth.d
 import { transformUserSessionDetailsResponse } from '../../../common/transformers/auth.transformer';
 import { LoginRequest } from '../../../dtos/auth/request';
 import { User } from '../../../entities/user';
-import { FileSGSession, RequestWithSession } from '../../../typings/common';
+import { FileSGCitizenSession, RequestWithCitizenSession } from '../../../typings/common';
 import { AuthService } from '../auth/auth.service';
 
 @ApiTags('auth')
@@ -33,7 +33,7 @@ export class AuthController {
   @FileSGAuth({ auth_state: AUTH_STATE.NO_LOGGED_IN })
   @ApiBody({ type: LoginRequest })
   @ApiOkResponse({ type: User, description: 'Logs in as citizen.' })
-  async citizenLogin(@Session() session: FileSGSession, @Body() loginDto: LoginRequest) {
+  async citizenLogin(@Session() session: FileSGCitizenSession, @Body() loginDto: LoginRequest) {
     this.logger.log(`User login with authcode: ${loginDto.authCode}`);
     return await this.authService.ndiLogin(session, loginDto);
   }
@@ -43,9 +43,9 @@ export class AuthController {
   @ApiOkResponse({ type: LogoutResponse, description: 'Logs out.' })
   @ApiUnauthorizedResponse({ description: ERROR_RESPONSE_DESC.UNAUTHORISED })
   async logout(
-    @Req() req: RequestWithSession,
+    @Req() req: RequestWithCitizenSession,
     @Res({ passthrough: true }) res: Response,
-    @Session() session: FileSGSession,
+    @Session() session: FileSGCitizenSession,
   ): Promise<LogoutResponse> {
     await this.authService.citizenLogout(req.session.user.userId, session);
     res.clearCookie(COOKIE_ID);
@@ -58,7 +58,7 @@ export class AuthController {
   @Get('user-session-details')
   @FileSGAuth({ auth_state: AUTH_STATE.NO_LOGGED_IN })
   @ApiOkResponse({ type: UserSessionDetailsResponse, description: 'Retrieves user details.' })
-  async getUserDetails(@Session() session: FileSGSession): Promise<UserSessionDetailsResponse | null> {
+  async getUserDetails(@Session() session: FileSGCitizenSession): Promise<UserSessionDetailsResponse | null> {
     if (!session?.user) {
       return null;
     }
@@ -71,7 +71,7 @@ export class AuthController {
   @Get('update-user-from-myinfo')
   @HttpCode(HttpStatus.OK)
   @FileSGAuth({ auth_state: AUTH_STATE.CITIZEN_LOGGED_IN, requireOnboardedUser: false })
-  async updateUserDetailsUsingMyInfo(@Session() { user }: FileSGSession) {
+  async updateUserDetailsUsingMyInfo(@Session() { user }: FileSGCitizenSession) {
     return this.authService.updateUserDetailsFromMyInfo(user);
   }
 
@@ -81,13 +81,13 @@ export class AuthController {
   @Post('ica-sso')
   @FileSGAuth({ auth_state: AUTH_STATE.NO_LOGGED_IN })
   @ApiBody({ type: IcaSsoRequest })
-  async icaSso(@Session() session: FileSGSession, @Body() { token }: IcaSsoRequest) {
+  async icaSso(@Session() session: FileSGCitizenSession, @Body() { token }: IcaSsoRequest) {
     return await this.authService.icaSso(token, session);
   }
 
   @Get('update-user-from-mcc')
   @FileSGAuth({ auth_state: AUTH_STATE.CITIZEN_LOGGED_IN, requireOnboardedUser: false })
-  async updateUserFromMcc(@Session() { user }: FileSGSession) {
+  async updateUserFromMcc(@Session() { user }: FileSGCitizenSession) {
     return await this.authService.updateUserFromMcc(user);
   }
 }

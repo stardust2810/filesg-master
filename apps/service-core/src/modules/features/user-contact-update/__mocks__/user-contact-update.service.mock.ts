@@ -24,7 +24,7 @@ export const mockContactToBeUpdated = 'new-mock-email@gmail.com';
 export const mockRedisOtpDetails: ContactVerificationOtpDetails = {
   otp: '123456',
   verificationAttemptCount: 0,
-  totalOTPSentPerCycleCount: 0,
+  otpSentCount: 0,
   allowResendAt: new Date(),
   expireAt: new Date(),
   contact: mockContactToBeUpdated,

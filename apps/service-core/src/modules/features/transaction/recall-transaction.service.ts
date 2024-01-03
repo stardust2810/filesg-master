@@ -1,4 +1,4 @@
-import { InputValidationException, LogMethod } from '@filesg/backend-common';
+import { EntityNotFoundException, InputValidationException, LogMethod } from '@filesg/backend-common';
 import {
   ACTIVITY_STATUS,
   ACTIVITY_TYPE,
@@ -70,21 +70,17 @@ export class RecallTransactionService {
     // check if the transaction belongs to eserviceUser
     const parentTransaction = await this.transactionEntityService.retrieveTransactionByUuidAndUserId(transactionUuid, eserviceUserId);
 
-    if (
-      !parentTransaction ||
-      !RECALLABLE_TRANSACTION_TYPES.includes(parentTransaction.type) ||
-      parentTransaction.status !== TRANSACTION_STATUS.COMPLETED
-    ) {
-      const internalErrorMsg = parentTransaction
-        ? `EserverUser:${eserviceUserId} tried to recall transaction:${transactionUuid} of type: ${parentTransaction.type} and status:${[
-            parentTransaction.status,
-          ]}`
-        : `No transaction found for UUID: ${transactionUuid}`;
+    if (!parentTransaction) {
+      throw new EntityNotFoundException(COMPONENT_ERROR_CODE.RECALL_SERVICE, Transaction.name, 'uuid', transactionUuid);
+    }
 
+    if (!RECALLABLE_TRANSACTION_TYPES.includes(parentTransaction.type) || parentTransaction.status !== TRANSACTION_STATUS.COMPLETED) {
       throw new InputValidationException(
         COMPONENT_ERROR_CODE.RECALL_SERVICE,
-        `Recallable transactions must be of types: ${RECALLABLE_TRANSACTION_TYPES.toString()} and in a completed status.`,
-        internalErrorMsg,
+        `Only transactions of the following types can be recalled: ${RECALLABLE_TRANSACTION_TYPES.toString()}. Additionally, the transaction must be in a '${
+          TRANSACTION_STATUS.COMPLETED
+        }' state.`,
+        undefined,
         EXCEPTION_ERROR_CODE.TRANSACTION_IS_INVALID,
       );
     }
@@ -105,10 +101,13 @@ export class RecallTransactionService {
       );
       // create recall - activites (SEND_RECALL, RECEIVE_RECALL)
       const fileAssetDeleteDetails = await this.createRecallActivities(recallTransaction, usersFileAssets, eserviceUserId, entityManager);
+
       // update parent transaction and child transaction status to be recalled and its activities status to be recalled
       await this.updateTransactionsAndActivitiesStatus(parentTransaction, entityManager);
+
       // update the fileasset asset status to PENING_DELETE
       const fileAssetsMarkedForDelete = await this.updateFileAssetStatus(usersFileAssets, entityManager);
+
       // call deletion service only if there are files to delete.
       if (fileAssetsMarkedForDelete.length > 0) {
         // call deletion service to create file session and send mgs to queue to transfer
@@ -259,9 +258,8 @@ export class RecallTransactionService {
       .map((activity) => activity.activityId);
 
     if (recalledFileAgencyActivityIds.length > 0) {
-      const [sendRecallActivity] = await this.activityEntityService.retrieveActivitiesDetailsRequiredForEmail(
+      const [sendRecallActivity] = await this.activityEntityService.retrieveRecallActivitiesDetailsRequiredForEmail(
         recalledFileAgencyActivityIds,
-        ACTIVITY_TYPE.SEND_RECALL,
       );
       await this.emailService.sendRecallSucessEmailToAgency(sendRecallActivity);
     }

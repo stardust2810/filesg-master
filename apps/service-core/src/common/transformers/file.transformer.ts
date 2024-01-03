@@ -3,16 +3,21 @@ import {
   AllFileAssetsFromAgencyResponse,
   AllFileAssetsResponse,
   AllFileAssetUuidsResponse,
+  AllRecentFileAssetsResponse,
   BasicFileAssetResponse,
   DetailFileAssetResponse,
   FILE_ASSET_ACTION,
   isDeletedByDate,
   isExpiredByDate,
+  RecentViewableFileAssetResponse,
+  USER_TYPE,
   ViewableFileAssetFromAgencyResponse,
   ViewableFileAssetResponse,
 } from '@filesg/common';
 
 import { FileAsset } from '../../entities/file-asset';
+import { FileAssetHistory } from '../../entities/file-asset-history';
+import { CorporateBaseUser } from '../../entities/user';
 
 // =============================================================================
 // Defaults
@@ -34,8 +39,16 @@ export function transformBasicFileAsset(fileAsset: FileAsset): BasicFileAssetRes
   };
 }
 
-function transformDetailFileAsset(fileAsset: FileAsset): DetailFileAssetResponse {
-  const lastViewedHistory = fileAsset.histories?.find((history) => history.type === FILE_ASSET_ACTION.VIEWED);
+function transformDetailFileAsset(fileAsset: FileAsset, authUserId?: number): DetailFileAssetResponse {
+  const lastViewedHistories = fileAsset.histories?.filter((history) => history.type === FILE_ASSET_ACTION.VIEWED);
+
+  let lastViewedHistory: FileAssetHistory | undefined;
+
+  if (fileAsset.owner?.type === USER_TYPE.CORPORATE) {
+    lastViewedHistory = lastViewedHistories?.find((history) => history.actionById === authUserId);
+  } else {
+    lastViewedHistory = lastViewedHistories?.[0];
+  }
 
   return {
     ...transformBasicFileAsset(fileAsset),
@@ -47,11 +60,29 @@ function transformDetailFileAsset(fileAsset: FileAsset): DetailFileAssetResponse
 // =============================================================================
 // Feature module services
 // =============================================================================
-export function transformAllFileAssets(fileAssets: FileAsset[], count: number, next: number | null): AllFileAssetsResponse {
+export function transformAllFileAssets(
+  fileAssets: FileAsset[],
+  count: number,
+  next: number | null,
+  authUserId?: number,
+): AllFileAssetsResponse {
   return {
     items: fileAssets.map((fileAsset) => {
-      return transformViewableFileAsset(fileAsset);
+      return transformViewableFileAsset(fileAsset, authUserId);
     }),
+    count,
+    next,
+  };
+}
+
+export function transformRecentFileAssets(
+  fileAssets: FileAsset[],
+  count: number,
+  next: number | null,
+  authUserId?: number,
+): AllRecentFileAssetsResponse {
+  return {
+    items: fileAssets?.map((fileAsset) => transformRecentFileAsset(fileAsset, authUserId)),
     count,
     next,
   };
@@ -71,23 +102,31 @@ export function transformAllFileAssetsFromAgency(
   };
 }
 
-export function transformViewableFileAsset(fileAsset: FileAsset): ViewableFileAssetResponse {
+export function transformViewableFileAsset(fileAsset: FileAsset, authUserId?: number): ViewableFileAssetResponse {
   const eservice = fileAsset.issuer!.eservices![0];
   const receiveTransferActivity = fileAsset.activities!.find((activity) => activity.type === ACTIVITY_TYPE.RECEIVE_TRANSFER)!;
   const receiveDeleteActivity = fileAsset.activities!.find((activity) => activity.type === ACTIVITY_TYPE.RECEIVE_DELETE) ?? null;
   const { owner } = fileAsset;
-  const { name: ownerName } = owner!;
+  const { name: fileAssetUserName } = owner!;
   const { name: eServiceName, agency } = eservice;
   const { name: agencyName, code: agencyCode } = agency!;
   const { isAcknowledgementRequired, acknowledgedAt, uuid: receiveTransferActivityUuid } = receiveTransferActivity;
   const externalRefId = receiveTransferActivity.transaction?.application?.externalRefId ?? null;
 
+  // For corporate, if name is null, to return UEN
+  let ownerName = fileAssetUserName;
+
+  if (owner?.type === USER_TYPE.CORPORATE) {
+    const { name: corporateName, uen } = (owner as CorporateBaseUser).corporate!;
+    ownerName = corporateName ?? uen;
+  }
+
   return {
-    ...transformDetailFileAsset(fileAsset),
+    ...transformDetailFileAsset(fileAsset, authUserId),
     agencyName,
     eServiceName,
     agencyCode,
-    ownerName: ownerName!,
+    ownerName,
     isAcknowledgementRequired,
     acknowledgedAt,
     receiveTransferActivityUuid,
@@ -112,8 +151,23 @@ function transformViewableFileAssetFromAgency(fileAsset: FileAsset): ViewableFil
   };
 }
 
+function transformRecentFileAsset(
+  fileAsset: FileAsset,
+  authUserId?: number,
+): Pick<RecentViewableFileAssetResponse, 'lastViewedAt' | 'type' | 'name' | 'uuid'> {
+  const { lastViewedAt } = transformDetailFileAsset(fileAsset, authUserId);
+  const { documentType, name, uuid } = fileAsset;
+
+  return {
+    lastViewedAt,
+    type: documentType,
+    name,
+    uuid,
+  };
+}
+
 export function transformAllFileAssetUuids(fileAssets: FileAsset[]): AllFileAssetUuidsResponse {
   return {
-    fileAssets: fileAssets.map((fileAsset) => fileAsset.uuid),
+    fileAssets: (fileAssets || []).map((fileAsset) => fileAsset.uuid),
   };
 }

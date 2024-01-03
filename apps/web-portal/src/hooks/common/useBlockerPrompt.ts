@@ -21,9 +21,9 @@ export function useBlockerPrompt(message: string, onOkButtonClick?: () => void, 
   const block = useCallback(() => {
     const unblock = (navigator as ExtendNavigator).block((tx) => {
       if (window.confirm(message)) {
-        onOkButtonClick?.();
         unblock();
         tx.retry();
+        onOkButtonClick?.();
       } else {
         onCancelButtonClick?.();
       }

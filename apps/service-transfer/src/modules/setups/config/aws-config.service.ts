@@ -56,6 +56,10 @@ export class AwsConfigService {
     return this.configService.get('AWS_STS_ASSUME_ROLE_SESSION_DURATION', { infer: true })!;
   }
 
+  get assumeRoleExpirationBufferInMs() {
+    return this.configService.get('AWS_STS_ASSUME_ROLE_EXPIRATION_BUFFER_IN_MS', { infer: true })!;
+  }
+
   get staticFileBucketURL() {
     return this.configService.get('AWS_S3_BUCKET_STATIC_FILES', { infer: true })!;
   }
@@ -126,6 +130,11 @@ export class AwsEnvironmentVariables {
   @Expose()
   @IsNumber()
   AWS_STS_ASSUME_ROLE_SESSION_DURATION: number;
+
+  @Transform(numberTransformer)
+  @Expose()
+  @IsNumber()
+  AWS_STS_ASSUME_ROLE_EXPIRATION_BUFFER_IN_MS: number;
 
   @Expose()
   @IsString()

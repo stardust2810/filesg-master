@@ -88,17 +88,18 @@ describe('System Controller', () => {
       expect(controller.resendNotification).toBeDefined();
     });
   });
+  describe('issuanceQuery', () => {
+    it('should be defined', () => {
+      expect(controller.issuanceQuery).toBeDefined();
+    });
+  });
+
   describe('generateAcgencyTransactionsReport', () => {
     it('should be defined', () => {
       expect(controller.generateAgencyTransactionsReport).toBeDefined();
     });
   });
   describe('generateFileSgStatisticsReport', () => {
-    it('should be defined', () => {
-      expect(controller.generateFileSgStatisticsReport).toBeDefined();
-    });
-  });
-  describe('generateFileSgIssuanceReport', () => {
     it('should be defined', () => {
       expect(controller.generateFileSgStatisticsReport).toBeDefined();
     });

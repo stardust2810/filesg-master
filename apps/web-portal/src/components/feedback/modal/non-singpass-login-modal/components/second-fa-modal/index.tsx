@@ -1,4 +1,4 @@
-import { EXCEPTION_ERROR_CODE } from '@filesg/common';
+import { EXCEPTION_ERROR_CODE, OTP_CHANNEL } from '@filesg/common';
 import { Alert, Button, Modal, TextButton, Typography } from '@filesg/design-system';
 import { forwardRef, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -19,12 +19,15 @@ import {
   selectContentRetrievalToken,
   selectFirstFaInput,
   selectFirstFaToken,
+  selectMaskedEmail,
   selectMaskedMobile,
+  selectOtpChannel,
   selectOtpDetails,
 } from '../../../../../../store/slices/non-singpass-session';
 import { isActivityBannedFromVerification, isFileSGError, isFileSGErrorType, resetRedirectionPath } from '../../../../../../utils/common';
 import { Otp, OtpFormInput } from '../../../../../inputs/otp';
-import MaxVerificationAttemptsFailedMsg from '../max-verification-attempts-failed-msg';
+import { MAXIMUM_VERIFICATION_ATTEMPTS_FAILED_TEXT } from '../first-fa-modal/helper';
+import VerificationErrorMessageContainer from '../verification-error-message-container';
 import { StyledBody, StyledFooter, StyledForm } from './style';
 
 interface Props {
@@ -33,7 +36,8 @@ interface Props {
   onUnexpectedError?: () => void;
 }
 
-const isOtpMaxRetriesReached = (error: unknown) => isFileSGErrorType(error, EXCEPTION_ERROR_CODE.OTP_MAX_RETRIES_REACHED);
+const isOtpMaxVerificationAttemptCountReached = (error: unknown) =>
+  isFileSGErrorType(error, EXCEPTION_ERROR_CODE.OTP_MAX_VERIFICATION_ATTEMPT_COUNT_REACHED);
 
 export const SecondFactorAuthModal = forwardRef<HTMLDivElement, Props>(
   ({ onBackButtonClick, onActivityBannedBackButtonClick, onUnexpectedError }: Props, ref) => {
@@ -41,8 +45,11 @@ export const SecondFactorAuthModal = forwardRef<HTMLDivElement, Props>(
     const firstFaInput = useAppSelector(selectFirstFaInput);
     const firstFaToken = useAppSelector(selectFirstFaToken);
     const maskedMobile = useAppSelector(selectMaskedMobile);
+    const maskedEmail = useAppSelector(selectMaskedEmail);
     const otpDetails = useAppSelector(selectOtpDetails);
+    const retrievalMethod = useAppSelector(selectOtpChannel);
     const contentRetrievalToken = useAppSelector(selectContentRetrievalToken);
+    const isMobileOtp = retrievalMethod === OTP_CHANNEL.SMS;
 
     // ---------------------------------------------------------------------------
     // React hook form
@@ -113,9 +120,9 @@ export const SecondFactorAuthModal = forwardRef<HTMLDivElement, Props>(
     // ---------------------------------------------------------------------------
     const getOtpDescription = () => (
       <>
-        Please enter the 6-digit one-time password (OTP) sent to your mobile{' '}
+        Please enter the 6-digit one-time password (OTP) sent to your {retrievalMethod}{' '}
         <Typography variant="BODY" bold="FULL">
-          {maskedMobile}
+          {isMobileOtp ? maskedMobile : maskedEmail}
         </Typography>
       </>
     );
@@ -131,7 +138,7 @@ export const SecondFactorAuthModal = forwardRef<HTMLDivElement, Props>(
             <StyledBody>
               {(isActivityBannedFromVerification(sendOtpError) || isActivityBannedFromVerification(verifyOtpError)) && (
                 <Alert variant="DANGER">
-                  <MaxVerificationAttemptsFailedMsg />
+                  <VerificationErrorMessageContainer message={MAXIMUM_VERIFICATION_ATTEMPTS_FAILED_TEXT} />
                 </Alert>
               )}
 
@@ -145,7 +152,9 @@ export const SecondFactorAuthModal = forwardRef<HTMLDivElement, Props>(
                   disabled={isActivityBannedFromVerification(sendOtpError) || isActivityBannedFromVerification(verifyOtpError)}
                   onResendOtpClick={() => sendOtp(firstFaToken)}
                   description={getOtpDescription()}
-                  subDescription="If you changed your mobile number, please reach out to the issuing agency to update it first."
+                  subDescription={`If you changed your ${
+                    isMobileOtp ? 'mobile number' : 'email address'
+                  }, please reach out to the issuing agency to update it first.`}
                 />
               )}
             </StyledBody>
@@ -155,7 +164,7 @@ export const SecondFactorAuthModal = forwardRef<HTMLDivElement, Props>(
                 label="Submit"
                 disabled={
                   otp.length !== 6 ||
-                  isOtpMaxRetriesReached(verifyOtpError) ||
+                  isOtpMaxVerificationAttemptCountReached(verifyOtpError) ||
                   isActivityBannedFromVerification(sendOtpError) ||
                   isActivityBannedFromVerification(verifyOtpError)
                 }

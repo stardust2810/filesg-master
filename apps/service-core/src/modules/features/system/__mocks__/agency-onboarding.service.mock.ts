@@ -15,14 +15,14 @@ import {
   NOTIFICATION_CHANNEL,
   NOTIFICATION_TEMPLATE_TYPE,
   NotificationTemplateOnboardingRequest,
+  NotificationTemplateUpdateRequest,
   ProgrammaticUserOnboardingRequestDetails,
   ROLE,
   STATUS,
-  TemplateUpdateRequest,
   TransactionTemplateOnboardingRequest,
   USER_TYPE,
 } from '@filesg/common';
-import { EntityManager, InsertResult, UpdateResult } from 'typeorm';
+import { EntityManager } from 'typeorm';
 
 import { Agency } from '../../../../entities/agency';
 import { Eservice } from '../../../../entities/eservice';
@@ -113,9 +113,9 @@ export class TestAgencyOnboardingService extends AgencyOnboardingService {
   }
 
   public updateNotificationMessageTemplateAndCreateAudit(
-    notificationMessageTemplateUpdateRequest: TemplateUpdateRequest,
+    notificationMessageTemplateUpdateRequest: NotificationTemplateUpdateRequest,
     entityManager?: EntityManager,
-  ): Promise<[InsertResult, UpdateResult]> {
+  ): Promise<{ uuid: string; name: string }> {
     return super.updateNotificationMessageTemplateAndCreateAudit(notificationMessageTemplateUpdateRequest, entityManager);
   }
 
@@ -283,7 +283,6 @@ export const mockEmailNotificationMessageTemplate = createMockNotificationMessag
   type: NOTIFICATION_TEMPLATE_TYPE.ISSUANCE,
   template: ['mockEmailTemplate1 with {{mockRequiredField1}} and {{mockRequiredField2}}'],
   notificationChannel: NOTIFICATION_CHANNEL.EMAIL,
-  version: 1,
 });
 
 const mockEmailNotificationTemplateOnboardingRequest: NotificationTemplateOnboardingRequest = {
@@ -299,7 +298,6 @@ export const mockNotifyNotificationMessageTemplate = createMockNotificationMessa
   template: ['mockTransactionTemplate1 with {{mockRequiredField1}} and {{mockRequiredField2}}'],
   notificationChannel: NOTIFICATION_CHANNEL.SG_NOTIFY,
   externalTemplateId: 'mockExternalTemplateId',
-  version: 1,
 });
 
 const mockNotifyNotificationTemplateOnboardingRequest: NotificationTemplateOnboardingRequest = {

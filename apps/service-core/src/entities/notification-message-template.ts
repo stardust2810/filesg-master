@@ -1,5 +1,5 @@
 import { INTEGRATION_TYPE, NOTIFICATION_CHANNEL, NOTIFICATION_TEMPLATE_TYPE } from '@filesg/common';
-import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique, VersionColumn } from 'typeorm';
 
 import { CreationAttributes } from '../typings/common';
 import { Agency } from './agency';
@@ -7,8 +7,15 @@ import { TimestampableEntity } from './base-model';
 import { NotificationMessageInput } from './notification-message-input';
 import { NotificationMessageTemplateAudit } from './notification-message-template-audit';
 
-type OptionalAttributes = 'requiredFields' | 'audits' | 'notificationMessageInputs' | 'externalTemplateId' | 'agency' | 'integrationType';
-type OmitAttributes = 'id' | 'uuid';
+type OptionalAttributes =
+  | 'requiredFields'
+  | 'audits'
+  | 'notificationMessageInputs'
+  | 'externalTemplateId'
+  | 'agency'
+  | 'integrationType'
+  | 'copyRecipientSubjectAffix';
+type OmitAttributes = 'id' | 'uuid' | 'version';
 export type NotificationMessageTemplateCreationModel = CreationAttributes<NotificationMessageTemplate, OptionalAttributes, OmitAttributes>;
 export type NotificationMessageTemplateUpdateModel = Partial<NotificationMessageTemplateCreationModel>;
 
@@ -27,9 +34,7 @@ export class NotificationMessageTemplate extends TimestampableEntity {
   @Column({ type: 'json' })
   template: string[];
 
-  // ENHANCEMENT: Typeorm has a version control decorator
-  // https://orkhan.gitbook.io/typeorm/docs/entities#special-columns
-  @Column({ type: 'int' })
+  @VersionColumn()
   version: number;
 
   @Column({ type: 'simple-array', nullable: true })
@@ -58,4 +63,7 @@ export class NotificationMessageTemplate extends TimestampableEntity {
 
   @ManyToOne(() => Agency, (agency) => agency.notificationMessageTemplates, { nullable: false })
   agency?: Agency;
+
+  @Column({ type: 'varchar', nullable: true })
+  copyRecipientSubjectAffix: string | null;
 }

@@ -36,7 +36,8 @@ interface Props {
 
 const isOtpInvalid = (error: unknown) => isFileSGErrorType(error, [EXCEPTION_ERROR_CODE.OTP_INVALID, EXCEPTION_ERROR_CODE.BAD_REQUEST]);
 const isOtpExpired = (error: unknown) => isFileSGErrorType(error, EXCEPTION_ERROR_CODE.OTP_EXPIRED);
-const isOtpMaxRetriesReached = (error: unknown) => isFileSGErrorType(error, EXCEPTION_ERROR_CODE.OTP_MAX_RETRIES_REACHED);
+const isOtpMaxVerificationAttemptCountReached = (error: unknown) =>
+  isFileSGErrorType(error, EXCEPTION_ERROR_CODE.OTP_MAX_VERIFICATION_ATTEMPT_COUNT_REACHED);
 const isOtpDoesNotExist = (error: unknown) => isFileSGErrorType(error, EXCEPTION_ERROR_CODE.OTP_DOES_NOT_EXIST);
 
 export const Otp = ({
@@ -95,7 +96,7 @@ export const Otp = ({
       return 'Invalid OTP. Please try again.';
     }
 
-    if (isOtpMaxRetriesReached(verifyOtpError)) {
+    if (isOtpMaxVerificationAttemptCountReached(verifyOtpError)) {
       return 'Invalid OTP. Please request for a new OTP and try again.';
     }
 
@@ -125,7 +126,7 @@ export const Otp = ({
               errorStyle={{
                 borderColor: Color.RED_DEFAULT,
               }}
-              isDisabled={disabled || isOtpMaxRetriesReached(verifyOtpError) || isLoadingSendOtp}
+              isDisabled={disabled || isOtpMaxVerificationAttemptCountReached(verifyOtpError) || isLoadingSendOtp}
               disabledStyle={{
                 backgroundColor: Color.GREY20,
                 color: Color.GREY50,
@@ -136,7 +137,7 @@ export const Otp = ({
           )}
         />
 
-        {(isOtpMaxRetriesReached(verifyOtpError) ||
+        {(isOtpMaxVerificationAttemptCountReached(verifyOtpError) ||
           isOtpInvalid(verifyOtpError) ||
           isOtpExpired(verifyOtpError) ||
           isOtpDoesNotExist(verifyOtpError)) && (

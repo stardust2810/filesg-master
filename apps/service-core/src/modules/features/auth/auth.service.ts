@@ -1,6 +1,5 @@
 import { ErrorLogLevel, InputValidationException, JWT_TYPE, maskUin, PerformanceTestMethodReturnMock } from '@filesg/backend-common';
 import {
-  AccessibleAgency,
   AUDIT_EVENT_NAME,
   AUTH_TYPE,
   COMPONENT_ERROR_CODE,
@@ -30,25 +29,19 @@ import {
 import { MOCK_USER_DETAILS_FROM_MYINFO } from '../../../consts/mocks';
 import { LoginRequest, ProgrammaticAuthRequest } from '../../../dtos/auth/request';
 import { AuditEventCreationModel } from '../../../entities/audit-event';
-import { Corporate } from '../../../entities/corporate';
-import { CorporateUser } from '../../../entities/corporate-user';
-import { CitizenUser, ProgrammaticUser, User } from '../../../entities/user';
+import { CitizenUser, ProgrammaticUser } from '../../../entities/user';
 import {
   AuthUser,
   DB_QUERY_ERROR,
-  FileSGSession,
+  FileSGCitizenSession,
   MYINFO_PROVIDER,
   SINGPASS_PROVIDER,
   UserSessionAuditEventData,
 } from '../../../typings/common';
 import { verifyArgon2Hash } from '../../../utils/encryption';
 import { generateUuid, isQueryFailedErrorType } from '../../../utils/helpers';
-import { AgencyEntityService } from '../../entities/agency/agency.entity.service';
 import { AuditEventEntityService } from '../../entities/audit-event/audit-event.entity.service';
 import { CitizenUserEntityService } from '../../entities/user/citizen-user.entity.service';
-import { CorporateEntityService } from '../../entities/user/corporate/corporate.entity.service';
-import { CorporateUserEntityService } from '../../entities/user/corporate-user/corporate-user.entity.service';
-import { UserEntityService } from '../../entities/user/user.entity.service';
 import { FileSGConfigService } from '../../setups/config/config.service';
 import { AgencyClientV2Service } from '../agency-client/agency-client.v2.service';
 
@@ -57,15 +50,11 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   constructor(
     private readonly citizenUserEntityService: CitizenUserEntityService,
-    private readonly userEntityService: UserEntityService,
-    private readonly corporateEntityService: CorporateEntityService,
-    private readonly corporateUserEntityService: CorporateUserEntityService,
     private readonly jwtService: JwtService,
     private redisService: RedisService,
     private fileSGConfigService: FileSGConfigService,
     private agencyClientService: AgencyClientV2Service,
     private auditEventEntityService: AuditEventEntityService,
-    private readonly agencyEntityService: AgencyEntityService,
     @Inject(SINGPASS_PROVIDER) private singpassHelper: NdiOidcHelper,
     @Inject(MYINFO_PROVIDER) private myInfoHelper: MyInfo.Helper,
   ) {
@@ -98,7 +87,7 @@ export class AuthService {
     };
   }
 
-  public async ndiLogin(session: FileSGSession, { authCode, nonce }: LoginRequest) {
+  public async ndiLogin(session: FileSGCitizenSession, { authCode, nonce }: LoginRequest) {
     const tokens = await this.singpassHelper.getTokens(authCode);
     this.logger.log(`[Singpass] Received Token`);
 
@@ -112,7 +101,7 @@ export class AuthService {
     const { nric, uuid } = this.singpassHelper.extractNricAndUuidFromPayload(tokenPayload);
     this.logger.log(`[Singpass] NRIC: ${maskUin(nric)}, uuid: ${uuid}`);
 
-    const user = await this.getOrCreateUserUsingUin(nric);
+    const user = await this.getOrCreateCitizenUserUsingUin(nric);
     this.logger.log(`User successfully created/retrieved from db`);
     if (!user.isOnboarded) {
       await this.citizenUserEntityService.updateCitizenUserById(user.id, { name: null, email: null, phoneNumber: null });
@@ -122,7 +111,7 @@ export class AuthService {
       this.logger.log(`Updated username from MyInfo in db`);
     }
 
-    await this.updateSession(user, session);
+    await this.updateCitizenUserSession(user, session);
     await this.citizenUserEntityService.updateCitizenUserById(user.id, { lastLoginAt: new Date() });
     await this.saveUserLoginAuditEvent({
       userId: user.id,
@@ -132,7 +121,7 @@ export class AuthService {
     });
   }
 
-  async updateSession(user: User, session: FileSGSession, ssoEservice?: SSO_ESERVICE) {
+  async updateCitizenUserSession(user: CitizenUser, session: FileSGCitizenSession, ssoEservice?: SSO_ESERVICE) {
     this.logger.log(`Creating session for user ${user.id}|${user.uuid}|${user.name}`);
     const { sessionLengthInSecs, extendSessionWarningDurationInSecs, absoluteSessionExpiryInMins } = this.fileSGConfigService.sessionConfig;
 
@@ -155,95 +144,22 @@ export class AuthService {
       extendSessionWarningDurationInSecs,
       ssoEservice: ssoEservice ?? null,
       hasPerformedDocumentAction: false,
-      corporateUen: null,
-      corporateName: null,
-      accessibleAgencies: null,
     };
     this.logger.log(`Session created for user ${user.id}|${user.uuid}|${user.name}`);
   }
 
-  async updateCorporateUserSession(
-    corporate: Corporate,
-    corporateUser: CorporateUser,
-    session: FileSGSession,
-    accessibleAgencies: AccessibleAgency[],
-  ) {
-    const { user, lastLoginAt } = corporateUser;
-    const { id, uuid, role } = user!;
-
-    this.logger.log(`Creating session for corporate user with base user info of ${id}|${uuid}`);
-    const { sessionLengthInSecs, extendSessionWarningDurationInSecs, absoluteSessionExpiryInMins } = this.fileSGConfigService.sessionConfig;
-
-    await this.redisService.set(FILESG_REDIS_CLIENT.USER, uuid, session.id);
-
-    const currentTime = new Date();
-
-    session.user = {
-      userId: id,
-      userUuid: uuid,
-      type: USER_TYPE.CORPORATE_USER,
-      maskedUin: maskUin(corporateUser.uin),
-      name: corporateUser.name,
-      role: role,
-      isOnboarded: null,
-      lastLoginAt,
-      createdAt: currentTime,
-      expiresAt: addMinutes(currentTime, absoluteSessionExpiryInMins),
-      sessionLengthInSecs,
-      extendSessionWarningDurationInSecs,
-      ssoEservice: null,
-      hasPerformedDocumentAction: false,
-      corporateUen: corporate.uen,
-      corporateName: corporate.name,
-      accessibleAgencies,
-    };
-    this.logger.log(`Session created for corporate user with base user info of ${id}|${uuid}`);
-  }
-
-  async getOrCreateUserUsingUin(nric: string) {
+  async getOrCreateCitizenUserUsingUin(nric: string): Promise<CitizenUser> {
     if (!isUinfinValid(nric)) {
       throw new InputValidationException(COMPONENT_ERROR_CODE.AUTH_SERVICE, 'Invalid UIN');
     }
 
-    const user = await this.userEntityService.retrieveUserByUin(nric, { toThrow: false });
+    const user = await this.citizenUserEntityService.retrieveCitizenUserByUin(nric, { toThrow: false });
 
     if (user) {
       return user;
     }
 
     return await this.citizenUserEntityService.saveCitizenUser({ uin: nric, status: STATUS.ACTIVE });
-  }
-
-  // gd TODO: unit test to be done when proper login implemented in case any changes
-  public async getOrCreateCorporateAndCorporateUser(uen: string, uin: string) {
-    if (!isUinfinValid(uin)) {
-      throw new InputValidationException(COMPONENT_ERROR_CODE.AUTH_SERVICE, 'Invalid UIN');
-    }
-
-    let corporate: Corporate | null = null;
-    let corporateUser: CorporateUser | null;
-
-    // check if corporate user exists with the uen, create if not
-    corporate = await this.corporateEntityService.retrieveCorporateByUen(uen, { toThrow: false });
-
-    if (!corporate) {
-      corporate = await this.corporateEntityService.saveCorporateWithBaseUser({ uen, user: { status: STATUS.ACTIVE } });
-    }
-
-    // check if corppass user exists with the uin and uen, create if not
-    corporateUser = await this.corporateUserEntityService.retrieveCorporateUserWithBaseUserByUinAndCorporateId(uin, corporate.id, {
-      toThrow: false,
-    });
-
-    if (!corporateUser) {
-      corporateUser = await this.corporateUserEntityService.saveCorporateUserWithBaseUser({
-        uin,
-        corporate,
-        user: { status: STATUS.ACTIVE },
-      });
-    }
-
-    return { corporate, corporateUser };
   }
 
   public async updateUserNameFromMyInfo(userId: number) {
@@ -295,7 +211,7 @@ export class AuthService {
     return await this.updateUserDetailUsingExternalSourceData(authUser, { name, email, phoneNumber });
   }
 
-  public async citizenLogout(id: number, session: FileSGSession) {
+  public async citizenLogout(id: number, session: FileSGCitizenSession) {
     this.logger.log(`Logging out citizen with id: ${id} and session ${session.id}`);
 
     // Remove previous MyInfo details if user not onboarded
@@ -312,18 +228,18 @@ export class AuthService {
     await this.redisService.del(FILESG_REDIS_CLIENT.USER, id.toString());
   }
 
-  public async icaSso(token: string, session: FileSGSession) {
+  public async icaSso(token: string, session: FileSGCitizenSession) {
     // NOTE: Will overwrite previous user session
     const uin = await this.agencyClientService.retrieveUinFromMyIca(token);
     this.logger.log(`SSO for ICA user with id: ${maskUin(uin)}`);
-    const user = await this.getOrCreateUserUsingUin(uin);
+    const user = await this.getOrCreateCitizenUserUsingUin(uin);
 
     // Remove previous MyInfo details if user not onboarded
     if (!user.isOnboarded) {
       await this.citizenUserEntityService.updateCitizenUserById(user.id, { name: null, email: null, phoneNumber: null });
     }
 
-    await this.updateSession(user, session, SSO_ESERVICE.MY_ICA);
+    await this.updateCitizenUserSession(user, session, SSO_ESERVICE.MY_ICA);
     await this.saveUserLoginAuditEvent({
       userId: user.id,
       authType: AUTH_TYPE.SINGPASS_SSO,
@@ -348,60 +264,6 @@ export class AuthService {
     const name = `${personSurname} ${personName}`.trim(); // Surname may return empty string
     const phoneNumber = contactMobileNo?.replaceAll('|', ''); // contactMobileNo returns null, different for API spec (empty string)
     return await this.updateUserDetailUsingExternalSourceData(authUser, { name, email, phoneNumber });
-  }
-
-  // gd TODO: unit test to be done when proper login implemented in case any changes
-  public async handleAgencyNameCaching(roles: string[]): Promise<AccessibleAgency[]> {
-    const agencyCodes = roles; // assuming these are roles gotten from corppass login
-
-    const accessibleAgencies: AccessibleAgency[] = [];
-    const agencyCodesNotInRedis: string[] = [];
-
-    // update company particular icon in profile page
-    const hasAllAgenciesRole = agencyCodes.some((code) => code.toLocaleLowerCase() === 'all');
-
-    if (hasAllAgenciesRole) {
-      accessibleAgencies.push({ code: 'ALL', name: 'All government agencies' });
-      return accessibleAgencies;
-    }
-
-    const agencyNamesFromRedis = await this.redisService.mget(FILESG_REDIS_CLIENT.CORPPASS_AGENCY, agencyCodes);
-
-    agencyNamesFromRedis.forEach((name, index) => {
-      if (name !== null) {
-        accessibleAgencies.push({ name, code: agencyCodes[index] });
-      } else {
-        agencyCodesNotInRedis.push(agencyCodes[index]);
-      }
-    });
-
-    if (agencyCodesNotInRedis.length > 0) {
-      const agencies = await this.agencyEntityService.retrieveAgenciesByCodes(agencyCodesNotInRedis);
-
-      const agencyCodesFromDb = agencies.map(({ code }) => code);
-      const unknownAgencyCodes = agencyCodesNotInRedis.filter((code) => !agencyCodesFromDb.includes(code));
-
-      if (unknownAgencyCodes.length > 0) {
-        this.logger.error(`Unknown agency code(s) ${unknownAgencyCodes.join(', ')} assigned to user.`);
-      }
-
-      const promises = agencies.map(({ code, name }) => {
-        accessibleAgencies.push({ code, name });
-
-        // use set with loop instead of mset because mset does not support setting of expiration
-        return this.redisService.set(
-          FILESG_REDIS_CLIENT.CORPPASS_AGENCY,
-          code,
-          name,
-          undefined,
-          this.fileSGConfigService.authConfig.corppassAgencyCacheExpirySeconds,
-        );
-      });
-
-      await Promise.allSettled(promises);
-    }
-
-    return accessibleAgencies.sort((a, b) => a.code.localeCompare(b.code));
   }
 
   private async updateUserDetailUsingExternalSourceData(

@@ -49,7 +49,7 @@ export const FaqSection = ({ faqList, sectionDescription, moreFaqExternalLink }:
     <StyledFaqSection style={{ backgroundImage: `url(${iconsBackgoundImage})` }}>
       <StyledFaqWrapper>
         <StyledFaqContent column={getFaqContentColumns()}>
-          <img alt="" src={faqIllustration} />
+          <img alt="" height={128} width={128} src={faqIllustration} />
           <StyledSectionHeader isCentered title={FAQ_TITLE} description={sectionDescription} />
           {faqList.map((faq, index) => (
             <Level1Accordion key={index} title={faq.title}>

@@ -1,18 +1,18 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import {
   ACTIVATED_FILE_STATUSES,
+  ACTIVITY_SORT_BY,
   ACTIVITY_STATUS,
   ACTIVITY_TYPE,
   FILE_STATUS,
   FILE_TYPE,
-  SORT_BY,
   VIEWABLE_ACTIVITY_TYPES,
   VIEWABLE_USER_TYPES,
 } from '@filesg/common';
 import { CompletedActivitiesRequestDto } from '@filesg/common';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, FindOptionsWhere, In, Repository, UpdateResult } from 'typeorm';
+import { EntityManager, FindOptionsWhere, Repository, UpdateResult } from 'typeorm';
 
 import { Activity, ActivityUpdateModel } from '../../../entities/activity';
 
@@ -53,6 +53,7 @@ export class ActivityEntityRepository {
     types: ACTIVITY_TYPE[],
     userId?: number,
     entityManager?: EntityManager,
+    agencyCodes?: Array<string>,
   ) {
     const query = this.getRepository(entityManager)
       .createQueryBuilder('activity')
@@ -60,6 +61,7 @@ export class ActivityEntityRepository {
       .leftJoinAndSelect('activity.transaction', 'transaction')
       .leftJoinAndSelect('activity.acknowledgementTemplate', 'acknowledgementTemplate')
       .leftJoinAndSelect('transaction.application', 'application')
+      .leftJoinAndSelect('activity.user', 'user')
       .leftJoinAndSelect('application.eservice', 'eservice')
       .leftJoinAndSelect('eservice.agency', 'agency')
       .where('activity.uuid = :uuid', { uuid })
@@ -68,7 +70,11 @@ export class ActivityEntityRepository {
       .andWhere('fileAssets.status IN (:...statuses)', { statuses: ACTIVATED_FILE_STATUSES });
 
     if (userId) {
-      query.leftJoinAndSelect('activity.user', 'user').andWhere('user.id = :userId', { userId });
+      query.andWhere('user.id = :userId', { userId });
+    }
+
+    if (agencyCodes) {
+      query.andWhere('agency.code IN (:...agencyCodes)', { agencyCodes });
     }
 
     return await query.getOne();
@@ -77,10 +83,10 @@ export class ActivityEntityRepository {
   // NOTE: if non completed activities are required, modify this function to do so
   public async findAndCountCompletedActivitiesByUserId(
     userId: number,
-    queryOptions: CompletedActivitiesRequestDto = { sortBy: SORT_BY.CREATED_AT, asc: true, page: 0, limit: 0, types: [] },
+    queryOptions: CompletedActivitiesRequestDto = { sortBy: ACTIVITY_SORT_BY.CREATED_AT, asc: true, page: 0, limit: 0, types: [] },
     entityManager?: EntityManager,
   ) {
-    const { sortBy, asc, page, limit, types, agencyCode } = queryOptions;
+    const { sortBy, asc, page, limit, types, agencyCodes } = queryOptions;
     const fetchedNumber = (page! - 1) * limit!;
 
     const query = this.getRepository(entityManager)
@@ -99,8 +105,8 @@ export class ActivityEntityRepository {
       .skip(fetchedNumber)
       .take(limit);
 
-    if (agencyCode) {
-      query.andWhere('agency.code = :agencyCode', { agencyCode });
+    if (agencyCodes) {
+      query.andWhere('agency.code IN (:...agencyCodes)', { agencyCodes });
     }
 
     return await query.getManyAndCount();
@@ -194,47 +200,52 @@ export class ActivityEntityRepository {
       .getMany();
   }
 
-  public async findActivityDetailsRequiredForEmail(ids: number[], type?: ACTIVITY_TYPE, entityManager?: EntityManager): Promise<Activity[]>; // prettier-ignore
-  public async findActivityDetailsRequiredForEmail(uuids: string[], type?: ACTIVITY_TYPE, entityManager?: EntityManager): Promise<Activity[]>; // prettier-ignore
-  public async findActivityDetailsRequiredForEmail(identifiers: string[] | number[], type?: ACTIVITY_TYPE, entityManager?: EntityManager): Promise<Activity[]>; // prettier-ignore
-  public async findActivityDetailsRequiredForEmail(
+  public async findActivitiesDetailsRequiredForEmail(ids: number[], type?: ACTIVITY_TYPE, entityManager?: EntityManager): Promise<Activity[]>; // prettier-ignore
+  public async findActivitiesDetailsRequiredForEmail(uuids: string[], type?: ACTIVITY_TYPE, entityManager?: EntityManager): Promise<Activity[]>; // prettier-ignore
+  public async findActivitiesDetailsRequiredForEmail(identifiers: string[] | number[], type?: ACTIVITY_TYPE, entityManager?: EntityManager): Promise<Activity[]>; // prettier-ignore
+  public async findActivitiesDetailsRequiredForEmail(
     identifiers: string[] | number[],
-    type: ACTIVITY_TYPE = ACTIVITY_TYPE.RECEIVE_TRANSFER,
+    type: ACTIVITY_TYPE,
     entityManager?: EntityManager,
-  ) {
-    const identifierCondition =
-      typeof identifiers[0] === 'string' ? { uuid: In(identifiers as string[]) } : { id: In(identifiers as number[]) };
+  ): Promise<Activity[]> {
+    const queryBuilder = this.getRepository(entityManager)
+      .createQueryBuilder('activity')
+      .leftJoinAndSelect('activity.transaction', 'transaction')
+      .leftJoinAndSelect('transaction.application', 'application')
+      .leftJoinAndSelect('application.applicationType', 'applicationType')
+      .leftJoinAndSelect('application.eservice', 'eservice')
+      .leftJoinAndSelect('eservice.agency', 'agency')
+      .leftJoinAndSelect('transaction.eserviceWhitelistedUser', 'eserviceWhitelistedUser')
+      .leftJoinAndSelect('activity.fileAssets', 'fileAssets')
+      .leftJoinAndSelect('activity.user', 'user')
+      .where('activity.type = :type', { type });
 
-    const relations = [
-      'transaction',
-      'transaction.application',
-      'transaction.application.applicationType',
-      'transaction.application.eservice',
-      'transaction.application.eservice.agency',
-      'transaction.eserviceWhitelistedUser',
-      'fileAssets',
-      'user',
-    ];
+    if (typeof identifiers[0] === 'string') {
+      queryBuilder.andWhere('activity.uuid IN (:...identifiers)', { identifiers });
+    } else {
+      queryBuilder.andWhere('activity.id IN (:...identifiers)', { identifiers });
+    }
 
-    const relationsForParentTransaction = [
-      'transaction.parent',
-      'transaction.application.eservice',
-      'transaction.application.eservice.agency',
-      'transaction.eserviceWhitelistedUser',
-      'transaction.parent.application',
-      'transaction.parent.application.applicationType',
-      'transaction.parent.activities',
-      'transaction.parent.activities.fileAssets',
-      'transaction.parent.activities.user',
-    ];
+    return await queryBuilder.getMany();
+  }
 
-    return await this.getRepository(entityManager).find({
-      relations: type !== ACTIVITY_TYPE.SEND_RECALL ? relations : relationsForParentTransaction,
-      where: {
-        ...identifierCondition,
-        type,
-      },
-    });
+  public async findRecallActivitiesDetailsRequiredForEmail(ids: number[], entityManager?: EntityManager): Promise<Activity[]> {
+    return await this.getRepository(entityManager)
+      .createQueryBuilder('activity')
+      .leftJoinAndSelect('activity.transaction', 'transaction')
+      .leftJoinAndSelect('application.eservice', 'eservice')
+      .leftJoinAndSelect('eservice.agency', 'agency')
+      .leftJoinAndSelect('transaction.eserviceWhitelistedUser', 'eserviceWhitelistedUser')
+      .leftJoinAndSelect('transaction.application', 'application')
+      .leftJoinAndSelect('application.applicationType', 'applicationType')
+      .leftJoinAndSelect('transaction.parent', 'parentTransaction')
+      .leftJoinAndSelect('parentTransaction.activities', 'parentTransactionActivities')
+      .leftJoinAndSelect('parentTransactionActivities.fileAssets', 'fileAssets')
+      .leftJoinAndSelect('parentTransactionActivities.user', 'user')
+      .where('activity.id IN (:...ids)', { ids })
+      .andWhere('activity.type = :type', { type: ACTIVITY_TYPE.SEND_RECALL })
+      .andWhere('activity.status = :status', { status: ACTIVITY_STATUS.COMPLETED })
+      .getMany();
   }
 
   public async findActivityAcknowledgeDetailsByUuidAndStatusAndTypes(

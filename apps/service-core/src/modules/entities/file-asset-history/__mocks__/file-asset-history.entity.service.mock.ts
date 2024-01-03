@@ -2,6 +2,8 @@ import { FILE_ASSET_ACTION } from '@filesg/common';
 
 import { FileAssetHistoryCreationModel } from '../../../../entities/file-asset-history';
 import { MockService } from '../../../../typings/common.mock';
+import { mockUser } from '../../activity/__mocks__/activity.entity.service.mock';
+import { mockEservice } from '../../eservice/__mocks__/eservice.entity.service.mock';
 import { FileAssetHistoryEntityService } from '../file-asset-history.entity.service';
 import { createMockFileAssetHistory } from './file-asset-history.mock';
 
@@ -25,16 +27,18 @@ export const mockFileAssetHistoryUuid2 = 'mockFileAssetHistory-uuid-2';
 export const mockTimestamp = '1696219069120';
 
 export const mockFileAssetHistoryModels: FileAssetHistoryCreationModel[] = [
-  { type: FILE_ASSET_ACTION.DOWNLOAD },
-  { type: FILE_ASSET_ACTION.DELETE },
+  { type: FILE_ASSET_ACTION.DOWNLOADED },
+  { type: FILE_ASSET_ACTION.DELETED },
 ];
 
 export const mockFileAssetHistory = createMockFileAssetHistory({
-  type: FILE_ASSET_ACTION.DOWNLOAD,
+  type: FILE_ASSET_ACTION.DOWNLOADED,
+  actionBy: { ...mockUser, eservices: [mockEservice] },
 });
 
 export const mockFileAssetHistory2 = createMockFileAssetHistory({
-  type: FILE_ASSET_ACTION.DELETE,
+  type: FILE_ASSET_ACTION.DELETED,
+  actionBy: { ...mockUser, eservices: [mockEservice] },
 });
 
 export const mockFileAssetHistoryViewed = createMockFileAssetHistory({

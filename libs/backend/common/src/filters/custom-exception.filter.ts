@@ -236,8 +236,10 @@ export class UserRoleErrorException extends FileSGBaseHttpException {
  * 2. Unathorized access to a request but without triggering frontend logout (specific to frontend)
  */
 export class ForbiddenException extends FileSGBaseHttpException {
-  constructor(componentErrorCode: COMPONENT_ERROR_CODE) {
+  constructor(componentErrorCode: COMPONENT_ERROR_CODE, internalLog?: string) {
     super(`[ForbiddenException] Request is forbidden`, HttpStatus.FORBIDDEN, componentErrorCode, EXCEPTION_ERROR_CODE.FORBIDDEN);
+    this.errorLogLevel = 'warn';
+    this.internalLog = internalLog;
   }
 }
 

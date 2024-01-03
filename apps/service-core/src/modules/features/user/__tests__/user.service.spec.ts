@@ -1,10 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { mockAgencyEntityService } from '../../../entities/agency/__mocks__/agency.entity.service.mock';
+import { AgencyEntityService } from '../../../entities/agency/agency.entity.service';
 import { mockFileAssetEntityService } from '../../../entities/file-asset/__mocks__/file-asset.entity.service.mock';
 import { FileAssetEntityService } from '../../../entities/file-asset/file-asset.entity.service';
 import { mockCitizenUserEntityService } from '../../../entities/user/__mocks__/citizen-user.entity.service.mock';
+import { mockCorporateEntityService } from '../../../entities/user/__mocks__/corporate/corporate.entity.service.mock';
 import { mockUserEntityService } from '../../../entities/user/__mocks__/user.entity.service.mock';
 import { CitizenUserEntityService } from '../../../entities/user/citizen-user.entity.service';
+import { CorporateEntityService } from '../../../entities/user/corporate/corporate.entity.service';
 import { UserEntityService } from '../../../entities/user/user.entity.service';
 import { mockFileSGConfigService } from '../../../setups/config/__mocks__/config.service.mock';
 import { FileSGConfigService } from '../../../setups/config/config.service';
@@ -22,6 +26,8 @@ describe('UserService', () => {
         { provide: CitizenUserEntityService, useValue: mockCitizenUserEntityService },
         { provide: FileSGConfigService, useValue: mockFileSGConfigService },
         { provide: FileAssetEntityService, useValue: mockFileAssetEntityService },
+        { provide: CorporateEntityService, useValue: mockCorporateEntityService },
+        { provide: AgencyEntityService, useValue: mockAgencyEntityService },
       ],
     }).compile();
 

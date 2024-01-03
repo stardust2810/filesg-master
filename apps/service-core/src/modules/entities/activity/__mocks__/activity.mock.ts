@@ -20,6 +20,7 @@ export const createMockActivity = (args: TestCreationModel<ActivityCreationModel
   activity.acknowledgedAt = args.acknowledgedAt ?? null;
   activity.acknowledgementTemplate = args.acknowledgementTemplate;
   args.isBannedFromNonSingpassVerification && (activity.isBannedFromNonSingpassVerification = args.isBannedFromNonSingpassVerification);
+  args.isNonSingpassRetrievable && (activity.isNonSingpassRetrievable = args.isNonSingpassRetrievable);
 
   return activity;
 };

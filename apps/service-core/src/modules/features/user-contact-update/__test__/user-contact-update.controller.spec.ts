@@ -1,7 +1,7 @@
 import { OTP_CHANNEL, UserContactUpdateSendOtpRequest, UserContactUpdateVerifyOtpRequest } from '@filesg/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { RequestWithSession } from '../../../../typings/common';
+import { RequestWithCitizenSession } from '../../../../typings/common';
 import { mockUserContactUpdateService } from '../__mocks__/user-contact-update.service.mock';
 import { UserContactUpdateController } from '../user-contact-update.controller';
 import { UserContactUpdateService } from '../user-contact-update.service';
@@ -12,7 +12,7 @@ const mockRequest = {
       userId: 1,
     },
   },
-} as RequestWithSession;
+} as RequestWithCitizenSession;
 
 describe('UserContactUpdateController', () => {
   let controller: UserContactUpdateController;

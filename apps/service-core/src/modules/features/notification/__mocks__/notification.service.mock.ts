@@ -10,8 +10,6 @@ import {
 
 import { MockService } from '../../../../typings/common.mock';
 import { createMockActivity } from '../../../entities/activity/__mocks__/activity.mock';
-import { createMockApplicationType } from '../../../entities/application-type/__mocks__/application-type.mock';
-import { createMockApplicationTypeNotification } from '../../../entities/application-type-notification/__mocks__/application-type-notification.mock';
 import { createMockNotificationMessageInput } from '../../../entities/notification-message-input/__mocks__/notification-message-input.mock';
 import { createMockNotificationMessageTemplate } from '../../../entities/notification-message-template/__mocks__/notification-message-template.mock';
 import { createMockTransaction } from '../../../entities/transaction/__mocks__/transaction.mock';
@@ -46,21 +44,10 @@ const mockLegacyTransaction = createMockTransaction({
   },
 });
 
-const mockApplicationType = createMockApplicationType({
-  name: 'mockName',
-  code: 'mockCode',
-});
-
-const mockSgNotifyApplicationTypeNotification = createMockApplicationTypeNotification({
-  notificationChannel: NOTIFICATION_CHANNEL.SG_NOTIFY,
-  applicationType: mockApplicationType,
-});
-
 const mockNotficationMessageTemplate = createMockNotificationMessageTemplate({
   name: 'mockTemplateName',
   type: NOTIFICATION_TEMPLATE_TYPE.ISSUANCE,
   template: ['Mock template'],
-  version: 1,
   notificationChannel: NOTIFICATION_CHANNEL.EMAIL,
 });
 

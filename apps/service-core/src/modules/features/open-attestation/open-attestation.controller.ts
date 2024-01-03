@@ -31,13 +31,6 @@ export class OpenAttestationController {
     return await this.openAttestationService.verifyOaCertificateRevocationStatus(certificateIdentifier);
   }
 
-  @Get('verify-identity-proof-location/:identityProofLocation')
-  @FileSGAuth({ auth_state: AUTH_STATE.NO_LOGGED_IN })
-  @ApiOkResponse({ type: Boolean, description: 'Verify identity proof location.' })
-  async verifyIdentityProofLocation(@Param('identityProofLocation') identityProofLocation: string) {
-    return await this.openAttestationService.verifyIdentityProofLocation(identityProofLocation);
-  }
-
   @Post('verify')
   @HttpCode(HttpStatus.OK)
   @FileSGAuth({ auth_state: AUTH_STATE.NO_LOGGED_IN })

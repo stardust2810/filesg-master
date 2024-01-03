@@ -4,13 +4,14 @@ import { StyledPageContainer, StyledPageContent, StyledPageContentWrapper } from
 
 type Props = {
   children: JSX.Element;
+  columnSize?: 6 | 8 | 12;
 };
 /**
  * This component is used for verification page and retrieval page
  * @param children
  * @returns
  */
-const PublicPageContainer = ({ children }: Props) => {
+const PublicPageContainer = ({ children, columnSize }: Props) => {
   const isSmallerThanSmallDesktop = useShouldRender(RESPONSIVE_VARIANT.SMALLER_THAN, FSG_DEVICES.SMALL_DESKTOP);
   const isSmallerThanNormalTabletLandscape = useShouldRender(RESPONSIVE_VARIANT.SMALLER_THAN, FSG_DEVICES.NORMAL_TABLET_LANDSCAPE);
 
@@ -27,7 +28,7 @@ const PublicPageContainer = ({ children }: Props) => {
   return (
     <StyledPageContentWrapper>
       <StyledPageContainer>
-        <StyledPageContent column={getContentCol()}>{children}</StyledPageContent>
+        <StyledPageContent column={columnSize ?? getContentCol()}>{children}</StyledPageContent>
       </StyledPageContainer>
     </StyledPageContentWrapper>
   );

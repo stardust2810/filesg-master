@@ -103,6 +103,23 @@ export const maskUin = (uinToMask: string) => {
   return maskString(uinToMask, 4, MaskType.UIN);
 };
 
+export const maskMobile = (mobileToMask: string) => {
+  return mobileToMask.slice(0, 3) + maskString(mobileToMask, 4, MaskType.PHONE_NUMBER).slice(3);
+};
+
+/**
+ * replace with asterisk for all except email domain, 60% of the email address prefix will be masked
+ */
+export const maskEmail = (emailToMask: string) => {
+  const prefixLength = emailToMask.indexOf('@');
+  const charsToMaskCount = Math.ceil(prefixLength * 0.6); // min 60% of chars to be masked
+  const startIndex = Math.ceil((prefixLength - charsToMaskCount) / 2);
+  // eslint-disable-next-line security/detect-non-literal-regexp
+  const regexPattern = new RegExp(`(.{${startIndex}}).{${charsToMaskCount}}(.*)`, 'i');
+
+  return emailToMask.replace(regexPattern, (_, a, b) => a + '*'.repeat(charsToMaskCount) + b);
+};
+
 export const isClassValidatorErrors = (error: any): error is ValidationError[] => {
   return Array.isArray(error) && !!error[0].property;
 };

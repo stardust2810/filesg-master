@@ -1,5 +1,5 @@
 import { ACTIVITY_TYPE, FILE_SESSION_TYPE, TRANSACTION_TYPE, USER_TYPE } from '../constants/common';
-import { DownloadFile, TransactionDetails, TransferFileUpdates } from './common';
+import { FileDownloadInfo, TransactionDetails, TransferFileUpdates } from './common';
 
 // =============================================================================
 // File Session
@@ -91,7 +91,8 @@ export interface FileDeleteSessionFilesOwner {
 export interface FileDownloadSession {
   type: FILE_SESSION_TYPE.DOWNLOAD;
   ownerUuid: string;
-  files: DownloadFile[];
+  isAgencyDownload: boolean;
+  files: FileDownloadInfo[];
 }
 
 // =============================================================================

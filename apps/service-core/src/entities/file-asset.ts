@@ -27,7 +27,6 @@ type OptionalAttributes =
   | 'issuerId'
   | 'parentId'
   | 'oaCertificateId'
-  | 'lastViewedAt';
 type OmitAttributes = 'id' | 'uuid' | 'transformDates';
 export type FileAssetCreationModel = CreationAttributes<FileAsset, OptionalAttributes, OmitAttributes>;
 export type FileAssetUpdateModel = Partial<FileAssetCreationModel>;
@@ -126,9 +125,6 @@ export class FileAsset extends TimestampableEntity {
 
   @Column({ nullable: true })
   oaCertificateId: string | null;
-
-  @Column({ type: 'datetime', nullable: true })
-  lastViewedAt: Date | null;
 
   /**
    * Typeorm stores type:date as string

@@ -7,7 +7,10 @@ export class Verify1FaNonSingpassResponse {
   accessToken: string;
 
   @ApiProperty()
-  maskedMobile: string;
+  maskedMobile?: string;
+
+  @ApiProperty()
+  maskedEmail?: string;
 }
 
 export class Send2FaOtpNonSingpassResponse extends OtpDetailsResponse {}

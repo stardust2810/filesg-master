@@ -7,7 +7,7 @@ export const Container = styled.div`
   flex-direction: column;
 `;
 
-export const TabTitleContainer = styled.ul`
+export const TabTitleContainer = styled.div`
   position: relative;
 
   display: flex;

@@ -248,7 +248,7 @@ export class DeleteEventService {
 
         toCreateFileAssetHistories.push({
           fileAssetId,
-          type: FILE_ASSET_ACTION.DELETE,
+          type: FILE_ASSET_ACTION.DELETED,
           actionById: issuerId,
           actionToId: ownerId,
         });

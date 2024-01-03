@@ -4,6 +4,8 @@ import { Route, Routes, useLocation } from 'react-router-dom';
 
 import { awsRumManager } from '../../config/aws-rum-config';
 import { WebPage } from '../../consts';
+import { TOGGLABLE_FEATURES } from '../../consts/features';
+import { useFeature } from '../../hooks/common/useFeature';
 import BrowserNotSupported from '../../pages/app/errors/templates/browser-not-supported';
 import UnexpectedError from '../../pages/app/errors/templates/unexpected-error';
 import { lazyWithRefresh } from '../../utils/common';
@@ -37,6 +39,7 @@ const Logout = lazyWithRefresh(() => import('../../pages/app/logout'));
 
 export const Router = () => {
   const location = useLocation();
+  const isCorppassEnabled = useFeature(TOGGLABLE_FEATURES.FEATURE_CORPPASS);
 
   const onErrorHandler: ErrorBoundaryPropsWithComponent['onError'] = (error) => {
     awsRumManager.getAwsRum()?.recordError(error);
@@ -74,9 +77,9 @@ export const Router = () => {
           </Route>
 
           <Route path={WebPage.MOCK_SINGPASS_AUTHCALLBACK} element={<MockAuthCallback />} />
-          <Route path={WebPage.MOCK_CORPPASS_AUTHCALLBACK} element={<MockAuthCallback isCorppass={true} />} />
+          {isCorppassEnabled && <Route path={WebPage.MOCK_CORPPASS_AUTHCALLBACK} element={<MockAuthCallback isCorppass={true} />} />}
           <Route path={WebPage.SINGPASS_AUTHCALLBACK} element={<AuthCallback />} />
-          <Route path={WebPage.CORPPASS_AUTHCALLBACK} element={<AuthCallback isCorppass={true} />} />
+          {isCorppassEnabled && <Route path={WebPage.CORPPASS_AUTHCALLBACK} element={<AuthCallback isCorppass={true} />} />}
           <Route path={WebPage.ICA_SSO_CALLBACK} element={<IcaSsoCallback />} />
 
           {/* Wildcard (Anything else) route */}

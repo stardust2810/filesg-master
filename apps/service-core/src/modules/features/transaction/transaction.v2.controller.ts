@@ -8,11 +8,11 @@ import {
   ROLE,
 } from '@filesg/common';
 import { Body, Controller, Delete, Logger, Param, Post, Req, UseInterceptors } from '@nestjs/common';
-import { ApiBody, ApiForbiddenResponse, ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { ApiBody, ApiForbiddenResponse, ApiOkResponse, ApiOperation, ApiParam, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
 import { AUTH_STATE, FileSGAuth } from '../../../common/decorators/filesg-auth.decorator';
 import { AppendTraceIdInterceptor } from '../../../common/interceptors/append-trace-id.interceptor';
-import { RequestWithSession } from '../../../typings/common';
+import { RequestWithProgrammaticSession } from '../../../typings/common';
 import { FileTransactionV2Service } from './file-transaction.v2.service';
 import { RecallTransactionService } from './recall-transaction.service';
 
@@ -43,23 +43,34 @@ export class TransactionV2Controller {
   @ApiUnauthorizedResponse({ description: ERROR_RESPONSE_DESC.UNAUTHORISED, type: ErrorResponse })
   @ApiForbiddenResponse({ description: ERROR_RESPONSE_DESC.FORBIDDEN_CLIENT_ONLY, type: ErrorResponse })
   @UseInterceptors(AppendTraceIdInterceptor)
-  async createFileTransactionForProgrammaticUser(@Req() req: RequestWithSession, @Body() body: CreateFileTransactionV2Request) {
+  async createFileTransactionForProgrammaticUser(@Req() req: RequestWithProgrammaticSession, @Body() body: CreateFileTransactionV2Request) {
     return this.fileTransactionV2Service.createFileTransaction(req.session.user.userId, body);
   }
 
   @Delete('/recall/:transactionUuid')
-  @FileSGAuth({ auth_state: AUTH_STATE.PROGRAMMATIC_LOGGED_IN, roles: [ROLE.PROGRAMMATIC_WRITE] })
+  @ApiTags('apigw', 'tech-doc:recall transaction')
+  @ApiOperation({
+    summary: 'recall transaction',
+    description: 'Empowers authorized agencies to recall a specific transaction and its associated files.',
+  })
+  @ApiParam({
+    name: 'transactionUuid',
+    type: String,
+    example: 'transaction-xxxxxxxxxxxxx-xxxxxxxxxxxxxxxx',
+    description: 'Specify the unique identifier (UUID) of the transaction that the agency wishes to recall.',
+  })
   @ApiOkResponse({
     type: RecallTransactionResponse,
     description: 'Returns the transaction uuid for the recall transaction',
   })
   @ApiUnauthorizedResponse({ description: ERROR_RESPONSE_DESC.UNAUTHORISED, type: ErrorResponse })
   @ApiForbiddenResponse({ description: ERROR_RESPONSE_DESC.FORBIDDEN_CLIENT_ONLY, type: ErrorResponse })
+  @FileSGAuth({ auth_state: AUTH_STATE.PROGRAMMATIC_LOGGED_IN, roles: [ROLE.PROGRAMMATIC_WRITE] })
   @UseInterceptors(AppendTraceIdInterceptor)
   async recallTransaction(
     @Param('transactionUuid') transactionUuid: string,
     @Body() recallTransactionRequest: RecallTransactionRequest,
-    @Req() req: RequestWithSession,
+    @Req() req: RequestWithProgrammaticSession,
   ) {
     const eserviceUserId = req.session.user.userId;
     return await this.recallTransactionService.recallTransaction(transactionUuid, eserviceUserId, recallTransactionRequest);

@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import { EntityNotFoundException } from '@filesg/backend-common';
+import { EntityNotFoundException, maskUin } from '@filesg/backend-common';
 import { COMPONENT_ERROR_CODE } from '@filesg/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
@@ -99,7 +99,7 @@ describe('UserEntityService', () => {
       mockUserEntityRepository.getRepository().findOne.mockResolvedValueOnce(null);
 
       await expect(service.retrieveUserByUin(userUin, { toThrow: true })).rejects.toThrowError(
-        new EntityNotFoundException(COMPONENT_ERROR_CODE.USER_SERVICE, User.name, 'uin', userUin),
+        new EntityNotFoundException(COMPONENT_ERROR_CODE.USER_SERVICE, User.name, 'uin', maskUin(userUin)),
       );
       expect(mockUserEntityRepository.getRepository().findOne).toBeCalledWith({ where: { uin: userUin } });
     });

@@ -1,4 +1,4 @@
-import { Metadata, stringToObjectTransformer, transformToUndefinedIfEmpty } from '@filesg/common';
+import { booleanTransformer, Metadata, stringToObjectTransformer, transformToUndefinedIfEmpty } from '@filesg/common';
 import { FileSgEncryptedFormData } from '@filesg/formsg';
 import { SQSRecord } from 'aws-lambda';
 import { Transform, Type } from 'class-transformer';
@@ -113,6 +113,9 @@ export class BatchIssuanceSidecarData {
 
   externalRefId?: string;
   deleteAt?: string;
+
+  @Transform(booleanTransformer('extended'))
+  isNonSingpassRetrievable?: boolean;
 }
 // =============================================================================
 // Typings

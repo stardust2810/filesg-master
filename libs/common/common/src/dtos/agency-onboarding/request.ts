@@ -14,6 +14,7 @@ import {
   IsOptional,
   IsString,
   Matches,
+  MaxLength,
   ValidateNested,
 } from 'class-validator';
 
@@ -148,9 +149,17 @@ export class NotificationTemplateOnboardingRequest extends BaseTemplateOnboardin
   @IsEnum(NOTIFICATION_CHANNEL)
   @ApiProperty({ enum: NOTIFICATION_CHANNEL })
   notificationChannel: NOTIFICATION_CHANNEL;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  @Transform(stringSanitizerTransformer)
+  @ApiPropertyOptional()
+  copyRecipientSubjectAffix?: string;
 }
 
-export class TemplateUpdateRequest {
+export class BaseTemplateUpdateRequest {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
@@ -162,6 +171,18 @@ export class TemplateUpdateRequest {
   @ArrayMinSize(1)
   @ApiProperty({ type: [String] })
   template: string[];
+}
+
+export class TransactionTemplateUpdateRequest extends BaseTemplateUpdateRequest {}
+
+export class NotificationTemplateUpdateRequest extends BaseTemplateUpdateRequest {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  @Transform(stringSanitizerTransformer)
+  @ApiPropertyOptional()
+  copyRecipientSubjectAffix?: string;
 }
 
 export class AgencyOnboardingEserviceRequest {
@@ -285,9 +306,9 @@ export class UpdateTransactionTemplatesRequest {
   @IsArray()
   @ArrayNotEmpty()
   @ValidateNested({ each: true })
-  @Type(() => TemplateUpdateRequest)
-  @ApiProperty({ type: [TemplateUpdateRequest] })
-  transactionTemplates: TemplateUpdateRequest[];
+  @Type(() => TransactionTemplateUpdateRequest)
+  @ApiProperty({ type: [TransactionTemplateUpdateRequest] })
+  transactionTemplates: TransactionTemplateUpdateRequest[];
 }
 
 export class AddNotificationTemplatesRequest {
@@ -313,9 +334,9 @@ export class UpdateNotificationTemplatesRequest {
   @IsArray()
   @ArrayNotEmpty()
   @ValidateNested({ each: true })
-  @Type(() => TemplateUpdateRequest)
-  @ApiProperty({ type: [TemplateUpdateRequest] })
-  notificationTemplates: TemplateUpdateRequest[];
+  @Type(() => NotificationTemplateUpdateRequest)
+  @ApiProperty({ type: [NotificationTemplateUpdateRequest] })
+  notificationTemplates: NotificationTemplateUpdateRequest[];
 }
 
 export class EserviceOnboardingRequest {

@@ -24,6 +24,10 @@ metadata:
   labels:
     app.kubernetes.io/name: db-migration
 spec:
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 3000
+    fsGroup: 2000
   automountServiceAccountToken: false
   containers:
     - command:
@@ -39,3 +43,5 @@ spec:
         requests:
           memory: 1000Mi
           cpu: 1
+      securityContext:
+        allowPrivilegeEscalation: false

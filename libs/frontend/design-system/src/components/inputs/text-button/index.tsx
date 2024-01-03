@@ -52,7 +52,14 @@ export const TextButton = ({
       style={rest['style']}
     >
       {startIcon && <Icon icon={startIcon} size="ICON_NORMAL" color={color} />}
-      <Typography asSpan={true} variant={variant} bold={bold} isEllipsis={isEllipsis} ellipsisLine={isEllipsis ? 1 : undefined}>
+      <Typography
+        asSpan={true}
+        variant={variant}
+        bold={bold}
+        isEllipsis={isEllipsis}
+        ellipsisLine={isEllipsis ? 1 : undefined}
+        textAlign="inherit"
+      >
         {label}
       </Typography>
       {endIcon && <Icon icon={endIcon} size="ICON_NORMAL" color={color} />}

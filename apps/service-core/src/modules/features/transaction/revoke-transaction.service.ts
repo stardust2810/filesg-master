@@ -343,7 +343,7 @@ export class RevokeTransactionService {
     const receiveRevokeActivityUuids: string[] = [];
     // For each receive transfer activity
     for (const receiveTransferActivity of receiveTransferActivitiesWithUserAndActiveOAFileAssets) {
-      const { recipientInfo } = receiveTransferActivity;
+      const { recipientInfo, isNonSingpassRetrievable } = receiveTransferActivity;
 
       // Create a receive revoke activity
       const receiveRevokeActivity = await this.activityEntityService.saveActivity(
@@ -353,6 +353,7 @@ export class RevokeTransactionService {
           transaction: revokeTransaction,
           user: receiveTransferActivity.user,
           recipientInfo,
+          isNonSingpassRetrievable,
         },
         entityManager,
       );

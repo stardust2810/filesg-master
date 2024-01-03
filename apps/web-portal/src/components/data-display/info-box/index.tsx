@@ -15,7 +15,7 @@ export function InfoBox({ title, children }: PropsWithChildren<Props>) {
         <Typography variant="H4" bold="FULL">
           {title}
         </Typography>
-        <img src={lightBulbImg} alt="light-bulb" />
+        <img src={lightBulbImg} width={25.91} height={28} alt="light-bulb" />
       </StyledHeader>
       <StyledBody>{children}</StyledBody>
     </StyledWrapper>

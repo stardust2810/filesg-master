@@ -4,7 +4,7 @@ import { compile } from 'handlebars';
 import { QueryFailedError } from 'typeorm';
 import { v4 as uuidV4 } from 'uuid';
 
-import { ContactVerificationOtpDetails, DB_QUERY_ERROR, MILLISECONDS, OtpDetails } from '../typings/common';
+import { DB_QUERY_ERROR, MILLISECONDS, OtpDetails } from '../typings/common';
 import { generateRandomString } from './encryption';
 
 export function generateEntityUUID(entityName: string) {
@@ -28,10 +28,11 @@ export function generateCsrfToken() {
 }
 
 export function getWhitelistedCsrfURLs() {
-  return ['/core/session', '/core/session/status', '/core/agency'];
+  // FIXME: first 3 csrf not whitelisted, review whitelist urls
+  return ['/core/session', '/core/session/status', '/core/agency', '/api/core/v1/file/generate-download-token'];
 }
 
-export function otpDataTransformer(otpDataString: string): OtpDetails | ContactVerificationOtpDetails {
+export function otpDataTransformer(otpDataString: string): OtpDetails {
   return JSON.parse(otpDataString, (key, value) => {
     switch (key as keyof OtpDetails) {
       case 'expireAt':

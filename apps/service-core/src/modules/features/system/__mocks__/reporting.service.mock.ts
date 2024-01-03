@@ -30,7 +30,7 @@ import { createMockEservice } from '../../../entities/eservice/__mocks__/eservic
 import { createMockFileAsset } from '../../../entities/file-asset/__mocks__/file-asset.mock';
 import { createMockTransaction } from '../../../entities/transaction/__mocks__/transaction.mock';
 import { createMockProgrammaticUser } from '../../../entities/user/__mocks__/user.mock';
-import { FileDownloadCount, ReportingService, USER_ACTIONS_REPORT_QUERY_CHUNK_SIZE } from '../reporting.service';
+import { GenerateFileDownloadReportResponse, ReportingService, USER_ACTIONS_REPORT_QUERY_CHUNK_SIZE } from '../reporting.service';
 
 // =============================================================================
 // Test Service
@@ -56,7 +56,7 @@ export class TestReportingService extends ReportingService {
     eserviceIds: number[],
     startDate: Date,
     endDate: Date,
-  ): Promise<{ fileDownloadReportFileName: string; fileDownloadCountMap: FileDownloadCount }> {
+  ): Promise<GenerateFileDownloadReportResponse> {
     return super.generateFileDownloadReport(agencyCode, reportDir, eserviceIds, startDate, endDate);
   }
 
@@ -121,7 +121,6 @@ export const mockReportingService: MockService<ReportingService> = {
   generateAgencyTransactionsReport: jest.fn(),
   generateFileSgStatisticsReport: jest.fn(),
   generateFileSgUserActionsReport: jest.fn(),
-  generateFileSgIssuanceReport: jest.fn(),
 };
 
 export const mockAgencyName = 'mockAgencyName';
@@ -189,6 +188,7 @@ export const mockagencyApplicationEventCountsResult = [
     downloadCount: '1',
     printSaveCount: '1',
     viewCount: '1',
+    agencyDownloadCount: '1',
   },
   {
     agency: mockAgencyName2,
@@ -196,6 +196,7 @@ export const mockagencyApplicationEventCountsResult = [
     downloadCount: '1',
     printSaveCount: '1',
     viewCount: '1',
+    agencyDownloadCount: '1',
   },
 ];
 
@@ -292,6 +293,7 @@ export const mockDocumentIssuanceStatisticsReportData = [
     printSaveCount: 1,
     revokedCount: 2,
     viewCount: 1,
+    agencyDownloadCount: 1,
   },
   {
     accessedCount: 1,
@@ -302,6 +304,7 @@ export const mockDocumentIssuanceStatisticsReportData = [
     printSaveCount: 1,
     revokedCount: 2,
     viewCount: 1,
+    agencyDownloadCount: 1,
   },
 ];
 

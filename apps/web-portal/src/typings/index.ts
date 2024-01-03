@@ -1,4 +1,4 @@
-import { EXCEPTION_ERROR_CODE, SORT_BY } from '@filesg/common';
+import { ACTIVITY_SORT_BY, EXCEPTION_ERROR_CODE, FILE_ASSET_SORT_BY } from '@filesg/common';
 import { AxiosError, AxiosResponse } from 'axios';
 import React from 'react';
 
@@ -38,13 +38,13 @@ export interface DownloadSaveFile {
 }
 
 export interface FileAssetSortOptions {
-  sortBy: SORT_BY;
+  sortBy: FILE_ASSET_SORT_BY;
   asc: boolean;
-  agencyCode?: string | null;
+  agencyCodes?: string[] | null;
 }
 
 export interface ActivitiesSortOptions {
-  sortBy: SORT_BY;
+  sortBy: ACTIVITY_SORT_BY;
   asc: boolean;
-  agencyCode?: string | null;
+  agencyCodes?: Array<string> | null;
 }

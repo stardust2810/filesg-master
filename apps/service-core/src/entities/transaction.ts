@@ -43,8 +43,8 @@ export class Transaction extends TimestampableEntity {
   @Column({ type: 'enum', enum: Object.values(TRANSACTION_TYPE) })
   type: TRANSACTION_TYPE;
 
-  @Column({ type: 'enum', enum: Object.values(TRANSACTION_CREATION_METHOD), nullable: true, default: null })
-  creationMethod: TRANSACTION_CREATION_METHOD | null;
+  @Column({ type: 'enum', enum: Object.values(TRANSACTION_CREATION_METHOD) })
+  creationMethod: TRANSACTION_CREATION_METHOD;
 
   @Column({ type: 'enum', enum: Object.values(TRANSACTION_STATUS), default: TRANSACTION_STATUS.INIT })
   status: TRANSACTION_STATUS;

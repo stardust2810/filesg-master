@@ -12,13 +12,21 @@ export const DATE_TOOLTIP_TEXT =
   'Please enter ‘00’ in the respective field(s) if your birth date and/or birth month is unknown. For e.g. 00/09/1950, 00/00/1950 etc.';
 
 //Verification error messages
-export const VERIFICATION_ATTEMPT_FAILED_TEXT = 'Verification failed. Please check your particulars and try again.';
-export const MAXIMUM_VERIFICATION_ATTEMPTS_FAILED_TEXT = [
-  'For data security, we have locked access to this transaction as you have reached the maximum number of verification attempts.',
-  'To unlock, please contact the issuing agency directly.',
+export const VERIFICATION_ATTEMPT_FAILED_TEXT = [
+  'Verification failed. Please check your particulars and try again.',
+  'If you are retrieving a document on behalf of the document recipient, please enter their details instead.',
 ];
-
+export const MAXIMUM_VERIFICATION_ATTEMPTS_FAILED_TEXT = [
+  'You have reached the limit of verification attempts.',
+  'To retrieve your documents, please contact the issuing agency directly.',
+];
+export const NON_SINGPASS_UNVERIFIABLE_TEXT = [
+  'There are no contact details associated with the Transaction ID you have provided.',
+  'Retrieving your documents without Singpass requires you to verify your identity by entering a  6-digit one-time password (OTP) sent to you, based on the contact details you provided the issuing agency.',
+  'To update your contact details for the transaction, please contact the issuing agency directly.',
+];
 export const FIN_NRIC_INPUT_IDENTIFIER = 'finNric';
+export const OTP_RETRIEVAL_METHOD = 'otpRetrievalMethod';
 export const DATE_OF_BIRTH_IDENTIFIER = 'dateOfBirth';
 export const VERIFY_BUTTON_IDENTIFIER = 'verifyButton';
 

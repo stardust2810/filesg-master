@@ -17,6 +17,7 @@ import {
   FILE_TYPE,
   NOTIFICATION_CHANNEL,
   NOTIFICATION_TEMPLATE_TYPE,
+  STATUS,
   TRANSACTION_CREATION_METHOD,
   TRANSACTION_STATUS,
   TRANSACTION_TYPE,
@@ -25,6 +26,8 @@ import {
 import { EmailDeliveryFailureTemplateArgs } from '../../../../common/email-template/email-delivery-faliure.class';
 import { FORMSG_TRANSACTION_EMAIL_TYPE } from '../../../../common/email-template/formsg-transaction-email-to-agency.class';
 import { GeneralInfoSection } from '../../../../common/email-template/formsg-transaction-email-to-agency.email-template';
+import { Activity } from '../../../../entities/activity';
+import { NotificationMessageInput } from '../../../../entities/notification-message-input';
 import { EmailNotificationOptions, FILE_ASSET_TYPE } from '../../../../typings/common';
 import { MockService } from '../../../../typings/common.mock';
 import { createMockActivity } from '../../../entities/activity/__mocks__/activity.mock';
@@ -35,8 +38,9 @@ import { createMockFileAsset } from '../../../entities/file-asset/__mocks__/file
 import { createMockNotificationMessageInput } from '../../../entities/notification-message-input/__mocks__/notification-message-input.mock';
 import { createMockNotificationMessageTemplate } from '../../../entities/notification-message-template/__mocks__/notification-message-template.mock';
 import { createMockTransaction } from '../../../entities/transaction/__mocks__/transaction.mock';
+import { createMockCitizenUser } from '../../../entities/user/__mocks__/user.mock';
 import { mockFileSGConfigService } from '../../../setups/config/__mocks__/config.service.mock';
-import { EmailService } from '../email.service';
+import { EmailService, TransactionalEmailDetails } from '../email.service';
 
 export class TestEmailService extends EmailService {
   public getFormSgTxnEmailType(messageBody: FormSgIssuanceSuccessMessage | FormSgIssuanceFailureMessage): FORMSG_TRANSACTION_EMAIL_TYPE {
@@ -48,6 +52,34 @@ export class TestEmailService extends EmailService {
     payload: FormSgIssuanceSuccessMessagePayload | FormSgIssuanceFailureMessagePayload,
   ): GeneralInfoSection {
     return super.constructFormSgTxnEmailGeneralInfoSectionArgs(emailType, payload);
+  }
+
+  public constructTransactionalEmail(
+    notificationMessageInput: NotificationMessageInput | null,
+    emailNotificationOptions: EmailNotificationOptions,
+    activity: Activity,
+  ): TransactionalEmailDetails {
+    return super.constructTransactionalEmail(notificationMessageInput, emailNotificationOptions, activity);
+  }
+
+  public async transactionalEmailHandler(
+    email: string,
+    activity: Activity,
+    notificationMessageInput: NotificationMessageInput | null,
+    emailNotificationOptions: EmailNotificationOptions,
+  ) {
+    return super.transactionalEmailHandler(email, activity, notificationMessageInput, emailNotificationOptions);
+  }
+
+  public async saveEventLogs(
+    transactionUuid: string,
+    recipientActivityUuid: string,
+    maskedUin: string,
+    email: string,
+    failSubType: string,
+    failedReason: string,
+  ) {
+    return super.saveEventLogs(transactionUuid, recipientActivityUuid, maskedUin, email, failSubType, failedReason);
   }
 }
 
@@ -99,7 +131,6 @@ export const mockReportDataInBase64 = 'dump data';
 const mockNotificationMessageTemplate = createMockNotificationMessageTemplate({
   name: 'mockTemplateName',
   template: ['mockTemplate'],
-  version: 1,
   type: NOTIFICATION_TEMPLATE_TYPE.ISSUANCE,
   notificationChannel: NOTIFICATION_CHANNEL.EMAIL,
 });
@@ -142,6 +173,8 @@ export const mockFileAsset = createMockFileAsset({
   size: 1,
 });
 
+export const mockUser = createMockCitizenUser({ status: STATUS.ACTIVE, uin: 'S3002610A' });
+
 export const mockActivity = createMockActivity({
   uuid: 'mockActivity-1',
   recipientInfo: {
@@ -152,6 +185,7 @@ export const mockActivity = createMockActivity({
   type: ACTIVITY_TYPE.RECEIVE_TRANSFER,
   transaction: mockTransaction,
   fileAssets: [mockFileAsset],
+  user: mockUser,
 });
 
 export const mockActivityWithoutEmail = createMockActivity({

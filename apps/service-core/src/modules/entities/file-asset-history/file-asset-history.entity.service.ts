@@ -52,13 +52,6 @@ export class FileAssetHistoryEntityService {
   ) {
     const { page, limit } = query;
 
-    if (!page) {
-      query.page = 1;
-    }
-    if (!limit) {
-      query.limit = 20;
-    }
-
     const [fileHistoryList, totalCount] = await this.fileAssetHistoryEntityRepository.findAndCountFileAssetHistoryByFileAssetUuidAndOwnerId(
       fileAssetUuid,
       ownerId,
@@ -83,9 +76,9 @@ export class FileAssetHistoryEntityService {
       { toThrow: false },
     );
 
-    return entry
-      ? this.fileAssetHistoryEntityRepository.updateFileAssetHistory({ id: entry.id }, { lastViewedAt })
-      : this.insertFileAssetHistory({
+    entry
+      ? await this.fileAssetHistoryEntityRepository.updateFileAssetHistory({ id: entry.id }, { lastViewedAt })
+      : await this.insertFileAssetHistory({
           type: FILE_ASSET_ACTION.VIEWED,
           actionById: userId,
           fileAssetId,

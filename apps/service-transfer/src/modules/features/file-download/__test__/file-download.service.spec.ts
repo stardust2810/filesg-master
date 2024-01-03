@@ -55,6 +55,7 @@ describe('FileDownloadService', () => {
         type: mockS3File.ContentType,
         stream: mockS3File.Body,
         fileAssetIds: [mockDownloadInfo.files[0].id],
+        name: 'testFile1',
       });
 
       // retrieving download info
@@ -80,6 +81,7 @@ describe('FileDownloadService', () => {
         type: mockS3File.ContentType,
         stream: mockReadableStream,
         fileAssetIds: [mockDownloadInfo.files[0].id],
+        name: 'testFile1',
       });
 
       jest.spyOn(mockOaDocumentService, 'obfuscateOa').mockImplementation();

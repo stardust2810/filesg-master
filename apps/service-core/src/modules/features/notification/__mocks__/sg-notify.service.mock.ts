@@ -14,8 +14,6 @@ import { MockService } from '../../../../typings/common.mock';
 import { createMockActivity } from '../../../entities/activity/__mocks__/activity.mock';
 import { createMockAgency } from '../../../entities/agency/__mocks__/agency.mock';
 import { createMockApplication } from '../../../entities/application/__mocks__/application.mock';
-import { createMockApplicationType } from '../../../entities/application-type/__mocks__/application-type.mock';
-import { createMockApplicationTypeNotification } from '../../../entities/application-type-notification/__mocks__/application-type-notification.mock';
 import { createMockEservice } from '../../../entities/eservice/__mocks__/eservice.mock';
 import { createMockNotificationMessageInput } from '../../../entities/notification-message-input/__mocks__/notification-message-input.mock';
 import { createMockNotificationMessageTemplate } from '../../../entities/notification-message-template/__mocks__/notification-message-template.mock';
@@ -59,21 +57,10 @@ export const mockTransaction = createMockTransaction({
   application: mockApplication,
 });
 
-const mockApplicationType = createMockApplicationType({
-  name: 'mockName',
-  code: 'mockCode',
-});
-
-const mockSgNotifyApplicationTypeNotification = createMockApplicationTypeNotification({
-  notificationChannel: NOTIFICATION_CHANNEL.SG_NOTIFY,
-  applicationType: mockApplicationType,
-});
-
 export const mockNotificationMessageTemplate = createMockNotificationMessageTemplate({
   name: 'mockTemplateName',
   type: NOTIFICATION_TEMPLATE_TYPE.ISSUANCE,
   template: ['Mock template'],
-  version: 1,
   externalTemplateId: 'mockExtTemplateId',
   notificationChannel: NOTIFICATION_CHANNEL.EMAIL,
 });

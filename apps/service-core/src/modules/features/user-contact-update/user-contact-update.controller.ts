@@ -9,7 +9,7 @@ import { Body, Controller, HttpCode, HttpStatus, Logger, Post, Req } from '@nest
 import { ApiBody, ApiOkResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
 import { AUTH_STATE, FileSGAuth } from '../../../common/decorators/filesg-auth.decorator';
-import { RequestWithSession } from '../../../typings/common';
+import { RequestWithCitizenSession } from '../../../typings/common';
 import { UserContactUpdateService } from './user-contact-update.service';
 
 @ApiTags('user-contact-update')
@@ -25,7 +25,7 @@ export class UserContactUpdateController {
   @ApiBody({ type: UserContactUpdateSendOtpRequest, description: 'Requests sending of OTP.' })
   @ApiOkResponse({ type: UserContactUpdateSendOtpResponse, description: 'OTP sent' })
   @ApiUnauthorizedResponse({ description: ERROR_RESPONSE_DESC.UNAUTHORISED })
-  async sendOtp(@Req() req: RequestWithSession, @Body() body: UserContactUpdateSendOtpRequest) {
+  async sendOtp(@Req() req: RequestWithCitizenSession, @Body() body: UserContactUpdateSendOtpRequest) {
     const { email, mobile } = body;
 
     if (email) {
@@ -41,7 +41,7 @@ export class UserContactUpdateController {
   @ApiBody({ type: UserContactUpdateVerifyOtpRequest, description: 'Verification of OTP.' })
   @ApiOkResponse({ description: 'OTP verified' })
   @ApiUnauthorizedResponse({ description: ERROR_RESPONSE_DESC.UNAUTHORISED })
-  async verifyOtp(@Req() req: RequestWithSession, @Body() body: UserContactUpdateVerifyOtpRequest) {
+  async verifyOtp(@Req() req: RequestWithCitizenSession, @Body() body: UserContactUpdateVerifyOtpRequest) {
     const { channel, inputOtp } = body;
     return await this.userContactUpdateService.verifyOtp(req.session.user.userId, inputOtp, channel);
   }

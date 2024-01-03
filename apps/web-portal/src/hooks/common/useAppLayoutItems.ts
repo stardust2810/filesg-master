@@ -1,13 +1,17 @@
+import { FEATURE_TOGGLE } from '@filesg/common';
 import { FSG_DEVICES, HeaderItemProps, HeaderNavItem, RESPONSIVE_VARIANT, useShouldRender } from '@filesg/design-system';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
+import { config } from '../../config/app-config';
 import { SIDEBAR_ITEMS, WebPage } from '../../consts';
+import { TOGGLABLE_FEATURES } from '../../consts/features';
 import { selectHasUnexpectedError } from '../../store/slices/app';
 import { selectNonSingpassVerified } from '../../store/slices/non-singpass-session';
 import { selectIsCorporateUser, selectIsUserLoggedIn } from '../../store/slices/session';
 import { isPathMatching, resetRedirectionPath } from '../../utils/common';
 import { useLogout } from '../queries/useLogout';
+import { useFeature } from './useFeature';
 import { useAppSelector } from './useSlice';
 
 // Auth related & error pages will use the default layout
@@ -35,6 +39,9 @@ export const useAppLayoutItems = () => {
   const isNonSingpassVerified = useAppSelector(selectNonSingpassVerified);
   const hasUnexpectedError = useAppSelector(selectHasUnexpectedError);
 
+  const isCorppassFeatureEnabled = useFeature(TOGGLABLE_FEATURES.FEATURE_CORPPASS);
+
+  const [showMockLoginModal, setShowMockLoginModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [profileMenuBtnEl, setProfileMenuBtnEl] = useState<HTMLElement>();
@@ -50,6 +57,8 @@ export const useAppLayoutItems = () => {
   const [headerUncollapsibleItems, setHeaderUncollapsibleItems] = useState<HeaderItemProps[]>([]);
 
   const [hasFooter, setHasFooter] = useState<boolean>();
+
+  const navigate = useNavigate();
 
   const { pathname } = useLocation();
 
@@ -76,8 +85,18 @@ export const useAppLayoutItems = () => {
     [showProfileMenu],
   );
   const loginHandler = useCallback(() => {
-    setShowLoginModal(true);
-  }, []);
+    if (isCorppassFeatureEnabled) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    if (config.mockAuth === FEATURE_TOGGLE.ON) {
+      setShowMockLoginModal(true);
+      return;
+    }
+
+    navigate(`${WebPage.SINGPASS_AUTHCALLBACK}?isLoginAttempt=true`);
+  }, [isCorppassFeatureEnabled, navigate]);
 
   function onProfileMenuClose() {
     setShowProfileMenu(false);
@@ -223,5 +242,7 @@ export const useAppLayoutItems = () => {
     onProfileMenuClose,
     profileMenuItems,
     showBetaBanner,
+    showMockLoginModal,
+    setShowMockLoginModal,
   };
 };

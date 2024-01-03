@@ -206,6 +206,12 @@ export class CoreEventsQueueHandlerService implements OnApplicationBootstrap, On
           break;
         }
 
+        case EVENT.AGENCY_DOWNLOADED_FILES: {
+          this.logger.log(`Processing file downloaded by agency event`);
+          await this.downloadEventService.agencyFileDownloadedHandler(messageBody);
+          break;
+        }
+
         case EVENT.FORMSG_ISSUANCE_SUCCESS: {
           this.logger.log('Processing formsg single issuance success event');
           await this.formsgEventService.formSgIssuanceHandler(messageBody);

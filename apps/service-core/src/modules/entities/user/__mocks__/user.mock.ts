@@ -29,13 +29,13 @@ export const createMockCitizenUser = (args: TestCreationModel<CitizenUserCreatio
   args.phoneNumber && (user.phoneNumber = args.phoneNumber);
   args.isOnboarded && (user.isOnboarded = args.isOnboarded);
   user.status = args.status;
-  args.role && (user.role = args.role);
   args.lastLoginAt && (user.lastLoginAt = args.lastLoginAt);
   user.ownedfileAssets = args.ownedfileAssets;
   args.issuedFileAssets && (user.issuedFileAssets = args.issuedFileAssets);
   user.activities = args.activities;
   user.transactions = args.transactions;
   user.type = USER_TYPE.CITIZEN;
+  user.role = ROLE.CITIZEN;
 
   return user;
 };

@@ -33,14 +33,14 @@ export function transformFileAssetHistoryDisplay(
       fileHistory.actionBy?.type !== USER_TYPE.CITIZEN ? fileHistory.actionBy!.eservices![0].agency!.code : fileHistory.actionBy.name!;
 
     const fileHistoryObj: FileHistory = {
-      id: fileHistory.id,
+      uuid: fileHistory.uuid,
       createdAt: fileHistory.createdAt,
       type: fileHistory.type,
       actionBy,
       actionByType: fileHistory.actionBy!.type,
     };
 
-    if (fileHistoryObj.type === FILE_ASSET_ACTION.REVOKED || fileHistoryObj.type === FILE_ASSET_ACTION.EXPIRE) {
+    if (fileHistoryObj.type === FILE_ASSET_ACTION.REVOKED || fileHistoryObj.type === FILE_ASSET_ACTION.EXPIRED) {
       fileHistoryObj.revocationType = fileHistory.fileAsset!.oaCertificate!.revocationType!;
     }
 

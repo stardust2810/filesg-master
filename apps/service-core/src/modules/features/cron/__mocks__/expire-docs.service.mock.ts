@@ -211,7 +211,6 @@ export const SINGLE_TRANSACTION_SINGLE_FILE: FileAsset[] = [
     issuerId: 3,
     parentId: null,
     oaCertificateId: MOCK_OA_CERT_UUID_1,
-    lastViewedAt: null,
     activities: [MOCK_ACTIVITY_UPLOAD_1, MOCK_ACTIVITY_SEND_TRANSFER_1],
   }),
   createMockFileAsset({
@@ -231,7 +230,6 @@ export const SINGLE_TRANSACTION_SINGLE_FILE: FileAsset[] = [
     issuerId: 3,
     parentId: null,
     oaCertificateId: MOCK_OA_CERT_UUID_1,
-    lastViewedAt: null,
     activities: [MOCK_ACTIVITY_RECEIVE_TRANSFER_1],
   }),
 ];
@@ -254,7 +252,6 @@ export const MULTIPLE_TRANSACTIONS_MULTIPLE_FILES: FileAsset[] = [
     issuerId: 3,
     parentId: null,
     oaCertificateId: MOCK_OA_CERT_UUID_1,
-    lastViewedAt: null,
     activities: [MOCK_ACTIVITY_UPLOAD_1, MOCK_ACTIVITY_SEND_TRANSFER_1],
   }),
   createMockFileAsset({
@@ -274,7 +271,6 @@ export const MULTIPLE_TRANSACTIONS_MULTIPLE_FILES: FileAsset[] = [
     issuerId: 3,
     parentId: null,
     oaCertificateId: MOCK_OA_CERT_UUID_1,
-    lastViewedAt: null,
     activities: [MOCK_ACTIVITY_RECEIVE_TRANSFER_1],
   }),
   createMockFileAsset({
@@ -294,7 +290,6 @@ export const MULTIPLE_TRANSACTIONS_MULTIPLE_FILES: FileAsset[] = [
     issuerId: 3,
     parentId: null,
     oaCertificateId: MOCK_OA_CERT_UUID_2,
-    lastViewedAt: null,
     activities: [MOCK_ACTIVITY_UPLOAD_2, MOCK_ACTIVITY_SEND_TRANSFER_2],
   }),
   createMockFileAsset({
@@ -314,7 +309,6 @@ export const MULTIPLE_TRANSACTIONS_MULTIPLE_FILES: FileAsset[] = [
     issuerId: 3,
     parentId: null,
     oaCertificateId: MOCK_OA_CERT_UUID_2,
-    lastViewedAt: null,
     activities: [MOCK_ACTIVITY_RECEIVE_TRANSFER_2],
   }),
   createMockFileAsset({
@@ -334,7 +328,6 @@ export const MULTIPLE_TRANSACTIONS_MULTIPLE_FILES: FileAsset[] = [
     issuerId: 3,
     parentId: null,
     oaCertificateId: MOCK_OA_CERT_UUID_2,
-    lastViewedAt: null,
     activities: [MOCK_ACTIVITY_RECEIVE_TRANSFER_3],
   }),
 ];

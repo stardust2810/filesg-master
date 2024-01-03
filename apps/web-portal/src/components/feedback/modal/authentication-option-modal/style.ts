@@ -15,6 +15,7 @@ export const StyledOption = styled.div`
 `;
 
 export const NonSingpassButton = styled(Button)``;
+export const CorppassButton = styled(Button)``;
 
 export const SingpassButton = styled.button`
   background-color: #cf0b15;

@@ -100,6 +100,7 @@ export enum QueryKey {
   AGENCY_REDIRECT = 'agency-redirect',
   NON_SINGPASS = 'non-singpass',
   GET_USER_DETAILS = 'get-profile-details',
+  ACTIVITY_RETRIEVAL_OPTIONS = 'activity-retrieval-options',
   VALIDATE_ACTIVITY = 'validate-activity',
   MY_INFO = 'my-info',
   VERIFY = 'verify',

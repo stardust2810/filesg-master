@@ -16,7 +16,7 @@ describe('transformViewableFileAsset', () => {
       isPasswordEncrypted: false,
       isExpired: false,
       isDeleted: false,
-      lastViewedAt: nonSingpassReceiveRevokeFileAsset.lastViewedAt,
+      lastViewedAt: nonSingpassReceiveRevokeFileAsset.histories![0].lastViewedAt,
       metadata: nonSingpassReceiveRevokeFileAsset.metadata,
       agencyName: nonSingpassReceiveRevokeFileAsset.issuer?.eservices![0].agency!.name,
       eServiceName: nonSingpassReceiveRevokeFileAsset.issuer?.eservices![0].name,

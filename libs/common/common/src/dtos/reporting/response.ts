@@ -77,7 +77,7 @@ export class ApplicationIssuanceDetailsReponse {
   transactions: TransactionIssuanceDetailsResponse[];
 }
 
-export class IssuanceReportResponse {
+export class IssuanceQueryResponse {
   @ApiProperty()
   searchValue?: string;
 

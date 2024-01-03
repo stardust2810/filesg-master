@@ -4,11 +4,12 @@ import {
   ACTIVITY_TYPE,
   CustomPropertyMap,
   DateRange,
+  FILE_ASSET_ACTION,
+  FILE_ASSET_SORT_BY,
   FILE_STATUS,
   FILE_TYPE,
   normalizeCustomPropertyMap,
   RECIPIENT_ACTIVITY_TYPES,
-  SORT_BY,
   VIEWABLE_FILE_STATUSES,
 } from '@filesg/common';
 import { Injectable } from '@nestjs/common';
@@ -28,9 +29,18 @@ import {
 } from 'typeorm';
 
 import { FILE_NOT_DELETED_BY_DATE } from '../../../consts';
-import { AllFileAssetUuidsRequestDto } from '../../../dtos/file/request';
+import {
+  AllFileAssetsFromCitizenRequestDto,
+  AllFileAssetsFromCorporateRequestDto,
+  AllFileAssetUuidsRequestDto,
+} from '../../../dtos/file/request';
 import { FileAsset, FileAssetUpdateModel } from '../../../entities/file-asset';
 import { DocumentStatisticsReportAgencyIssuedFileAssetRawQueryResult, FILE_ASSET_TYPE } from '../../../typings/common';
+import {
+  FindAndCountCorporateViewableFileAssetsInputs,
+  FindAndCountRecentFileAssetsInputs,
+  FindAndCountViewableFileAssetsInputs,
+} from './interface/file-asset.interface';
 
 @Injectable()
 export class FileAssetEntityRepository {
@@ -51,16 +61,31 @@ export class FileAssetEntityRepository {
   // Individual File Asset
   // ---------------------------------------------------------------------------
 
-  public async findFileAssetByUuidAndUserUuid(uuid: string, userUuid: string, entityManager?: EntityManager) {
-    return await this.getRepository(entityManager)
+  public async findFileAssetByUuidAndUserUuid(
+    uuid: string,
+    userUuid: string,
+    agencyCodes?: string[],
+    statuses?: FILE_STATUS[],
+    entityManager?: EntityManager,
+  ) {
+    const query = this.getRepository(entityManager)
       .createQueryBuilder('fileAsset')
       .leftJoinAndSelect('fileAsset.owner', 'owner')
       .leftJoinAndSelect('fileAsset.issuer', 'issuer')
       .leftJoinAndSelect('issuer.eservices', 'eservices')
       .leftJoinAndSelect('eservices.agency', 'agency')
       .where('fileAsset.uuid = :uuid', { uuid })
-      .andWhere('owner.uuid = :userUuid', { userUuid })
-      .getOne();
+      .andWhere('owner.uuid = :userUuid', { userUuid });
+
+    if (agencyCodes) {
+      query.andWhere('agency.code IN (:...agencyCodes)', { agencyCodes });
+    }
+
+    if (statuses) {
+      query.andWhere('fileAsset.status IN (:...statuses)', { statuses });
+    }
+
+    return await query.getOne();
   }
 
   public async findFileAssetByUuidAndUserId(uuid: string, userId: number, activityUuid?: string, entityManager?: EntityManager) {
@@ -76,10 +101,43 @@ export class FileAssetEntityRepository {
     return await query.getOne();
   }
 
+  public async findCorppassFileAssetByUuidAndUserId(
+    uuid: string,
+    userId: number,
+    activityUuid?: string,
+    agencyCodes?: string[],
+    entityManager?: EntityManager,
+  ) {
+    const query = this.getRepository(entityManager)
+      .createQueryBuilder('fileAsset')
+      .leftJoinAndSelect('fileAsset.histories', 'histories')
+      .leftJoinAndSelect('fileAsset.activities', 'activities')
+      .leftJoinAndSelect('fileAsset.owner', 'owner')
+      .leftJoinAndSelect('owner.corporate', 'corporate')
+      .leftJoinAndSelect('fileAsset.issuer', 'issuer')
+      .leftJoinAndSelect('issuer.eservices', 'eservices')
+      .leftJoinAndSelect('eservices.agency', 'agency')
+      .where('fileAsset.uuid = :uuid', { uuid })
+      .andWhere('fileAsset.ownerId = :userId', { userId })
+      .andWhere('fileAsset.status IN (:...statuses)', { statuses: ACTIVATED_FILE_STATUSES }) // Activated instead of viewable, since document page needs to show File was deleted message
+      .andWhere('activities.type IN (:...types)', { types: RECIPIENT_ACTIVITY_TYPES });
+
+    if (activityUuid) {
+      query.andWhere('activities.uuid = :activityUuid', { activityUuid });
+    }
+
+    if (agencyCodes) {
+      query.andWhere('agency.code IN (:...agencyCodes)', { agencyCodes });
+    }
+
+    return await query.getOne();
+  }
+
   public async findActivatedFileAssetByUuidAndUserId(uuid: string, userId: number, entityManager?: EntityManager) {
     const query = this.getRepository(entityManager)
       .createQueryBuilder('fileAsset')
       .leftJoinAndSelect('fileAsset.activities', 'activities')
+      .leftJoinAndSelect('fileAsset.histories', 'histories')
       .leftJoin('activities.transaction', 'transaction')
       .leftJoin('transaction.application', 'application')
       .leftJoinAndSelect('fileAsset.owner', 'owner')
@@ -90,7 +148,28 @@ export class FileAssetEntityRepository {
       .where('fileAsset.uuid = :uuid', { uuid })
       .andWhere('activities.type IN (:...types)', { types: RECIPIENT_ACTIVITY_TYPES })
       .andWhere('owner.id = :userId', { userId })
-      .andWhere('fileAsset.status IN (:...statuses)', { statuses: ACTIVATED_FILE_STATUSES });
+      .andWhere('fileAsset.status IN (:...statuses)', { statuses: ACTIVATED_FILE_STATUSES }); // Activated instead of viewable, since document page needs to show File was deleted message
+
+    return await query.getOne();
+  }
+
+  public async findAccessibleFileAssetByUuidAndUserId(uuid: string, userId: number, entityManager?: EntityManager) {
+    const query = this.getRepository(entityManager)
+      .createQueryBuilder('fileAsset')
+      .leftJoinAndSelect('fileAsset.activities', 'activities')
+      .leftJoinAndSelect('fileAsset.histories', 'histories')
+      .leftJoin('activities.transaction', 'transaction')
+      .leftJoin('transaction.application', 'application')
+      .leftJoinAndSelect('fileAsset.owner', 'owner')
+      .leftJoinAndSelect('fileAsset.issuer', 'issuer')
+      .leftJoinAndSelect('issuer.eservices', 'eservices')
+      .leftJoinAndSelect('eservices.agency', 'agency')
+      .addSelect(['transaction.uuid', 'application.externalRefId'])
+      .where('fileAsset.uuid = :uuid', { uuid })
+      .andWhere('activities.type IN (:...types)', { types: RECIPIENT_ACTIVITY_TYPES })
+      .andWhere('owner.id = :userId', { userId })
+      .andWhere('fileAsset.status IN (:...statuses)', { statuses: ACTIVATED_FILE_STATUSES })
+      .andWhere(FILE_NOT_DELETED_BY_DATE);
 
     return await query.getOne();
   }
@@ -135,6 +214,10 @@ export class FileAssetEntityRepository {
       .leftJoinAndSelect('fileAsset.issuer', 'issuer')
       .leftJoinAndSelect('issuer.eservices', 'eservices')
       .leftJoinAndSelect('eservices.agency', 'agency')
+      .leftJoinAndSelect('fileAsset.activities', 'activities')
+      .leftJoinAndSelect('activities.transaction', 'transaction')
+      .leftJoinAndSelect('transaction.application', 'application')
+      .leftJoinAndSelect('application.applicationType', 'applicationType')
       .where('fileAsset.uuid IN (:...uuids)', { uuids })
       .getMany();
   }
@@ -143,6 +226,7 @@ export class FileAssetEntityRepository {
     uuids: string[],
     userUuid: string,
     activityUuid?: string,
+    agencyCodes?: string[],
     entityManager?: EntityManager,
   ) {
     const query = this.getRepository(entityManager)
@@ -162,6 +246,10 @@ export class FileAssetEntityRepository {
       query.andWhere('activities.uuid = :activityUuid', { activityUuid });
     }
 
+    if (agencyCodes) {
+      query.andWhere('agency.code IN (:...agencyCodes)', { agencyCodes });
+    }
+
     return await query.getMany();
   }
 
@@ -174,77 +262,51 @@ export class FileAssetEntityRepository {
       .getMany();
   }
 
-  private addFallbackOrder(query: SelectQueryBuilder<FileAsset>) {
-    query.addOrderBy(`fileAsset.name`, 'ASC').addOrderBy(`fileAsset.id`, 'ASC');
-  }
+  public async findAndCountRecentViewableFileAssets(inputs: FindAndCountRecentFileAssetsInputs, entityManager?: EntityManager) {
+    const { ownerId, limit } = inputs;
 
-  public async findAndCountViewableFileAssets(
-    ownerId: number,
-    queryOptions: AllFileAssetUuidsRequestDto,
-    agencyId?: number,
-    entityManager?: EntityManager,
-  ) {
-    const { sortBy, asc, page, limit, statuses, ignoreNull, externalRefId, metadata, agencyCode } = queryOptions;
-    const fetchedNumber = (page! - 1) * limit!;
-
-    const customPropertyMap: CustomPropertyMap = {
-      lastViewedAt: {
-        path: 'histories.lastViewedAt',
-        filterOnly: true,
-        ignoreNull: ignoreNull && sortBy === SORT_BY.LAST_VIEWED_AT,
-      },
-    };
-
-    const isCustomProperty = Object.keys(customPropertyMap).includes(sortBy);
-    const propertyUsed = isCustomProperty ? customPropertyMap[sortBy].path : `fileAsset.${sortBy}`;
-
-    const query = this.getRepository(entityManager)
+    const queryBuilder = this.getRepository(entityManager)
       .createQueryBuilder('fileAsset')
+      .leftJoinAndSelect('fileAsset.owner', 'owner')
+      .leftJoinAndSelect('fileAsset.issuer', 'issuer')
+      .leftJoinAndSelect('issuer.eservices', 'eservices')
+      .leftJoinAndSelect('eservices.agency', 'agency')
+      .leftJoinAndSelect('fileAsset.histories', 'histories')
       .leftJoinAndSelect('fileAsset.activities', 'activities')
       .leftJoin('activities.transaction', 'transaction')
       .leftJoin('transaction.application', 'application')
-      .leftJoinAndSelect('fileAsset.issuer', 'issuer')
-      .leftJoinAndSelect('fileAsset.histories', 'histories')
-      .leftJoinAndSelect('fileAsset.owner', 'owner')
-      .leftJoinAndSelect('issuer.eservices', 'eservices')
-      .leftJoinAndSelect('eservices.agency', 'agency')
       .where('fileAsset.ownerId = :ownerId', { ownerId })
       .addSelect(['transaction.uuid', 'application.externalRefId'])
       .andWhere(FILE_NOT_DELETED_BY_DATE)
       .andWhere('activities.type = :type', { type: ACTIVITY_TYPE.RECEIVE_TRANSFER })
-      .andWhere('fileAsset.status IN(:...statuses)', { statuses: statuses })
-      .orderBy(propertyUsed, asc ? 'ASC' : 'DESC')
-      .skip(fetchedNumber)
+      .andWhere(`histories.type = :historyType`, { historyType: FILE_ASSET_ACTION.VIEWED })
+      .orderBy('histories.lastViewedAt', 'DESC')
       .take(limit);
 
-    this.addFallbackOrder(query);
+    this.addFallbackOrder(queryBuilder);
 
-    if (agencyId) {
-      query.andWhere('eservices.agencyId = :agencyId', { agencyId });
+    return await queryBuilder.getManyAndCount();
+  }
+
+  public async findAndCountViewableFileAssets(inputs: FindAndCountViewableFileAssetsInputs, entityManager?: EntityManager) {
+    const queryBuilder = this.constructViewableFileAssetsQueryBuilder(inputs, entityManager);
+    return await queryBuilder.getManyAndCount();
+  }
+
+  public async findAndCountCorporateViewableFileAssets(
+    inputs: FindAndCountCorporateViewableFileAssetsInputs,
+    entityManager?: EntityManager,
+  ) {
+    const queryBuilder = this.constructViewableFileAssetsQueryBuilder(inputs, entityManager);
+    queryBuilder.leftJoinAndSelect('owner.corporate', 'corporate');
+
+    const { historyActionById } = inputs;
+
+    if (historyActionById) {
+      queryBuilder.andWhere(`histories.actionById = :historyActionById`, { historyActionById });
     }
 
-    normalizeCustomPropertyMap<FileAsset>(query, customPropertyMap);
-
-    if (ignoreNull && !isCustomProperty) {
-      query.andWhere(`${propertyUsed} IS NOT NULL`);
-    }
-
-    if (externalRefId) {
-      query.andWhere(`application.externalRefId = :externalRefId`, { externalRefId });
-    }
-
-    if (metadata) {
-      for (const key in metadata) {
-        const valueToSearch = typeof metadata[key] === 'string' ? `'${metadata[key]}'` : metadata[key];
-        query.andWhere(`JSON_EXTRACT(fileAsset.metadata, '$.${key}') = ${valueToSearch}`);
-      }
-    }
-
-    if (agencyCode) {
-      query.andWhere('agency.code = :agencyCode', { agencyCode });
-    }
-
-    return await query.getManyAndCount();
+    return await queryBuilder.getManyAndCount();
   }
 
   public async findViewableFileAssetsByStatusAndUserUuid(
@@ -252,7 +314,7 @@ export class FileAssetEntityRepository {
     queryOptions: AllFileAssetUuidsRequestDto,
     entityManager?: EntityManager,
   ) {
-    const { sortBy, asc, statuses, agencyCode } = queryOptions;
+    const { sortBy, asc, statuses, agencyCodes } = queryOptions;
 
     const query = this.getRepository(entityManager)
       .createQueryBuilder('fileAsset')
@@ -265,12 +327,42 @@ export class FileAssetEntityRepository {
 
     this.addFallbackOrder(query);
 
-    if (agencyCode) {
+    if (agencyCodes) {
       query
         .leftJoinAndSelect('fileAsset.issuer', 'issuer')
         .leftJoinAndSelect('issuer.eservices', 'eservices')
         .leftJoinAndSelect('eservices.agency', 'agency')
-        .andWhere('agency.code = :agencyCode', { agencyCode });
+        .andWhere('agency.code IN (:agencyCodes)', { agencyCodes });
+    }
+
+    return await query.getMany();
+  }
+
+  public async findViewableFileAssetsByStatusAndCorporateUen(
+    corporateUen: string,
+    queryOptions: AllFileAssetUuidsRequestDto,
+    entityManager?: EntityManager,
+  ) {
+    const { sortBy, asc, statuses, agencyCodes } = queryOptions;
+
+    const query = this.getRepository(entityManager)
+      .createQueryBuilder('fileAsset')
+      .select('fileAsset.uuid')
+      .leftJoinAndSelect('fileAsset.owner', 'owner')
+      .leftJoinAndSelect('owner.corporate', 'corporate')
+      .where('corporate.uen = :corporateUen', { corporateUen })
+      .andWhere('fileAsset.status IN(:...statuses)', { statuses })
+      .andWhere(FILE_NOT_DELETED_BY_DATE)
+      .orderBy(`fileAsset.${sortBy}`, `${asc ? 'ASC' : 'DESC'}`);
+
+    this.addFallbackOrder(query);
+
+    if (agencyCodes) {
+      query
+        .leftJoinAndSelect('fileAsset.issuer', 'issuer')
+        .leftJoinAndSelect('issuer.eservices', 'eservices')
+        .leftJoinAndSelect('eservices.agency', 'agency')
+        .andWhere('agency.code IN (:agencyCodes)', { agencyCodes });
     }
 
     return await query.getMany();
@@ -429,8 +521,9 @@ export class FileAssetEntityRepository {
 
     const query = await this.getRepository(entityManager)
       .createQueryBuilder('fileAsset')
-      .select('agency.name AS agency, applicationType.name AS applicationType, COUNT(fileAsset.lastViewedAt) AS count')
+      .select('agency.name AS agency, applicationType.name AS applicationType, COUNT(histories.lastViewedAt) AS count')
       .leftJoin('fileAsset.activities', 'activities')
+      .leftJoin('fileAsset.histories', 'histories')
       .leftJoin('activities.transaction', 'transaction')
       .leftJoin('transaction.application', 'application')
       .leftJoin('application.applicationType', 'applicationType')
@@ -440,7 +533,8 @@ export class FileAssetEntityRepository {
       .addGroupBy('applicationType.name')
       .where('fileAsset.status IN (:statuses)', { statuses: ACTIVATED_FILE_STATUSES })
       .andWhere('fileAsset.type = :type', { type: FILE_ASSET_TYPE.TRANSFERRED })
-      .andWhere('activities.type = :activityType', { activityType: ACTIVITY_TYPE.RECEIVE_TRANSFER });
+      .andWhere('activities.type = :activityType', { activityType: ACTIVITY_TYPE.RECEIVE_TRANSFER })
+      .andWhere('histories.lastViewedAt IS NOT NULL');
 
     if (startDate) {
       query.andWhere({ createdAt: MoreThanOrEqual(startDate) });
@@ -453,20 +547,32 @@ export class FileAssetEntityRepository {
     return query.getRawMany<{ agency: string; applicationType: string; count: string }>();
   }
 
-  public async findAgenciesIssuingFileAssetsWithStatusesByUserId(userId: number, statuses: FILE_STATUS[], entityManager?: EntityManager) {
-    return await this.getRepository(entityManager)
+  public async findFileAssetUsingFileAssetUuidAndUserId(fileAssetUuids: string[], userId: number, eserviceUserUuid: string) {
+    return await this.getRepository()
       .createQueryBuilder('fileAsset')
-      .leftJoinAndSelect('fileAsset.issuer', 'issuer')
-      .leftJoinAndSelect('issuer.eservices', 'eservices')
-      .leftJoinAndSelect('eservices.agency', 'agency')
-      .where('fileAsset.ownerId = :userId', { userId })
-      .andWhere('fileAsset.status IN (:statuses)', { statuses })
-      .select('agency.code', 'agencyCode')
-      .addSelect('agency.name', 'agencyName')
-      .distinct(true)
-      .getRawMany<{ agencyCode: string; agencyName: string }>();
+      .leftJoin('fileAsset.activities', 'activities')
+      .leftJoin('fileAsset.issuer', 'issuer')
+      .select(['fileAsset.uuid', 'fileAsset.name', 'activities.isAcknowledgementRequired', 'activities.acknowledgedAt'])
+      .where('fileAsset.uuid IN (:...fileAssetUuids)', { fileAssetUuids })
+      .andWhere('fileAsset.status IN (:...statuses)', { statuses: VIEWABLE_FILE_STATUSES })
+      .andWhere('fileAsset.ownerId = :userId', { userId })
+      .andWhere('issuer.uuid = :eserviceUserUuid', { eserviceUserUuid })
+      .andWhere('activities.type = :type', { type: ACTIVITY_TYPE.RECEIVE_TRANSFER })
+      .getMany();
   }
 
+  public async findAgencyFileAssetByRecipientFileAssetUuidAndEserviceUserUuid(fileAssetUuids: string[], eserviceUserUuid: string) {
+    return await this.getRepository()
+      .createQueryBuilder('fileAsset')
+      .leftJoin('fileAsset.parent', 'parentFileAsset')
+      .leftJoin('fileAsset.issuer', 'issuer')
+      .leftJoin('parentFileAsset.owner', 'parentFileAssetOwner')
+      .select(['fileAsset.uuid', 'fileAsset.name', 'fileAsset.parent', 'parentFileAsset.uuid', 'parentFileAsset.name'])
+      .where('fileAsset.uuid IN (:...fileAssetUuids)', { fileAssetUuids })
+      .andWhere('fileAsset.status IN (:...statuses)', { statuses: VIEWABLE_FILE_STATUSES })
+      .andWhere('issuer.uuid = :eserviceUserUuid', { eserviceUserUuid })
+      .getMany();
+  }
   // =============================================================================
   // Update
   // =============================================================================
@@ -502,5 +608,81 @@ export class FileAssetEntityRepository {
       .where('id = :parentFileAssetId', { parentFileAssetId })
       .orWhere('parentId = :parentFileAssetId', { parentFileAssetId })
       .execute();
+  }
+
+  // ===========================================================================
+  // Private methods
+  // ===========================================================================
+  private addFallbackOrder(query: SelectQueryBuilder<FileAsset>) {
+    query.addOrderBy(`fileAsset.name`, 'ASC').addOrderBy(`fileAsset.id`, 'ASC');
+  }
+
+  private constructViewableFileAssetsQueryBuilder(
+    { ownerId, query, agencyId }: FindAndCountViewableFileAssetsInputs,
+    entityManager?: EntityManager,
+  ) {
+    const { sortBy, asc, page, limit, statuses, ignoreNull, externalRefId, metadata } = query;
+    const fetchedNumber = (page! - 1) * limit!;
+
+    const customPropertyMap: CustomPropertyMap = {
+      lastViewedAt: {
+        path: 'histories.lastViewedAt',
+        filterOnly: false,
+        ignoreNull: ignoreNull && sortBy === FILE_ASSET_SORT_BY.LAST_VIEWED_AT,
+      },
+    };
+
+    const isCustomProperty = Object.keys(customPropertyMap).includes(sortBy);
+    const propertyUsed = isCustomProperty ? customPropertyMap[sortBy].path : `fileAsset.${sortBy}`;
+
+    const queryBuilder = this.getRepository(entityManager)
+      .createQueryBuilder('fileAsset')
+      .leftJoinAndSelect('fileAsset.owner', 'owner')
+      .leftJoinAndSelect('fileAsset.issuer', 'issuer')
+      .leftJoinAndSelect('issuer.eservices', 'eservices')
+      .leftJoinAndSelect('eservices.agency', 'agency')
+      .leftJoinAndSelect('fileAsset.histories', 'histories')
+      .leftJoinAndSelect('fileAsset.activities', 'activities')
+      .leftJoin('activities.transaction', 'transaction')
+      .leftJoin('transaction.application', 'application')
+      .where('fileAsset.ownerId = :ownerId', { ownerId })
+      .addSelect(['transaction.uuid', 'application.externalRefId'])
+      .andWhere(FILE_NOT_DELETED_BY_DATE)
+      .andWhere('activities.type = :type', { type: ACTIVITY_TYPE.RECEIVE_TRANSFER })
+      .andWhere('fileAsset.status IN(:...statuses)', { statuses: statuses })
+      .orderBy(propertyUsed, asc ? 'ASC' : 'DESC')
+      .skip(fetchedNumber)
+      .take(limit);
+
+    this.addFallbackOrder(queryBuilder);
+
+    if (agencyId) {
+      queryBuilder.andWhere('eservices.agencyId = :agencyId', { agencyId });
+    }
+
+    normalizeCustomPropertyMap<FileAsset>(queryBuilder, customPropertyMap);
+
+    if (ignoreNull && !isCustomProperty) {
+      queryBuilder.andWhere(`${propertyUsed} IS NOT NULL`);
+    }
+
+    if (externalRefId) {
+      queryBuilder.andWhere(`application.externalRefId = :externalRefId`, { externalRefId });
+    }
+
+    if (metadata) {
+      for (const key in metadata) {
+        const valueToSearch = typeof metadata[key] === 'string' ? `'${metadata[key]}'` : metadata[key];
+        queryBuilder.andWhere(`JSON_EXTRACT(fileAsset.metadata, '$.${key}') = ${valueToSearch}`);
+      }
+    }
+
+    const { agencyCodes } = query as AllFileAssetsFromCitizenRequestDto | AllFileAssetsFromCorporateRequestDto;
+
+    if (agencyCodes) {
+      queryBuilder.andWhere('agency.code IN (:...agencyCodes)', { agencyCodes });
+    }
+
+    return queryBuilder;
   }
 }

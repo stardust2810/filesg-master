@@ -196,7 +196,7 @@ locals {
       value = 1
     },
     {
-      name = "CORPPASS_AGENCY_CACHE_EXPIRY_SECONDS"
+      name  = "CORPPASS_AGENCY_CACHE_EXPIRY_SECONDS"
       value = 24 * 60 * 60
     },
     // non-singpass-auth
@@ -274,7 +274,7 @@ locals {
       name  = "SINGPASS_OPENID_DISCOVERY_ENDPOINT"
       value = local.singpass_openid_discovery_url[var.env_name]
     },
-        // corppass
+    // corppass
     {
       name  = "CORPPASS_SERVICE_ID"
       value = "FSG"
@@ -294,6 +294,10 @@ locals {
     {
       name  = "CORPPASS_AUTH_URL"
       value = local.corppass_auth_url[var.env_name]
+    },
+    {
+      name  = "CORPPASS_AUTH_INFO_URL"
+      value = local.corppass_auth_info_url[var.env_name]
     },
     {
       name  = "CORPPASS_JWKS_ENDPOINT"
@@ -328,34 +332,29 @@ locals {
       name  = "MYINFO_API_ENVIRONMENT"
       value = local.myinfo_environment[var.env_name]
     },
-    //otp
+    // otp
     {
       name  = "OTP_LENGTH"
       value = 6
     },
-    // PROD = 3 mins = 3 * 60 secs = 180 secs
     {
       name  = "OTP_EXPIRY_SECONDS"
-      value = 3 * 60
+      value = 3 * 60 // 3mins
     },
-    // PROD = 1 min = 60 secs
     {
       name  = "OTP_RESEND_WAIT_SECONDS"
-      value = 60
+      value = 60 // 1min
     },
-    // PROD = 3
     {
       name  = "OTP_MAX_VALIDATION_ATTEMPT_COUNT"
       value = 3
     },
-    // PROD = 60
     {
       name  = "OTP_REDIS_RECORD_EXPIRY_BUFFER"
-      value = 60
+      value = 60 // 1min
     },
-    // PROD = 3 times
     {
-      name  = "OTP_MAX_ALLOWED_SENT_PER_CYCLE",
+      name  = "OTP_MAX_ALLOWED_SEND_COUNT",
       value = 3
     },
     {
@@ -365,6 +364,11 @@ locals {
     {
       name  = "OTP_MOCK_STRING",
       value = "123456"
+    },
+    // contact update
+    {
+      name  = "CONTACT_UPDATE_BAN_SECONDS",
+      value = 60 * 60 // 1hr
     },
     // agency-client
     {
@@ -448,15 +452,15 @@ locals {
     },
     // formsg
     {
-      name = "FORMSG_RECALL_ISSUANCE_FORM_URL"
+      name  = "FORMSG_RECALL_ISSUANCE_FORM_URL"
       value = local.formsg_recall_issuance_form_url[var.env_name]
     },
     {
-      name = "FORMSG_RECALL_ISSUANCE_ERROR_SCENARIOS_DOC_URL"
+      name  = "FORMSG_RECALL_ISSUANCE_ERROR_SCENARIOS_DOC_URL"
       value = "https://go.gov.sg/filesg-manual-issuance-list-of-possible-errors"
     },
-     {
-      name = "FORMSG_ISSUANCE_ERROR_SCENARIOS_DOC_URL"
+    {
+      name  = "FORMSG_ISSUANCE_ERROR_SCENARIOS_DOC_URL"
       value = "https://go.gov.sg/filesg-manual-issuance-list-of-possible-errors"
     }
   ]
@@ -562,7 +566,7 @@ locals {
     prd   = "https://id.singpass.gov.sg/.well-known/openid-configuration"
   }
 
-    corppass_redirect_url = {
+  corppass_redirect_url = {
     local = "https://www.dev.file.gov.sg/corppass/auth-callback"
     dev   = "https://www.dev.file.gov.sg/corppass/auth-callback"
     sit   = "https://www.sit.file.gov.sg/corppass/auth-callback"
@@ -577,7 +581,16 @@ locals {
     sit   = "https://stg-id.corppass.gov.sg/mga/sps/oauth/oauth20/authorize"
     stg   = "https://stg-id.corppass.gov.sg/mga/sps/oauth/oauth20/authorize"
     uat   = "https://stg-id.corppass.gov.sg/mga/sps/oauth/oauth20/authorize"
-    prd   = "https://id.corppass.gov.sg/auth"
+    prd   = "https://id.corppass.gov.sg/mga/sps/oauth/oauth20/authorize"
+  }
+
+  corppass_auth_info_url = {
+    local = "https://stg-id.corppass.gov.sg/authorization-info"
+    dev   = "https://stg-id.corppass.gov.sg/authorization-info"
+    sit   = "https://stg-id.corppass.gov.sg/authorization-info"
+    stg   = "https://stg-id.corppass.gov.sg/authorization-info"
+    uat   = "https://stg-id.corppass.gov.sg/authorization-info"
+    prd   = "https://id.corppass.gov.sg/authorization-info"
   }
 
   corppass_clientId = {

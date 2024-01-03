@@ -6,8 +6,11 @@ import { useNavigate } from 'react-router-dom';
 
 import { apiCoreServerClient } from '../../config/api-client';
 import { WebPage } from '../../consts';
+import { TOGGLABLE_FEATURES } from '../../consts/features';
 import { resetApp, selectSessionTimeout, updateApp } from '../../store/slices/app';
-import { initialState, selectCreatedAt, selectIsSessionTimedout, setSession } from '../../store/slices/session';
+import { initialState, selectCreatedAt, selectIsCorporateUser, selectIsSessionTimedout, setSession } from '../../store/slices/session';
+import { getRoutePath } from '../../utils/common';
+import { useFeature } from '../common/useFeature';
 import { useAppDispatch, useAppSelector } from '../common/useSlice';
 
 const LOGOUT = 'logout';
@@ -19,15 +22,20 @@ type iLogoutBroadcastMsg = {
   value: string | null;
 };
 const logoutSyncChannel: BroadcastChannel<iLogoutBroadcastMsg> = new BroadcastChannel('logout-state-sync');
+
 export const useLogout = (willNavigate = true) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const createdAt = useAppSelector(selectCreatedAt);
   const isSessionTimeout = useAppSelector(selectIsSessionTimedout);
   const sessionTimeout = useAppSelector(selectSessionTimeout);
+  const isCorporateUser = useAppSelector(selectIsCorporateUser);
+  const isCorppassEnabled = useFeature(TOGGLABLE_FEATURES.FEATURE_CORPPASS);
 
   const logout = async () => {
-    const response = await apiCoreServerClient.post<LogoutResponse>('/v1/auth/logout');
+    const medium = getRoutePath(null, isCorporateUser && isCorppassEnabled);
+    const url = `/v1/auth${medium}/logout`;
+    const response = await apiCoreServerClient.post<LogoutResponse>(url);
     return response.data;
   };
 

@@ -10,7 +10,7 @@ import {
   EserviceOnboardingRequest,
   EserviceOnboardingResponse,
   EserviceUserOnboardingResponseDetails,
-  IssuanceReportResponse,
+  IssuanceQueryResponse,
   NOTIFICATION_STATUS,
   ProgrammaticUserOnboardingResponseDetails,
   USER_TYPE,
@@ -169,13 +169,13 @@ export function transformEserviceAcknowledgementTemplateOnboardingResponse(
   };
 }
 
-export function transformGenerateIssuanceReportResponse(
+export function transformIssuanceQueryResponse(
   result: Application[],
   searchValue: string | undefined,
   agencyCode?: string,
   startDateString?: string,
   endDateString?: string,
-): IssuanceReportResponse {
+): IssuanceQueryResponse {
   if (!searchValue) {
     return {
       result: [],

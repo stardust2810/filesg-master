@@ -1,10 +1,12 @@
-import { DownloadMessage } from '@filesg/backend-common';
-import { COMPONENT_ERROR_CODE, FILE_ASSET_ACTION } from '@filesg/common';
+import { AgencyFilesDownloadMessage, DownloadMessage } from '@filesg/backend-common';
+import { AUDIT_EVENT_NAME, COMPONENT_ERROR_CODE, FILE_ASSET_ACTION } from '@filesg/common';
 import { Injectable, Logger } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 
 import { DatabaseException } from '../../../../common/filters/custom-exceptions.filter';
 import { FileAssetHistory } from '../../../../entities/file-asset-history';
+import { AgencyFilesDownloadAuditEvent } from '../../../../typings/common';
+import { AuditEventEntityService } from '../../../entities/audit-event/audit-event.entity.service';
 import { FileAssetEntityService } from '../../../entities/file-asset/file-asset.entity.service';
 import { FileAssetHistoryEntityService } from '../../../entities/file-asset-history/file-asset-history.entity.service';
 import { DatabaseTransactionService } from '../../../setups/database/db-transaction.service';
@@ -17,6 +19,7 @@ export class DownloadEventService {
     private readonly fileAssetEntityService: FileAssetEntityService,
     private readonly fileAssetHistoryEntityService: FileAssetHistoryEntityService,
     private readonly databaseTransactionService: DatabaseTransactionService,
+    private readonly auditEventEntityService: AuditEventEntityService,
   ) {}
 
   // ===========================================================================
@@ -52,9 +55,37 @@ export class DownloadEventService {
 
       // Create fileAssetHistory
       this.logger.log(`Creating download fileAssetHistory for fileAsset: ${fileAssetId}`);
-      await this.fileAssetHistoryEntityService.saveFileAssetHistory({ type: FILE_ASSET_ACTION.DOWNLOAD, fileAsset }, entityManager);
+      await this.fileAssetHistoryEntityService.saveFileAssetHistory({ type: FILE_ASSET_ACTION.DOWNLOADED, fileAsset }, entityManager);
     } catch (error) {
       throw new DatabaseException(COMPONENT_ERROR_CODE.DOWNLOAD_EVENT_SERVICE, 'creating', FileAssetHistory.name);
     }
+  }
+
+  public async agencyFileDownloadedHandler(messageBody: AgencyFilesDownloadMessage) {
+    const {
+      payload: { fileAssetIds, userUuid },
+    } = messageBody;
+
+    const fileAssetInfos = await this.fileAssetEntityService.retrieveFileAssetsByUuidsWithAgencyInfo(fileAssetIds);
+    const auditEventModels = fileAssetInfos.map((fileAssetInfo) => {
+      const { uuid: fileAssetUuid, name: fileName, issuer, ownerId, issuerId, activities } = fileAssetInfo;
+      const [{ name: eserviceName, agency }] = issuer!.eservices!;
+      const agencyFilesDownloadAuditEvent: AgencyFilesDownloadAuditEvent = {
+        fileAssetUuid,
+        fileName,
+        userUuid,
+        eservice: eserviceName,
+        isUserCopy: issuerId !== ownerId,
+        agency: agency?.name,
+        applicationType: activities![0].transaction!.application!.applicationType!.name,
+      };
+      return this.auditEventEntityService.buildAuditEventModel({
+        eventName: AUDIT_EVENT_NAME.AGENCY_FILE_DOWNLOAD,
+        subEventName: agency!.code,
+        data: agencyFilesDownloadAuditEvent,
+      });
+    });
+
+    await this.auditEventEntityService.insertAuditEvents(auditEventModels);
   }
 }

@@ -139,7 +139,7 @@ export function Footer({
 
   const GdsBranding = () => (
     <StyledGdsBrandingContainer>
-      <StyledGdsLogo src={gdsLogo} alt={GDS_LOGO_ALT} />
+      <StyledGdsLogo width={121.5} height={48} src={gdsLogo} alt={GDS_LOGO_ALT} />
       <StyledDevelopedByContainer>
         <Typography variant="SMALL" color={GDS_BRANDING_AND_COPYRIGHT_FONT_COLOR}>
           {GDS_DEVELOPED_BY}

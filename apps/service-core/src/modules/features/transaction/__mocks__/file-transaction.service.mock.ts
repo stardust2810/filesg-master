@@ -237,7 +237,7 @@ export const mockTransactionInfo: FileUploadTransactionInfo = {
       name: mockCreateFileTransactionRequest.files[0].name,
     },
   ],
-  recipients: [{ uin: mockCitizenUser.uin!, activityUuid: mockReceiveTransferActivity.uuid }],
+  recipients: [{ uin: mockCitizenUser.uin!, activityUuid: mockReceiveTransferActivity.uuid, isNonSingpassRetrievable: true }],
   transactionUuid: mockTransaction.uuid,
 };
 
@@ -506,7 +506,7 @@ export const receiveTransferActivityFileInserts: ActivityFileInsert[] = [
 ];
 
 export const mockCreateFileTransactionRecipientResponse: CreateFileTransactionRecipientResponse[] = [
-  { uin: mockExistingUsers[mockCitizenUser.id].uin, activityUuid: mockReceiveTransferActivity.uuid },
+  { uin: mockExistingUsers[mockCitizenUser.id].uin, activityUuid: mockReceiveTransferActivity.uuid, isNonSingpassRetrievable: true },
 ];
 
 // =============================================================================

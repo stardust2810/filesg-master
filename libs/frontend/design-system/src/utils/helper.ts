@@ -1,18 +1,27 @@
-import { REMOVAL_PATTERN } from '../constants';
+import { REMOVAL_PATTERN, SCROLL_LOCK_DATA_ATTRIBUTE } from '../constants';
 
 export function isSGDS(x: string) {
   return x.startsWith('sgds-icon-');
 }
 
-export function getFileNameWithoutExtensionAndLastChars(fileName: string, numberOfChars: number): string {
-  return fileName.substring(0, fileName.lastIndexOf('.') - numberOfChars);
-}
-export function getFileExtensionAndLastChars(fileName: string, numberOfChars: number): string {
-  return fileName.substring(fileName.lastIndexOf('.') - numberOfChars);
-}
+export const generateEllipsisFileNameParts = (fileName: string, numberOfChars: number): { front: string; back: string } => {
+  const extensionPeriodIndex = fileName.lastIndexOf('.');
+  const isFileNameWithoutExtension = extensionPeriodIndex === -1;
 
-export const toggleScrollLock = () => {
-  document.querySelector('html')?.classList.toggle('scroll-lock');
+  const endIndex = isFileNameWithoutExtension ? fileName.length - numberOfChars : fileName.lastIndexOf('.') - numberOfChars;
+
+  return { front: fileName.substring(0, endIndex), back: fileName.substring(endIndex) };
+};
+
+export const updateScrollLock = () => {
+  const backdropWithScrollLock = Array.from(document.querySelectorAll(`div[${SCROLL_LOCK_DATA_ATTRIBUTE}=true]`));
+
+  if (backdropWithScrollLock.length) {
+    addScrollLock();
+    return;
+  }
+
+  removeScrollLock();
 };
 
 export const addScrollLock = () => {

@@ -2,10 +2,19 @@ import { useMutation, useQueryClient } from 'react-query';
 
 import { apiCoreServerClient } from '../../config/api-client';
 import { QueryKey } from '../../consts';
+import { TOGGLABLE_FEATURES } from '../../consts/features';
+import { selectIsCorporateUser } from '../../store/slices/session';
+import { getRoutePath } from '../../utils/common';
+import { useFeature } from '../common/useFeature';
+import { useAppSelector } from '../common/useSlice';
 
 export const useUpdateFileLastViewedAt = (fileAssetUuid?: string, token?: string) => {
+  const isCorporateUser = useAppSelector(selectIsCorporateUser);
+  const isCorppassEnabled = useFeature(TOGGLABLE_FEATURES.FEATURE_CORPPASS);
+
   const updateLastViewedAt = async () => {
-    const url = `/v1/file/${token ? 'non-singpass/' : ''}update/${fileAssetUuid}/lastViewedAt`;
+    const medium = getRoutePath(token, isCorporateUser && isCorppassEnabled);
+    const url = `/v1/file${medium}/${fileAssetUuid}/lastViewedAt`;
     const config = token
       ? {
           headers: {

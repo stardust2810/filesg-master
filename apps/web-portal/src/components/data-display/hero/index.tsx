@@ -1,7 +1,7 @@
 import { FSG_DEVICES, RESPONSIVE_VARIANT, useShouldRender } from '@filesg/design-system';
+// import heroImage from 'https://www.dev.file.gov.sg/assets/images/public-landing/plp-hero.svg';
 import { useRef } from 'react';
 
-import heroImage from '../../../assets/images/public-landing/plp-hero.svg';
 import iconsBackgroundImage from '../../../assets/images/public-landing/plp-hero-background.png';
 import {
   HeroDescriptors,
@@ -26,6 +26,7 @@ export const Hero = ({ title, description, onLoad }: Props): JSX.Element => {
   const isSmallerThanSmallDesktop = useShouldRender(RESPONSIVE_VARIANT.SMALLER_THAN, FSG_DEVICES.SMALL_DESKTOP);
   const isSmallerThanNormalDesktop = useShouldRender(RESPONSIVE_VARIANT.SMALLER_THAN, FSG_DEVICES.NORMAL_DESKTOP);
 
+  // const { isImagesPreloaded } = useImagePreloader(['/assets/images/plp-hero.svg']);
   const heroRef = useRef<HTMLDivElement>(null);
 
   const onLoadHandler = () => {
@@ -71,7 +72,15 @@ export const Hero = ({ title, description, onLoad }: Props): JSX.Element => {
           </HeroDescriptors>
         </StyledDescriptionContainer>
         <StyledIllustrationWrapper column={getImageColumns()}>
-          <img onLoad={onLoadHandler} alt={HERO_ALT} src={heroImage} />
+          {
+            <img
+              width="672"
+              height="578"
+              onLoad={onLoadHandler}
+              alt={HERO_ALT}
+              src={'https://www.dev.file.gov.sg/assets/images/plp-hero.svg'}
+            />
+          }
         </StyledIllustrationWrapper>
       </StyledHeroContent>
     </StyledHero>

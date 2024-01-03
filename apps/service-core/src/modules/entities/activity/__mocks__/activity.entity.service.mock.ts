@@ -18,6 +18,7 @@ export const mockActivityEntityService: MockService<ActivityEntityService> = {
 
   // Read
   retrieveActivityByUuid: jest.fn(),
+  retrieveActivityDetailsByFilters: jest.fn(),
   retrieveActivityWithUserByUuid: jest.fn(),
   retrieveActivityWithFileAssetsByUuid: jest.fn(),
   retrieveParentActivityByTransactionUuid: jest.fn(),
@@ -26,6 +27,7 @@ export const mockActivityEntityService: MockService<ActivityEntityService> = {
   retrieveActivitiesWithUserAndFileAssetsParentByParentIdAndType: jest.fn(),
   retrieveActivitiesWithUserAndActiveOAFileAssetsByTypeAndFileAssetUuidsAndTransactionUuid: jest.fn(),
   retrieveActivitiesDetailsRequiredForEmail: jest.fn(),
+  retrieveRecallActivitiesDetailsRequiredForEmail: jest.fn(),
   retrieveCompletedActivitiesByUserId: jest.fn(),
   retrieveActivityByUuidAndStatusAndTypes: jest.fn(),
   retrieveActivityAcknowledgementDetailsByUuidAndStatusAndTypes: jest.fn(),

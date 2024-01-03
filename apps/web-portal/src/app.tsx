@@ -6,6 +6,7 @@ import AppLayout from './components/layout/app';
 import { config } from './config/app-config';
 import { useAppDispatch, useAppSelector } from './hooks/common/useSlice';
 import { useActiveAnnouncements } from './hooks/queries/useActiveAnnouncements';
+import { useFeatures } from './hooks/queries/useFeatures';
 import { useGetUserSessionDetails } from './hooks/queries/useGetUserSessionDetails';
 import { useHiddenAnnouncementIds } from './hooks/queries/useHiddenAnnouncementIds';
 import { resetApp, selectSessionTimeout, setHasUnexpectedError, updateApp } from './store/slices/app';
@@ -16,6 +17,7 @@ export const App = () => {
   const sessionTimeout = useAppSelector(selectSessionTimeout);
 
   const { data: activeAnnouncements } = useActiveAnnouncements();
+  useFeatures();
   const { hiddenAnnouncementIds, hideAnnouncement } = useHiddenAnnouncementIds();
 
   // ===========================================================================

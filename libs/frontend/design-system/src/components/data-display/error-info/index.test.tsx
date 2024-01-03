@@ -33,8 +33,9 @@ describe('ErrorInfo component', () => {
   it('should render description', () => {
     const descriptionsComponents = screen.getAllByTestId(TEST_IDS.INFO_DESCRIPTION);
 
-    expect(descriptionsComponents[0].textContent).toEqual('It might have been removed, changed its name, or is otherwise unavailable.');
-    expect(descriptionsComponents[1].textContent).toEqual('Here are some pages that might help:');
+    expect(descriptionsComponents[0].textContent).toEqual(
+      'It might have been removed, changed its name, or is otherwise unavailable.Here are some pages that might help:',
+    );
   });
 
   it('should render children', () => {

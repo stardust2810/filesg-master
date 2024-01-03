@@ -1,4 +1,4 @@
-import { FILE_STATUS, FILE_TYPE, SORT_BY } from '@filesg/common';
+import { FILE_ASSET_SORT_BY, FILE_STATUS, FILE_TYPE } from '@filesg/common';
 import {
   DATE_FORMAT_PATTERNS,
   ErrorInfo,
@@ -74,7 +74,7 @@ const ITEMS_PER_FETCH = 10;
 const ROWS_WHEN_LOADING = 8;
 
 const SortOptionDefault: FileAssetSortOptions = {
-  sortBy: SORT_BY.CREATED_AT,
+  sortBy: FILE_ASSET_SORT_BY.CREATED_AT,
   asc: false,
 };
 
@@ -117,7 +117,7 @@ function Files() {
     navigate(`..${WebPage.FILES}/${fileAssetUuid}`, { state });
   }
 
-  const handleSort = (sortType: SORT_BY) => {
+  const handleSort = (sortType: FILE_ASSET_SORT_BY) => {
     const { sortBy, asc } = sortOption;
 
     setSortOption({
@@ -171,7 +171,7 @@ function Files() {
           asc: sortOption.asc,
           page: 1,
           limit: ITEMS_PER_FETCH,
-          agencyCode: selectedValue as string | null,
+          agencyCodes: selectedValue ? [selectedValue] : null,
         }
       : undefined,
     options?.length > 0 && !isFilterInvalid,
@@ -191,7 +191,7 @@ function Files() {
       ? {
           sortBy: sortOption.sortBy,
           asc: sortOption.asc,
-          agencyCode: selectedValue as string | null,
+          agencyCodes: selectedValue ? [selectedValue] : null,
         }
       : undefined,
     options?.length > 0 && !isFilterInvalid,
@@ -298,7 +298,7 @@ function Files() {
             createdAt: formatDate(`${createdAt}`, DATE_FORMAT_PATTERNS.DATE_TIME),
             expireAt: expireAt ? formatDate(`${expireAt}`, DATE_FORMAT_PATTERNS.DATE) : '',
             deleteAt: deleteAt ? formatDate(`${deleteAt}`, DATE_FORMAT_PATTERNS.DATE) : '',
-            ownerName,
+            ownerName: ownerName ?? '-',
             size,
             isExpired,
             showToAcknowledge,

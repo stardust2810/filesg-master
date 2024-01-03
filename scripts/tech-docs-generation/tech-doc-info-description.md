@@ -4,21 +4,32 @@ FileSG REST APIs(for Government Digital Services only).
 
 # Release Notes
 
+🔖 **1.3.0 (Nov-2023)**
+
+✨ New Features:
+
+- Issuance Recall: Agencies can effectively recall issuances in case of errors or discrepancies, safeguarding data accuracy and preventing misuse.
+- File Download from Recipient: Agencies can seamlessly download files issued to recipients.
+- File Download from Own Bucket: Agencies can conveniently download files stored in their own buckets.
+
 🔖 **1.2.0 (Sep-2023)**
 
-- ✨ New Features:
-  - Introducing the capability for agencies to onboard custom agency templates.
-  - Enhancing notification options through the implementation of `v2 transaction creation`, offering support for multiple notification channels, including:
-    - Email
-    - SG Notify
+✨ New Features:
 
-🔖 **1.1.0 (May-2023)**
+- Introducing the capability for agencies to onboard custom agency templates.
+- Enhancing notification options through the implementation of `v2 transaction creation`, offering support for multiple notification channels, including:
+  - Email
+  - SG Notify
 
-- ✨ New Features:
-  - Empowering agencies with the ability to set a delete-at date for document Time-To-Live (TTL), providing greater control over document retention.
-  - Enabling agencies to determine whether certain documents require acknowledgment before viewing, enhancing security and privacy measures.
-  - Introducing the option for agencies to password-protect specific types of documents, such as PDFs, Excel files, and Zip archives, bolstering data protection.
-  - Introducing a new feature allowing agencies to update recipient particulars, which will automatically trigger the resend of relevant notifications, ensuring information accuracy and delivery efficiency.
+<details>
+  <summary><b>🔖 1.1.0 (May-2023)</b></summary>
+  ✨ New Features:
+
+- Empowering agencies with the ability to set a delete-at date for document Time-To-Live (TTL), providing greater control over document retention.
+- Enabling agencies to determine whether certain documents require acknowledgment before viewing, enhancing security and privacy measures.
+- Introducing the option for agencies to password-protect specific types of documents, such as PDFs, Excel files, and Zip archives, bolstering data protection.
+- Introducing a new feature allowing agencies to update recipient particulars, which will automatically trigger the resend of relevant notifications, ensuring information accuracy and delivery efficiency.
+</details>
 
 # Environment
 

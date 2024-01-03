@@ -437,7 +437,6 @@ export class FileTransactionService {
           documentHash: checksum,
           issuerId,
           oaCertificate,
-          lastViewedAt: null,
         });
       },
     );
@@ -530,7 +529,7 @@ export class FileTransactionService {
       });
 
       receiveTransferActivityModels.push(activity);
-      recipients.push({ uin: createRecipientRequest.uin, activityUuid: activity.uuid });
+      recipients.push({ uin: createRecipientRequest.uin, activityUuid: activity.uuid, isNonSingpassRetrievable: true });
 
       for (let i = 0; i < filesLength; i++) {
         fileAssetModels.push({

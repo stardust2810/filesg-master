@@ -54,7 +54,7 @@ import { EmailBlackListService } from '../email/email-black-list.service';
 import { RecallTransactionCSVReport } from '../transaction/recall-transaction.service';
 import { BaseNotificationService } from './notification.class';
 
-interface TransactionalEmailDetails {
+export interface TransactionalEmailDetails {
   title: string;
   content: string;
   agencyCode: string;
@@ -76,7 +76,6 @@ export class EmailService implements BaseNotificationService {
     this.emailToggleSend = this.fileSgConfigService.notificationConfig.emailToggleSend;
   }
 
-  // gd TODO: unit test
   public async sendNotification(
     activity: Activity,
     notificationMessageInput: NotificationMessageInput | null, //TODO: nullable for legacy email sending
@@ -110,7 +109,6 @@ export class EmailService implements BaseNotificationService {
     }
   }
 
-  // gd TODO: unit test
   protected constructTransactionalEmail(
     notificationMessageInput: NotificationMessageInput | null,
     emailNotificationOptions: EmailNotificationOptions,
@@ -138,7 +136,6 @@ export class EmailService implements BaseNotificationService {
     return { title, content, agencyCode };
   }
 
-  // gd TODO: unit test
   protected async transactionalEmailHandler(
     email: string,
     activity: Activity,
@@ -165,7 +162,6 @@ export class EmailService implements BaseNotificationService {
       const transactionUuid = activity.transaction!.uuid;
       const maskedUin = maskUin(activity.user!.uin!);
 
-      // gd TODO: update unit test
       if (activity.transaction?.creationMethod === TRANSACTION_CREATION_METHOD.FORMSG && activity.type === ACTIVITY_TYPE.RECEIVE_TRANSFER) {
         await this.saveEventLogs(transactionUuid, activity.uuid, maskedUin, email!, FORMSG_FAIL_CATEGORY.UNEXPECTED_ERROR, errorMessage);
       }

@@ -57,14 +57,6 @@ export const formatBytes = (bytes: number, decimals = 2) => {
 
 export const formatDate = (date: string, pattern: DATE_FORMAT_PATTERNS) => format(new Date(date), pattern);
 
-export const formatFileNameWithoutExtensionAndLastChars = (fileName: string, numberOfChars: number): string => {
-  return fileName.substring(0, fileName.lastIndexOf('.') - numberOfChars);
-};
-
-export const formatFileExtensionAndLastChars = (fileName: string, numberOfChars: number): string => {
-  return fileName.substring(fileName.lastIndexOf('.') - numberOfChars);
-};
-
 export const toDateTimeFormat = (inputDate: Date): string => {
   return formatDate(`${inputDate}`, DATE_FORMAT_PATTERNS.DATE_TIME);
 };
@@ -149,4 +141,16 @@ export function openLinkInNewTab(link: string) {
     */
   // eslint-disable-next-line security/detect-non-literal-fs-filename
   window.open(link, '_blank', 'noopener,noreferrer');
+}
+
+export function getRoutePath(token?: unknown, isCorporateUser?: boolean): string {
+  if (token) {
+    return '/non-singpass';
+  }
+
+  if (isCorporateUser) {
+    return '/corppass';
+  }
+
+  return '';
 }

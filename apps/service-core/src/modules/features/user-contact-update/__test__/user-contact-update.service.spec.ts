@@ -1,15 +1,16 @@
-import { OTP_CHANNEL, OTP_TYPE, STATUS } from '@filesg/common';
+import { OTP_CHANNEL, OTP_TYPE } from '@filesg/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import add from 'date-fns/add';
 
 import {
   ContactUpdateBanException,
   DuplicateEmailException,
   SameEmailUpdateException,
-  UnsupportedUserException,
 } from '../../../../common/filters/custom-exceptions.filter';
-import { mockUserEntityService } from '../../../entities/user/__mocks__/user.entity.service.mock';
-import { createMockProgrammaticUser } from '../../../entities/user/__mocks__/user.mock';
-import { UserEntityService } from '../../../entities/user/user.entity.service';
+import { mockCitizenUserEntityService } from '../../../entities/user/__mocks__/citizen-user.entity.service.mock';
+import { CitizenUserEntityService } from '../../../entities/user/citizen-user.entity.service';
+import { mockFileSGConfigService } from '../../../setups/config/__mocks__/config.service.mock';
+import { FileSGConfigService } from '../../../setups/config/config.service';
 import { mockOtpService } from '../../otp/__mocks__/otp.service.mock';
 import { OtpService } from '../../otp/otp.service';
 import { mockUserService } from '../../user/__mocks__/user.service.mock';
@@ -25,8 +26,9 @@ describe('UserContactUpdateService', () => {
       providers: [
         UserContactUpdateService,
         { provide: UserService, useValue: mockUserService },
-        { provide: UserEntityService, useValue: mockUserEntityService },
+        { provide: CitizenUserEntityService, useValue: mockCitizenUserEntityService },
         { provide: OtpService, useValue: mockOtpService },
+        { provide: FileSGConfigService, useValue: mockFileSGConfigService },
       ],
     }).compile();
 
@@ -49,7 +51,7 @@ describe('UserContactUpdateService', () => {
         hasSentOtp: true,
       };
 
-      mockUserEntityService.retrieveUserById.mockResolvedValueOnce(mockCitizenUser);
+      mockCitizenUserEntityService.retrieveCitizenUserById.mockResolvedValueOnce(mockCitizenUser);
       mockOtpService.generateOtp.mockResolvedValueOnce(mockGenerateOtpResult);
       mockUserService.checkDuplicateEmail.mockResolvedValueOnce({ isDuplicate: mockCitizenUser.email === mockContactToBeUpdated });
 
@@ -68,7 +70,7 @@ describe('UserContactUpdateService', () => {
     });
 
     it('should throw SameEmailUpdateException when email to be updated is same as user current email', async () => {
-      mockUserEntityService.retrieveUserById.mockResolvedValueOnce(mockCitizenUser);
+      mockCitizenUserEntityService.retrieveCitizenUserById.mockResolvedValueOnce(mockCitizenUser);
 
       await expect(service.sendOtp(mockCitizenUser.id, mockCitizenUser.email!, OTP_CHANNEL.EMAIL)).rejects.toThrowError(
         SameEmailUpdateException,
@@ -76,7 +78,7 @@ describe('UserContactUpdateService', () => {
     });
 
     it('should throw DuplicateEmailException when email to be updated is alredy used by other user', async () => {
-      mockUserEntityService.retrieveUserById.mockResolvedValueOnce(mockCitizenUser);
+      mockCitizenUserEntityService.retrieveCitizenUserById.mockResolvedValueOnce(mockCitizenUser);
       mockUserService.checkDuplicateEmail.mockResolvedValueOnce({ isDuplicate: true });
 
       await expect(service.sendOtp(mockCitizenUser.id, 'new-email@gmail.com', OTP_CHANNEL.EMAIL)).rejects.toThrowError(
@@ -85,8 +87,8 @@ describe('UserContactUpdateService', () => {
     });
 
     it('should throw ContactUpdateBanException when user is banned from any further contact update', async () => {
-      const mockBannedCitizenUser = { ...mockCitizenUser, isBannedFromContactUpdate: true };
-      mockUserEntityService.retrieveUserById.mockResolvedValueOnce(mockBannedCitizenUser);
+      const mockBannedCitizenUser = { ...mockCitizenUser, contactUpdateBannedUntil: new Date('2050-01-01') };
+      mockCitizenUserEntityService.retrieveCitizenUserById.mockResolvedValueOnce(mockBannedCitizenUser);
       mockUserService.checkDuplicateEmail.mockResolvedValueOnce({ isDuplicate: false });
 
       await expect(service.sendOtp(mockCitizenUser.id, 'new-email@gmail.com', OTP_CHANNEL.EMAIL)).rejects.toThrowError(
@@ -100,13 +102,13 @@ describe('UserContactUpdateService', () => {
       const inputOtp = '123456';
       const channelType = OTP_CHANNEL.EMAIL;
 
-      mockUserEntityService.retrieveUserById.mockResolvedValueOnce(mockCitizenUser);
+      mockCitizenUserEntityService.retrieveCitizenUserById.mockResolvedValueOnce(mockCitizenUser);
       mockOtpService.verifyOtp.mockResolvedValueOnce({ hasReachedBothMaxResendAndVerify: false, otpDetails: mockRedisOtpDetails });
 
       await service.verifyOtp(mockCitizenUser.id, inputOtp, channelType);
 
       expect(mockOtpService.verifyOtp).toBeCalledWith(mockCitizenUser.uuid, inputOtp, OTP_TYPE.CONTACT_VERIFICATION, channelType);
-      expect(mockUserEntityService.updateUserById).toBeCalledWith(mockCitizenUser.id, { email: mockRedisOtpDetails.contact });
+      expect(mockCitizenUserEntityService.updateCitizenUserById).toBeCalledWith(mockCitizenUser.id, { email: mockRedisOtpDetails.contact });
       expect(mockOtpService.deleteOtpRecord).toBeCalledWith(mockCitizenUser.uuid, OTP_TYPE.CONTACT_VERIFICATION, channelType);
     });
 
@@ -116,7 +118,7 @@ describe('UserContactUpdateService', () => {
       const mockMobileToBeUpdated = '+6588881234';
 
       const mockRedisOtpDetailsWithMobileContact = { ...mockRedisOtpDetails, contact: mockMobileToBeUpdated };
-      mockUserEntityService.retrieveUserById.mockResolvedValueOnce(mockCitizenUser);
+      mockCitizenUserEntityService.retrieveCitizenUserById.mockResolvedValueOnce(mockCitizenUser);
       mockOtpService.verifyOtp.mockResolvedValueOnce({
         hasReachedBothMaxResendAndVerify: false,
         otpDetails: mockRedisOtpDetailsWithMobileContact,
@@ -125,43 +127,36 @@ describe('UserContactUpdateService', () => {
       await service.verifyOtp(mockCitizenUser.id, inputOtp, channelType);
 
       expect(mockOtpService.verifyOtp).toBeCalledWith(mockCitizenUser.uuid, inputOtp, OTP_TYPE.CONTACT_VERIFICATION, channelType);
-      expect(mockUserEntityService.updateUserById).toBeCalledWith(mockCitizenUser.id, {
+      expect(mockCitizenUserEntityService.updateCitizenUserById).toBeCalledWith(mockCitizenUser.id, {
         phoneNumber: mockRedisOtpDetailsWithMobileContact.contact,
       });
       expect(mockOtpService.deleteOtpRecord).toBeCalledWith(mockCitizenUser.uuid, OTP_TYPE.CONTACT_VERIFICATION, channelType);
     });
 
     it('should verify, and update the user isBannedFromContactUpdate column to true when the otp verification failed and hit configured limits', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date());
+
       const inputOtp = '123456';
       const channelType = OTP_CHANNEL.EMAIL;
+      const { contactUpdateBanSeconds } = mockFileSGConfigService.otpConfig;
 
-      mockUserEntityService.retrieveUserById.mockResolvedValueOnce(mockCitizenUser);
+      mockCitizenUserEntityService.retrieveCitizenUserById.mockResolvedValueOnce(mockCitizenUser);
       mockOtpService.verifyOtp.mockResolvedValueOnce({ hasReachedBothMaxResendAndVerify: true });
 
       await expect(service.verifyOtp(mockCitizenUser.id, inputOtp, channelType)).rejects.toThrowError(ContactUpdateBanException);
-      expect(mockUserEntityService.updateUserById).toBeCalledWith(mockCitizenUser.id, { isBannedFromContactUpdate: true });
-    });
-
-    it('should throw UnsupportedUserException when user retrieved is of type programmatic', async () => {
-      const inputOtp = '123456';
-      const channelType = OTP_CHANNEL.EMAIL;
-      const mockInvalidUser = createMockProgrammaticUser({
-        id: 1,
-        uuid: 'mockProgrammaticUser-uuid-1',
-        status: STATUS.ACTIVE,
-        clientId: 'clientId-1',
-        clientSecret: 'secret',
+      expect(mockCitizenUserEntityService.updateCitizenUserById).toBeCalledWith(mockCitizenUser.id, {
+        contactUpdateBannedUntil: add(new Date(), { seconds: contactUpdateBanSeconds }),
       });
 
-      mockUserEntityService.retrieveUserById.mockResolvedValueOnce(mockInvalidUser);
-      await expect(service.verifyOtp(mockCitizenUser.id, inputOtp, channelType)).rejects.toThrowError(UnsupportedUserException);
+      jest.useRealTimers();
     });
 
     it('should throw ContactUpdateBanException when user is banned from any further contact update', async () => {
       const inputOtp = '123456';
       const channelType = OTP_CHANNEL.EMAIL;
-      const mockBannedCitizenUser = { ...mockCitizenUser, isBannedFromContactUpdate: true };
-      mockUserEntityService.retrieveUserById.mockResolvedValueOnce(mockBannedCitizenUser);
+      const mockBannedCitizenUser = { ...mockCitizenUser, contactUpdateBannedUntil: new Date('2050-01-01') };
+      mockCitizenUserEntityService.retrieveCitizenUserById.mockResolvedValueOnce(mockBannedCitizenUser);
 
       await expect(service.verifyOtp(mockCitizenUser.id, inputOtp, channelType)).rejects.toThrowError(ContactUpdateBanException);
     });

@@ -48,5 +48,5 @@ export function AccessDetailsModal({ accessibleAgencies, onClose }: Props) {
     </>
   );
 
-  return <InformationModal title="Your Access Details" information={message} onClose={onClose} />;
+  return <InformationModal title="Your Access Details" information={message} onClose={onClose} onRouteChange={onClose} />;
 }

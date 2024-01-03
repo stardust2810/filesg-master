@@ -107,7 +107,7 @@ describe('DeleteEventService', () => {
           },
           {
             fileAssetId: ONLY_OA_FILE_ASSETS[0].id,
-            type: FILE_ASSET_ACTION.DELETE,
+            type: FILE_ASSET_ACTION.DELETED,
             actionById: ONLY_OA_FILE_ASSETS[0].issuerId,
             actionToId: ONLY_OA_FILE_ASSETS[0].ownerId,
           },
@@ -119,7 +119,7 @@ describe('DeleteEventService', () => {
           },
           {
             fileAssetId: ONLY_OA_FILE_ASSETS[1].id,
-            type: FILE_ASSET_ACTION.DELETE,
+            type: FILE_ASSET_ACTION.DELETED,
             actionById: ONLY_OA_FILE_ASSETS[1].issuerId,
             actionToId: ONLY_OA_FILE_ASSETS[1].ownerId,
           },
@@ -140,13 +140,13 @@ describe('DeleteEventService', () => {
         toCreateFileAssetHistories: [
           {
             fileAssetId: ONLY_PDF_FILE_ASSETS[0].id,
-            type: FILE_ASSET_ACTION.DELETE,
+            type: FILE_ASSET_ACTION.DELETED,
             actionById: ONLY_PDF_FILE_ASSETS[0].issuerId,
             actionToId: ONLY_PDF_FILE_ASSETS[0].ownerId,
           },
           {
             fileAssetId: ONLY_PDF_FILE_ASSETS[1].id,
-            type: FILE_ASSET_ACTION.DELETE,
+            type: FILE_ASSET_ACTION.DELETED,
             actionById: ONLY_PDF_FILE_ASSETS[1].issuerId,
             actionToId: ONLY_PDF_FILE_ASSETS[1].ownerId,
           },
@@ -180,13 +180,13 @@ describe('DeleteEventService', () => {
           },
           {
             fileAssetId: OA_AND_PDF_FILE_ASSETS[0].id,
-            type: FILE_ASSET_ACTION.DELETE,
+            type: FILE_ASSET_ACTION.DELETED,
             actionById: OA_AND_PDF_FILE_ASSETS[0].issuerId,
             actionToId: OA_AND_PDF_FILE_ASSETS[0].ownerId,
           },
           {
             fileAssetId: OA_AND_PDF_FILE_ASSETS[2].id,
-            type: FILE_ASSET_ACTION.DELETE,
+            type: FILE_ASSET_ACTION.DELETED,
             actionById: OA_AND_PDF_FILE_ASSETS[2].issuerId,
             actionToId: OA_AND_PDF_FILE_ASSETS[2].ownerId,
           },
@@ -198,13 +198,13 @@ describe('DeleteEventService', () => {
           },
           {
             fileAssetId: OA_AND_PDF_FILE_ASSETS[1].id,
-            type: FILE_ASSET_ACTION.DELETE,
+            type: FILE_ASSET_ACTION.DELETED,
             actionById: OA_AND_PDF_FILE_ASSETS[1].issuerId,
             actionToId: OA_AND_PDF_FILE_ASSETS[1].ownerId,
           },
           {
             fileAssetId: OA_AND_PDF_FILE_ASSETS[3].id,
-            type: FILE_ASSET_ACTION.DELETE,
+            type: FILE_ASSET_ACTION.DELETED,
             actionById: OA_AND_PDF_FILE_ASSETS[3].issuerId,
             actionToId: OA_AND_PDF_FILE_ASSETS[3].ownerId,
           },
@@ -234,13 +234,13 @@ describe('DeleteEventService', () => {
         toCreateFileAssetHistories: [
           {
             fileAssetId: ONLY_PDF_FILE_ASSETS[0].id,
-            type: FILE_ASSET_ACTION.DELETE,
+            type: FILE_ASSET_ACTION.DELETED,
             actionById: ONLY_PDF_FILE_ASSETS[0].issuerId,
             actionToId: ONLY_PDF_FILE_ASSETS[0].ownerId,
           },
           {
             fileAssetId: ONLY_PDF_FILE_ASSETS[1].id,
-            type: FILE_ASSET_ACTION.DELETE,
+            type: FILE_ASSET_ACTION.DELETED,
             actionById: ONLY_PDF_FILE_ASSETS[1].issuerId,
             actionToId: ONLY_PDF_FILE_ASSETS[1].ownerId,
           },
@@ -252,7 +252,7 @@ describe('DeleteEventService', () => {
           },
           {
             fileAssetId: ONLY_OA_FILE_ASSETS[0].id,
-            type: FILE_ASSET_ACTION.DELETE,
+            type: FILE_ASSET_ACTION.DELETED,
             actionById: ONLY_OA_FILE_ASSETS[0].issuerId,
             actionToId: ONLY_OA_FILE_ASSETS[0].ownerId,
           },
@@ -264,7 +264,7 @@ describe('DeleteEventService', () => {
           },
           {
             fileAssetId: ONLY_OA_FILE_ASSETS[1].id,
-            type: FILE_ASSET_ACTION.DELETE,
+            type: FILE_ASSET_ACTION.DELETED,
             actionById: ONLY_OA_FILE_ASSETS[1].issuerId,
             actionToId: ONLY_OA_FILE_ASSETS[1].ownerId,
           },

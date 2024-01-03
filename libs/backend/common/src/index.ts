@@ -15,6 +15,7 @@ export * from './decorators/performance-profiler.decorator';
 // =============================================================================
 // Dtos
 // =============================================================================
+export * from './dtos/file/request';
 export * from './dtos/formsg-transaction/request';
 export * from './dtos/reporting/request';
 

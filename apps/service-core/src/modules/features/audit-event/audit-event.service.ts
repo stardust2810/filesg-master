@@ -4,21 +4,23 @@ import { Injectable, Logger } from '@nestjs/common';
 import { DatabaseException } from '../../../common/filters/custom-exceptions.filter';
 import { AuditEvent, AuditEventCreationModel } from '../../../entities/audit-event';
 import {
-  FileSGSession,
+  FileSGCitizenSession,
+  FileSGCorporateUserSession,
+  UserCorporateSessionAuditEventData,
   UserNonSsoSessionAuditEventData,
   UserSessionAuditEventData,
   UserSsoSessionAuditEventData,
 } from '../../../typings/common';
 import { AuditEventEntityService } from '../../entities/audit-event/audit-event.entity.service';
-import { FileAssetEntityService } from '../../entities/file-asset/file-asset.entity.service';
 import { DatabaseTransactionService } from '../../setups/database/db-transaction.service';
+import { AuditFileAssetStrategyFactory } from './factory/audit-file-asset-retrieval.factory';
 
 @Injectable()
 export class AuditEventService {
   private readonly logger = new Logger(AuditEventService.name);
 
   constructor(
-    private readonly fileAssetEntityService: FileAssetEntityService,
+    private readonly auditFileAssetStrategyFactory: AuditFileAssetStrategyFactory,
     private readonly auditEventEntityService: AuditEventEntityService,
     private readonly databaseTransactionService: DatabaseTransactionService,
   ) {}
@@ -27,14 +29,15 @@ export class AuditEventService {
     eventName: AUDIT_EVENT_NAME,
     fileAssetUuids: string[],
     userSessionAuditEventData: UserSessionAuditEventData,
-    session?: FileSGSession,
+    session?: FileSGCitizenSession | FileSGCorporateUserSession,
   ) {
-    const { userId, hasPerformedDocumentAction, sessionId, authType, ssoEservice } = userSessionAuditEventData;
-    const fileAssets = await this.fileAssetEntityService.retrieveActivatedFileAssetsWithApplicationTypeByUuidsAndUserId(
-      fileAssetUuids,
-      userId,
-    );
+    const { userId, hasPerformedDocumentAction, sessionId, authType, ssoEservice, corporateId } = userSessionAuditEventData;
+    const strategy = await this.auditFileAssetStrategyFactory.getStrategy(authType);
 
+    const fileAssets = await strategy.retrieveActivatedFileAssetsWithApplicationTypeByUuidsAndUserId(fileAssetUuids, userId, session);
+
+    // intentionally retuning and logging instead of throwing error so that if able to find any file asset based on the uuids
+    // just create audit event for it (best effort)
     if (!fileAssets || fileAssets.length === 0) {
       this.logger.warn(`[userFilesAuditEvent] Not logging as file not found.`);
       return;
@@ -46,17 +49,17 @@ export class AuditEventService {
     try {
       if (!hasPerformedDocumentAction) {
         await this.auditEventEntityService.updateAuditEventBySubEventName(sessionId, { hasPerformedDocumentAction: true }, entityManager);
-
         session && (session.user.hasPerformedDocumentAction = true);
       }
 
       // Type casted as hasPerformedDocumentAction isn't include in UserFileAuditEventData, but typescript is unable to match the disconstructed authType/ssoEservice typing
-      const baseUserSessionAuditEventData = {
+      const baseUserSessionAuditEventData = await strategy.buildBaseUserSessionAuditEventData({
         sessionId,
         userId,
         authType,
         ssoEservice,
-      } as UserSsoSessionAuditEventData | UserNonSsoSessionAuditEventData;
+        corporateId,
+      } as UserSsoSessionAuditEventData | UserNonSsoSessionAuditEventData | UserCorporateSessionAuditEventData);
 
       const userFilesAuditEventCreationModels: AuditEventCreationModel[] = fileAssets.map((fileAsset) => {
         const eservice = fileAsset.issuer!.eservices![0]!;

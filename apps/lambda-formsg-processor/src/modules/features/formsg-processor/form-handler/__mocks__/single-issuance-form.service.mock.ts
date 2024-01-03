@@ -488,6 +488,7 @@ export const mockCreateTransactionResponse: CreateFormSgFileTransactionResponse 
     {
       uin: mockFirstRecipientUin,
       activityUuid: mockFirstRecipientActivityUuid,
+      isNonSingpassRetrievable: false,
     },
   ],
   notificationChannels: [NOTIFICATION_CHANNEL.EMAIL],

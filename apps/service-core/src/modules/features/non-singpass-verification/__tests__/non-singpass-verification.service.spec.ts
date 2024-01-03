@@ -5,6 +5,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { add } from 'date-fns';
 
 import {
+  NonSingpassRetrievalException,
   NonSingpassVerificationBanException,
   NonSingpassVerificationInvalidCredentialException,
 } from '../../../../common/filters/custom-exceptions.filter';
@@ -46,6 +47,7 @@ const mockReceiveTransferActivity = createMockActivity({
   status: ACTIVITY_STATUS.COMPLETED,
   user: mockActivityOwner,
   recipientInfo: mockRecipientInfo,
+  isNonSingpassRetrievable: true,
 });
 
 const mockActivityWithoutMobileInRecipientInfo = {
@@ -54,6 +56,14 @@ const mockActivityWithoutMobileInRecipientInfo = {
     name: 'The Rock',
     dob: '1995-08-18',
     email: 'rockMePls@gmail.com',
+  },
+};
+
+const mockActivityWithoutMobileAndEmailInRecipientInfo = {
+  ...mockReceiveTransferActivity,
+  recipientInfo: {
+    name: 'The Rock',
+    dob: '1995-08-18',
   },
 };
 
@@ -71,7 +81,7 @@ const mockRedisOtpDetails: OtpDetails = {
   verificationAttemptCount: 0,
   expireAt: add(currentTime, { seconds: otpExpirySeconds }),
   allowResendAt: add(currentTime, { seconds: resendWaitSeconds }),
-  totalOTPSentPerCycleCount: 1,
+  otpSentCount: 1,
 };
 
 describe('NonSingpassVerificationService', () => {
@@ -101,7 +111,7 @@ describe('NonSingpassVerificationService', () => {
       jest.clearAllMocks();
     });
 
-    it('should return jwt access token with masked mobile number', async () => {
+    it('should return jwt access token with masked mobile number and email', async () => {
       mockActivityEntityService.retrieveActivityWithUserByUuid.mockResolvedValueOnce(mockReceiveTransferActivity);
       mockAuthService.generateJWT.mockResolvedValue('mockJwt');
 
@@ -109,7 +119,7 @@ describe('NonSingpassVerificationService', () => {
       expect(mockActivityEntityService.retrieveActivityWithUserByUuid).toBeCalledTimes(1);
       expect(mockActivityEntityService.updateActivityRecipientInfo).toBeCalledTimes(1);
       expect(mockAuthService.generateJWT).toBeCalledTimes(1);
-      expect(response).toEqual({ accessToken: 'mockJwt', maskedMobile: '+65****5678' });
+      expect(response).toEqual({ accessToken: 'mockJwt', maskedMobile: '+65****5678', maskedEmail: 'ro******s@gmail.com' });
     });
 
     it('should throw NonSingpassVerificationInvalidCredentialException when activity does not exist OR is not of type receive transfer OR of status completed OR has recipientInfo', async () => {
@@ -120,8 +130,8 @@ describe('NonSingpassVerificationService', () => {
       );
     });
 
-    it('should throw NonSingpassVerificationInvalidCredentialException when activity recipientInfo doesnt have mobile', async () => {
-      mockActivityEntityService.retrieveActivityWithUserByUuid.mockResolvedValueOnce(mockActivityWithoutMobileInRecipientInfo);
+    it('should throw NonSingpassVerificationInvalidCredentialException when activity recipientInfo doesnt have both mobile and email', async () => {
+      mockActivityEntityService.retrieveActivityWithUserByUuid.mockResolvedValueOnce(mockActivityWithoutMobileAndEmailInRecipientInfo);
 
       await expect(service.verify1Fa(mockActivityUuid, 'S1111111', '1995-08-18')).rejects.toThrowError(
         NonSingpassVerificationInvalidCredentialException,
@@ -148,10 +158,18 @@ describe('NonSingpassVerificationService', () => {
     it('should throw NonSingpassVerificationBanException when attempts is more than configured', async () => {
       const { max1FaVerificationAttemptCount } = mockFileSGConfigService.nonSingpassAuthConfig;
       mockReceiveTransferActivity.recipientInfo!.failedAttempts = max1FaVerificationAttemptCount;
+      mockReceiveTransferActivity.isNonSingpassRetrievable = true;
 
       mockActivityEntityService.retrieveActivityWithUserByUuid.mockResolvedValueOnce(mockReceiveTransferActivity);
 
       await expect(service.verify1Fa(mockActivityUuid, 'S2222222', '1995-01-01')).rejects.toThrowError(NonSingpassVerificationBanException);
+    });
+
+    it('should throw NonSingpassRetrievalException when activity cannot be retrieved using NonSingpass', async () => {
+      mockReceiveTransferActivity.isNonSingpassRetrievable = false;
+      mockActivityEntityService.retrieveActivityWithUserByUuid.mockResolvedValueOnce(mockReceiveTransferActivity);
+
+      await expect(service.verify1Fa(mockActivityUuid, 'S2222222', '1995-01-01')).rejects.toThrowError(NonSingpassRetrievalException);
     });
   });
 
@@ -164,7 +182,7 @@ describe('NonSingpassVerificationService', () => {
       const mockRedisOtpDetails: OtpDetails = {
         otp: '123456',
         verificationAttemptCount: 0,
-        totalOTPSentPerCycleCount: 0,
+        otpSentCount: 0,
         allowResendAt: new Date(),
         expireAt: new Date(),
       };
@@ -178,7 +196,7 @@ describe('NonSingpassVerificationService', () => {
       mockActivityEntityService.retrieveActivityByUuid.mockResolvedValueOnce(mockReceiveTransferActivity);
       mockOtpService.generateOtp.mockResolvedValueOnce(mockGenerateOtpResult);
 
-      const response = await service.sendOtpFor2Fa(mockActivityUuid);
+      const response = await service.sendOtpFor2Fa(mockActivityUuid, OTP_CHANNEL.SMS);
       expect(mockOtpService.generateOtp).toBeCalledWith(
         mockActivityUuid,
         OTP_TYPE.NON_SINGPASS_VERIFICATION,
@@ -194,20 +212,20 @@ describe('NonSingpassVerificationService', () => {
     it('should throw ForbiddenException when activity retrieved is undefined or not of accepted type or not of status completed', async () => {
       mockActivityEntityService.retrieveActivityByUuid.mockResolvedValueOnce(mockInvalidActivity);
 
-      await expect(service.sendOtpFor2Fa(mockActivityUuid)).rejects.toThrowError(ForbiddenException);
+      await expect(service.sendOtpFor2Fa(mockActivityUuid, OTP_CHANNEL.SMS)).rejects.toThrowError(ForbiddenException);
     });
 
     it('should throw ForbiddenException when activity recipientInfo doesnt have mobile', async () => {
       mockActivityEntityService.retrieveActivityByUuid.mockResolvedValueOnce(mockActivityWithoutMobileInRecipientInfo);
 
-      await expect(service.sendOtpFor2Fa(mockActivityUuid)).rejects.toThrowError(ForbiddenException);
+      await expect(service.sendOtpFor2Fa(mockActivityUuid, OTP_CHANNEL.SMS)).rejects.toThrowError(ForbiddenException);
     });
 
     it('should throw NonSingpassVerificationBanException when the activity is banned from further verification', async () => {
       const mockBannedActivity = { ...mockReceiveTransferActivity, isBannedFromNonSingpassVerification: true };
       mockActivityEntityService.retrieveActivityByUuid.mockResolvedValueOnce(mockBannedActivity);
 
-      await expect(service.sendOtpFor2Fa(mockActivityUuid)).rejects.toThrowError(NonSingpassVerificationBanException);
+      await expect(service.sendOtpFor2Fa(mockActivityUuid, OTP_CHANNEL.SMS)).rejects.toThrowError(NonSingpassVerificationBanException);
     });
   });
 

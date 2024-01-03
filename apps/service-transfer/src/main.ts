@@ -22,7 +22,7 @@ export default async function bootstrap() {
   app.use(json({ limit: '120mb' })); // Allowed 10 files to be uploaded at a time with a max size of 10 mb = 100mb + 20% Buffer = 120mb
   app.useLogger(app.get(PinoLogger));
   app.flushLogs();
-  app.enableCors({ origin: true, credentials: true, exposedHeaders: 'Content-Disposition' }); // TODO: set cors according to the subdomains
+  app.enableCors({ origin: [/\.file\.gov\.sg$/], credentials: true, exposedHeaders: 'Content-Disposition' });
   app.use(helmet());
   app.useGlobalFilters(new GlobalExceptionsFilter(SERVICE_NAME.TRANSFER));
   app.useGlobalPipes(new ValidationPipe());

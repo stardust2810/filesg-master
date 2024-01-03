@@ -20,8 +20,8 @@ export const mockFileAssetAccessModel = createMockFileAssetAccess({
 });
 
 export const mockTokenData = {
-  fileAssetUuid: mockFileAssetAccessModel.fileAsset,
-  userUuid: 'user-uuid-1',
+  fileAssetUuid: 'fileasset-1111111111111-aaaaaaaaaaaaaaaa',
+  userUuid: 'citizenuser-1111111111111-aaaaaaaaaaaaaaaa',
   token: mockFileAssetAccessModel.token,
 };
 

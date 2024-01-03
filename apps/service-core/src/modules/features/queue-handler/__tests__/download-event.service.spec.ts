@@ -1,6 +1,9 @@
+import { FILE_ASSET_ACTION } from '@filesg/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntityManager } from 'typeorm';
 
+import { mockAuditEventEntityService } from '../../../entities/audit-event/__mocks__/audit-event.entity.service.mock';
+import { AuditEventEntityService } from '../../../entities/audit-event/audit-event.entity.service';
 import { mockFileAssetEntityService } from '../../../entities/file-asset/__mocks__/file-asset.entity.service.mock';
 import { FileAssetEntityService } from '../../../entities/file-asset/file-asset.entity.service';
 import { mockFileAssetHistoryEntityService } from '../../../entities/file-asset-history/__mocks__/file-asset-history.entity.service.mock';
@@ -25,6 +28,7 @@ describe('DownloadEventService', () => {
         { provide: FileAssetEntityService, useValue: mockFileAssetEntityService },
         { provide: FileAssetHistoryEntityService, useValue: mockFileAssetHistoryEntityService },
         { provide: DatabaseTransactionService, useValue: mockDatabaseTransactionService },
+        { provide: AuditEventEntityService, useValue: mockAuditEventEntityService },
       ],
     }).compile();
 
@@ -63,7 +67,7 @@ describe('DownloadEventService', () => {
 
       expect(mockFileAssetEntityService.retrieveFileAssetByUuid).toHaveBeenCalledWith(mockFileAssetIds[0], entityManager);
       expect(mockFileAssetHistoryEntityService.saveFileAssetHistory).toHaveBeenCalledWith(
-        { type: 'download', fileAsset: mockFileAssetHistoryCreationModel1.fileAsset },
+        { type: FILE_ASSET_ACTION.DOWNLOADED, fileAsset: mockFileAssetHistoryCreationModel1.fileAsset },
         entityManager,
       );
     });

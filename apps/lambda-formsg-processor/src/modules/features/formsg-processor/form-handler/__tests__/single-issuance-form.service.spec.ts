@@ -459,7 +459,7 @@ describe('SingleIssuanceFormService', () => {
             uuid: transactionUuid,
             name: transactionName,
             agencyFileAssets: files.map(({ name, uuid }, index) => ({ name, uuid, deleteAt: requestFiles[index].deleteAt })),
-            recipientActivities: recipients.map(({ activityUuid, uin }, index) => {
+            recipientActivities: recipients.map(({ activityUuid, uin, isNonSingpassRetrievable }, index) => {
               const { name, email, dob, contact } = requestRecipients[index];
               return {
                 uuid: activityUuid,
@@ -468,7 +468,7 @@ describe('SingleIssuanceFormService', () => {
                 email,
                 dob,
                 contact,
-                isNonSingpassRetrievable: !!dob && !!contact,
+                isNonSingpassRetrievable,
               };
             }),
           },
@@ -886,7 +886,7 @@ describe('SingleIssuanceFormService', () => {
           uuid: transactionUuid,
           agencyFileAssets,
           recipientActivities: recipients.map(({ activityUuid, uin }, index) => {
-            const { name, email, dob, contact } = transaction.recipients[index];
+            const { name, email, dob, contact, isNonSingpassRetrievable } = transaction.recipients[index];
             return {
               uuid: activityUuid,
               name,
@@ -894,7 +894,7 @@ describe('SingleIssuanceFormService', () => {
               email,
               dob,
               contact,
-              isNonSingpassRetrievable: !!dob && !!contact,
+              isNonSingpassRetrievable,
             };
           }),
         },
@@ -942,7 +942,7 @@ describe('SingleIssuanceFormService', () => {
               uuid: transactionUuid,
               agencyFileAssets,
               recipientActivities: recipients.map(({ activityUuid, uin }, index) => {
-                const { name, email, dob, contact } = transaction.recipients[index];
+                const { name, email, dob, contact, isNonSingpassRetrievable } = transaction.recipients[index];
                 return {
                   uuid: activityUuid,
                   name,
@@ -950,7 +950,7 @@ describe('SingleIssuanceFormService', () => {
                   email,
                   dob,
                   contact,
-                  isNonSingpassRetrievable: !!dob && !!contact,
+                  isNonSingpassRetrievable,
                 };
               }),
             },

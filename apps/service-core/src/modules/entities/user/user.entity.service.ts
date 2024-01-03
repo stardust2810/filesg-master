@@ -1,5 +1,6 @@
 import {
   EntityNotFoundException,
+  maskUin,
   ServiceMethodDontThrowOptions,
   ServiceMethodOptions,
   ServiceMethodThrowOptions,
@@ -73,7 +74,7 @@ export class UserEntityService {
     });
 
     if (!existingUser && opts.toThrow) {
-      throw new EntityNotFoundException(COMPONENT_ERROR_CODE.USER_SERVICE, User.name, 'uin', uin);
+      throw new EntityNotFoundException(COMPONENT_ERROR_CODE.USER_SERVICE, User.name, 'uin', maskUin(uin));
     }
 
     return existingUser;

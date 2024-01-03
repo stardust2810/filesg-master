@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { EntityNotFoundException } from '@filesg/backend-common';
-import { ACTIVITY_TYPE, COMPONENT_ERROR_CODE, FILE_STATUS, FILE_TYPE, SORT_BY } from '@filesg/common';
+import { ACTIVITY_TYPE, COMPONENT_ERROR_CODE, FILE_ASSET_SORT_BY, FILE_STATUS, FILE_TYPE } from '@filesg/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { startOfDay } from 'date-fns';
 import { LessThan } from 'typeorm';
@@ -9,7 +9,6 @@ import { AllFileAssetsRequestDto, AllFileAssetUuidsRequestDto } from '../../../.
 import { FileAsset, FileAssetUpdateModel } from '../../../../entities/file-asset';
 import { mockFileAssetEntityRepository } from '../__mocks__/file-asset.entity.repository.mock';
 import {
-  mockCitizenUser,
   mockFileAsset,
   mockFileAssetModels,
   mockFileAssets,
@@ -20,6 +19,7 @@ import {
 import { createMockFileAsset } from '../__mocks__/file-asset.mock';
 import { FileAssetEntityRepository } from '../file-asset.entity.repository';
 import { FileAssetEntityService } from '../file-asset.entity.service';
+import { FindAndCountRecentFileAssetsInputs } from '../interface/file-asset.interface';
 
 const helpers = require('../../../../utils/helpers');
 
@@ -128,7 +128,13 @@ describe('FileAssetEntityService', () => {
       mockFileAssetEntityRepository.findFileAssetByUuidAndUserUuid.mockResolvedValueOnce(mockFileAsset);
 
       expect(await service.retrieveFileAssetByUuidAndUserUuid(mockFileAssetUuid, mockUserUuid)).toEqual(mockFileAsset);
-      expect(mockFileAssetEntityRepository.findFileAssetByUuidAndUserUuid).toBeCalledWith(mockFileAssetUuid, mockUserUuid, undefined);
+      expect(mockFileAssetEntityRepository.findFileAssetByUuidAndUserUuid).toBeCalledWith(
+        mockFileAssetUuid,
+        mockUserUuid,
+        undefined,
+        undefined,
+        undefined,
+      );
     });
 
     it('should throw EntityNotFoundException when fileAsset is not found', async () => {
@@ -142,7 +148,13 @@ describe('FileAssetEntityService', () => {
           `${mockFileAssetUuid} and ${mockUserUuid}`,
         ),
       );
-      expect(mockFileAssetEntityRepository.findFileAssetByUuidAndUserUuid).toBeCalledWith(mockFileAssetUuid, mockUserUuid, undefined);
+      expect(mockFileAssetEntityRepository.findFileAssetByUuidAndUserUuid).toBeCalledWith(
+        mockFileAssetUuid,
+        mockUserUuid,
+        undefined,
+        undefined,
+        undefined,
+      );
     });
   });
 
@@ -216,6 +228,7 @@ describe('FileAssetEntityService', () => {
         mockUserUuid,
         undefined,
         undefined,
+        undefined,
       );
     });
   });
@@ -243,7 +256,7 @@ describe('FileAssetEntityService', () => {
       const mockUserUuid = 'mockUser-Uuid-1';
       const mockQuery: AllFileAssetUuidsRequestDto = {
         statuses: [FILE_STATUS.ACTIVE, FILE_STATUS.EXPIRED],
-        sortBy: SORT_BY.LAST_VIEWED_AT,
+        sortBy: FILE_ASSET_SORT_BY.LAST_VIEWED_AT,
         asc: true,
       };
 
@@ -258,25 +271,22 @@ describe('FileAssetEntityService', () => {
     it('should call findAndCountFileAssets with page = 1 and limit = 20 when both are not given and return next with null when no additional items', async () => {
       const mockUserId = 1;
       const query: AllFileAssetsRequestDto = {
-        sortBy: SORT_BY.LAST_VIEWED_AT,
+        sortBy: FILE_ASSET_SORT_BY.LAST_VIEWED_AT,
         asc: true,
         statuses: [FILE_STATUS.ACTIVE],
       };
       mockFileAssetEntityRepository.findAndCountViewableFileAssets.mockResolvedValueOnce([mockFileAssets, 2]);
 
-      expect(await service.retrieveAllFileAssets(mockUserId, query)).toEqual({
+      expect(await service.retrieveAllFileAssets({ ownerId: mockUserId, query })).toEqual({
         fileAssets: mockFileAssets,
         count: 2,
         next: null,
       });
       expect(mockFileAssetEntityRepository.findAndCountViewableFileAssets).toBeCalledWith(
-        mockUserId,
         {
-          ...query,
-          page: 1,
-          limit: 20,
+          ownerId: mockUserId,
+          query,
         },
-        undefined,
         undefined,
       );
     });
@@ -284,7 +294,7 @@ describe('FileAssetEntityService', () => {
     it('should return next page number when there is still remaining items', async () => {
       const mockUserId = 1;
       const query: AllFileAssetsRequestDto = {
-        sortBy: SORT_BY.LAST_VIEWED_AT,
+        sortBy: FILE_ASSET_SORT_BY.LAST_VIEWED_AT,
         asc: true,
         statuses: [FILE_STATUS.ACTIVE],
         page: 1,
@@ -292,12 +302,42 @@ describe('FileAssetEntityService', () => {
       };
       mockFileAssetEntityRepository.findAndCountViewableFileAssets.mockResolvedValueOnce([mockFileAssets, 2]);
 
-      expect(await service.retrieveAllFileAssets(mockUserId, query)).toEqual({
+      expect(await service.retrieveAllFileAssets({ ownerId: mockUserId, query })).toEqual({
         fileAssets: mockFileAssets,
         count: 2,
         next: 2,
       });
-      expect(mockFileAssetEntityRepository.findAndCountViewableFileAssets).toBeCalledWith(mockUserId, query, undefined, undefined);
+      expect(mockFileAssetEntityRepository.findAndCountViewableFileAssets).toBeCalledWith({ ownerId: mockUserId, query }, undefined);
+    });
+  });
+
+  describe('retrieveRecentFileAssets', () => {
+    const mockUserId = 1;
+    const query: FindAndCountRecentFileAssetsInputs = {
+      limit: 1,
+      page: 1,
+      ownerId: mockUserId,
+    };
+    it('should call findAndCountRecentFileAssets with the right params', async () => {
+      mockFileAssetEntityRepository.findAndCountRecentViewableFileAssets.mockResolvedValueOnce([mockFileAssets, 2]);
+
+      expect(await service.retrieveRecentFileAssets(query)).toEqual({
+        fileAssets: mockFileAssets,
+        count: 2,
+        next: 2,
+      });
+      expect(mockFileAssetEntityRepository.findAndCountRecentViewableFileAssets).toBeCalledWith(query, undefined);
+    });
+
+    it('should return next page number when there is still remaining items', async () => {
+      mockFileAssetEntityRepository.findAndCountRecentViewableFileAssets.mockResolvedValueOnce([mockFileAssets, 2]);
+
+      expect(await service.retrieveRecentFileAssets(query)).toEqual({
+        fileAssets: mockFileAssets,
+        count: 2,
+        next: 2,
+      });
+      expect(mockFileAssetEntityRepository.findAndCountRecentViewableFileAssets).toBeCalledWith(query, undefined);
     });
   });
 
@@ -392,26 +432,6 @@ describe('FileAssetEntityService', () => {
       await service.updateFileAssetStatus(fileAssetUuid, { status: FILE_STATUS.ACTIVE });
 
       expect(updateFileAssetSpy).toBeCalledWith(fileAssetUuid, { status: FILE_STATUS.ACTIVE }, undefined);
-    });
-  });
-
-  describe('updateFileAssetLastViewedAt', () => {
-    it('response should be null', async () => {
-      const mockFile = mockFileAsset;
-      mockFile.ownerId = mockCitizenUser.id;
-      mockFileAssetEntityRepository.findFileAssetByUuidAndUserId.mockResolvedValueOnce(mockFile);
-      // Mock successful update
-      mockFileAssetEntityRepository.updateFileAsset.mockResolvedValueOnce({ affected: 1 });
-
-      await service.retrieveFileAssetByUuidAndUserId(mockFile.uuid, mockCitizenUser.id);
-      const response = await service.updateFileAssetLastViewedAt(mockFile.uuid);
-      expect(mockFileAssetEntityRepository.findFileAssetByUuidAndUserId).toBeCalledWith(
-        mockFile.uuid,
-        mockFile.ownerId,
-        undefined,
-        undefined,
-      );
-      expect(response).toBeNull;
     });
   });
 });

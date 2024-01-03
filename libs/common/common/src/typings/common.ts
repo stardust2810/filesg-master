@@ -13,6 +13,7 @@ import {
   TRANSACTION_TYPE,
 } from '../constants/common';
 import { EserviceUserOnboardingRequestDetails, ProgrammaticUserOnboardingRequestDetails } from '../dtos/agency-onboarding/request';
+import { FileDownloadSession } from './redis';
 
 export interface AccessibleAgency {
   name: string;
@@ -148,13 +149,11 @@ export type ActivatedFileStatus =
 // =============================================================================
 // Download response
 // =============================================================================
-export interface FileDownloadResponse {
-  fileSessionType: FILE_SESSION_TYPE.DOWNLOAD;
+export interface FileDownloadResponse extends FileDownloadSession {
   ownerUuidHash: string;
-  files: DownloadFile[];
 }
 
-export interface DownloadFile {
+export interface FileDownloadInfo {
   id: string;
   name: string;
 }
@@ -200,3 +199,5 @@ export type UserFileAuditEvent =
   | AUDIT_EVENT_NAME.USER_FILE_VIEW;
 
 export type UserActionAuditEvent = UserFileAuditEvent | AUDIT_EVENT_NAME.USER_LOGIN;
+
+export type FileStatisticAuditEvent = UserActionAuditEvent | AUDIT_EVENT_NAME.AGENCY_FILE_DOWNLOAD;

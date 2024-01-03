@@ -224,7 +224,6 @@ export function Select({
         <Modal
           pauseFocus={true}
           initialFocus={false}
-          allowScrollLock={hasScrollLockWhenExpanded}
           trapFocus={true}
           invisibleBackdrop={true}
           onBackdropClick={animateMenuSlideUpHandler}

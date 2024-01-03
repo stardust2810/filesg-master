@@ -5,7 +5,6 @@ import { SesService } from '../ses.service';
 
 export const mockBaseSesService: MockService<BaseSesService> = {
   sendEmail: jest.fn(),
-  sendEmailWithAttachments: jest.fn(),
 };
 
 export const mockSesService: MockService<SesService> = {
@@ -15,7 +14,7 @@ export const mockSesService: MockService<SesService> = {
 export const mockEmailReceivers = ['mockReceiver1', 'mockReceiver2'];
 export const mockEmailTitle = 'mockEmailTitle';
 export const mockEmailContent = 'mockEmailContent';
-export const mockAgencyCode = 'mockAgencyCode'
+export const mockAgencyCode = 'mockAgencyCode';
 
 export const mockEmailAttachments: EmailAttachment[] = [
   {

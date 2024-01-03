@@ -53,7 +53,7 @@ export class FileSgStatisticsReportRequest extends DateStringRange {
 
 export class FileSgUserActionsReportRequest extends DateStringRange {}
 
-export class IssuanceReportRequest {
+export class IssuanceQueryRequest {
   @IsOptional()
   @IsString()
   @ApiProperty()

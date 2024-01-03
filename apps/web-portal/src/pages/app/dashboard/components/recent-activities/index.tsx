@@ -1,4 +1,4 @@
-import { ActiveActivityResponse, SORT_BY } from '@filesg/common';
+import { ActiveActivityResponse, ACTIVITY_SORT_BY } from '@filesg/common';
 import { Color, FSG_DEVICES, RESPONSIVE_VARIANT, TextButton, TextLink, Tooltip, Typography, useShouldRender } from '@filesg/design-system';
 import { useEffect, useState } from 'react';
 
@@ -7,7 +7,7 @@ import { ActivitySkeleton } from '../../../../../components/data-display/activit
 import { MINIMUM_LOAD_DELAY_IN_MILLISECONDS, WebPage } from '../../../../../consts';
 import { useAppSelector } from '../../../../../hooks/common/useSlice';
 import { useAllActivities } from '../../../../../hooks/queries/useAllActivities';
-import { selectIsCorporateUser } from '../../../../../store/slices/session';
+import { selectAccessibleAgencies, selectIsCorporateUser } from '../../../../../store/slices/session';
 import {
   StyledActivitiesContainer,
   StyledErrorOrNoActivitiesContainer,
@@ -45,21 +45,22 @@ export const RecentActivities = () => {
   const [activities, setActivities] = useState<ActiveActivityResponse[]>();
   const [show, setShow] = useState(false);
   const isCorporateUser = useAppSelector(selectIsCorporateUser);
+  const accessibleAgencies = useAppSelector(selectAccessibleAgencies);
 
   // ---------------------------------------------------------------------------
   // Queries
   // ---------------------------------------------------------------------------
-
   const {
     isLoading,
     isError,
     data,
     refetch: fetchRecentActivities,
   } = useAllActivities({
-    sortBy: SORT_BY.CREATED_AT,
+    sortBy: ACTIVITY_SORT_BY.CREATED_AT,
     asc: false,
     page: 1,
     limit: ITEMS_PER_FETCH,
+    agencyCodes: accessibleAgencies?.map(({ code }) => code),
   });
 
   // ---------------------------------------------------------------------------

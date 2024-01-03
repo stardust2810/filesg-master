@@ -42,6 +42,8 @@ export type { DateValue } from './components/inputs/date-picker';
 export { DatePicker, DatePickerStatus } from './components/inputs/date-picker';
 export { Dropzone } from './components/inputs/dropzone';
 export { IconButton } from './components/inputs/icon-button';
+export { RadioButtonGroup } from './components/inputs/radio-button-group';
+export type { Props as RadioButtonProps } from './components/inputs/radio-button-group/radio-button';
 export { Select } from './components/inputs/select';
 export type { OptionProps } from './components/inputs/select/components/menu-item';
 export { MenuItem } from './components/inputs/select/components/menu-item';
@@ -81,7 +83,6 @@ export { sendPromiseToastMessage, sendToastMessage, Toast, updateToastMessage } 
 
 // Template
 export { AppLayoutTemplate } from './components/template/app-layout-template';
-export type { Link } from './components/template/error';
 export { Error } from './components/template/error';
 
 // =============================================================================
@@ -94,7 +95,7 @@ export { PAGE_HORIZONTAL_MARGIN_STYLES, PAGE_MARGIN_STYLES, PAGE_VERTICAL_MARGIN
 export { FileSGThemes } from './styles/theme';
 export type { FileSGDefaultTheme, FSGFont } from './typings/fsg-theme';
 export { DATE_FORMAT_PATTERNS, FSG_DEVICES, HEX_COLOR_OPACITY, RESPONSIVE_VARIANT, TEST_IDS } from './utils/constants';
-export type { ActionProps, FileSGProps, NavProps } from './utils/typings';
+export type { ActionProps, FileSGProps, LinkProps, NavProps } from './utils/typings';
 export { WithStyles } from './utils/withStyles';
 
 // =============================================================================
@@ -105,9 +106,4 @@ export { useKeyPress } from './hooks/useKeyPress';
 export { useShouldRender } from './hooks/useShouldRender';
 export { useUserAgent } from './hooks/useUserAgent';
 export type { IconFileTypeLiterals, IconLiterals } from './typings/icon-literals';
-export {
-  getFileExtensionAndLastChars,
-  getFileNameWithoutExtensionAndLastChars,
-  removeWhitelistedUnicode,
-  toKebabCase,
-} from './utils/helper';
+export { generateEllipsisFileNameParts, removeWhitelistedUnicode, toKebabCase } from './utils/helper';

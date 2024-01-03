@@ -21,13 +21,13 @@ export const createMockFileAsset = (args: TestCreationModel<FileAssetCreationMod
   args.metadata && (fileAsset.metadata = args.metadata);
   fileAsset.expireAt = args.expireAt ?? null;
   fileAsset.deleteAt = args.deleteAt ?? null;
-  fileAsset.lastViewedAt = args.lastViewedAt ?? null;
   fileAsset.isPasswordEncrypted = args.isPasswordEncrypted ?? false;
   fileAsset.children = args.children;
   fileAsset.parent = args.parent;
   fileAsset.owner = args.owner;
   fileAsset.issuer = args.issuer;
   fileAsset.activities = args.activities;
+  fileAsset.histories = args.histories;
 
   return fileAsset;
 };

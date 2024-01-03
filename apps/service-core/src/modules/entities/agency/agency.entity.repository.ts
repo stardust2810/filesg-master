@@ -1,4 +1,4 @@
-import { DateRange, STATUS, TEMPLATE_TYPE } from '@filesg/common';
+import { DateRange, FILE_STATUS, STATUS, TEMPLATE_TYPE } from '@filesg/common';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, FindOneOptions, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
@@ -82,6 +82,30 @@ export class AgencyEntityRepository {
         code: true,
       },
     });
+  }
+
+  public async findIssuingAgenciesWithStatusesByUserId(
+    userId: number,
+    statuses: FILE_STATUS[],
+    agencyCodes?: Array<string>,
+    entityManager?: EntityManager,
+  ) {
+    const queryBuilder = this.getRepository(entityManager)
+      .createQueryBuilder('agency')
+      .leftJoinAndSelect('agency.eservices', 'eservices')
+      .leftJoinAndSelect('eservices.users', 'users')
+      .leftJoinAndSelect('users.issuedFileAssets', 'issuedFileAssets')
+      .where('issuedFileAssets.ownerId = :userId', { userId })
+      .andWhere('issuedFileAssets.status IN (:statuses)', { statuses })
+      .select('agency.code', 'agencyCode')
+      .addSelect('agency.name', 'agencyName')
+      .distinct(true);
+
+    if (agencyCodes) {
+      queryBuilder.andWhere('agency.code IN (:agencyCodes)', { agencyCodes });
+    }
+
+    return await queryBuilder.getRawMany<{ agencyCode: string; agencyName: string }>();
   }
 
   public async findCountAgencyAndEservices(dateRange: DateRange, entityManager?: EntityManager) {

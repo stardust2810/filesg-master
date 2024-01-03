@@ -42,9 +42,12 @@ export const withAuthentication = (WrappedComponent) => {
       }
     }, [dispatch, state, isUserLoggedIn]);
 
+    const onCloseAuthenticationModal = () => {
+      setShowLoginModal(false);
+    };
     return (
       <>
-        {showLoginModal && <AuthenticationModal onCloseModal={() => setShowLoginModal(false)} showSingpassOptionsOnly={true} />}
+        {showLoginModal && <AuthenticationModal onCloseModal={onCloseAuthenticationModal} showSingpassOptionsOnly={true} />}
         {showCorppassFirstLoginModal && <CorppassFirstLoginInformationModal onClose={onClose} onGetStartedButtonClick={onClose} />}
         <WrappedComponent {...props} />
       </>

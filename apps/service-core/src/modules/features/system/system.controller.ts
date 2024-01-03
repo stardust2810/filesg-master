@@ -13,8 +13,8 @@ import {
   EserviceWhitelistedUsersOnboardingRequest,
   FileSgStatisticsReportRequest,
   FileSgUserActionsReportRequest,
-  IssuanceReportRequest,
-  IssuanceReportResponse,
+  IssuanceQueryRequest,
+  IssuanceQueryResponse,
   ResendNotificationRequest,
   ROLE,
   TransactionReportRequest,
@@ -166,7 +166,7 @@ export class SystemController {
   // ===========================================================================
   //  TECH OPS SUPPORT
   // ===========================================================================
-  @Post('resend-notification')
+  @Post('ops-support/notification/resend')
   @FileSGAuth({ auth_state: AUTH_STATE.PROGRAMMATIC_LOGGED_IN, roles: [ROLE.SYSTEM] })
   @HttpCode(204)
   @ApiBody({ type: ResendNotificationRequest })
@@ -177,7 +177,7 @@ export class SystemController {
     return await this.systemService.resendNotification(body);
   }
 
-  @Post('activities/:activityUuid/lift-1fa')
+  @Post('ops-support/activities/:activityUuid/lift-1fa')
   @FileSGAuth({ auth_state: AUTH_STATE.PROGRAMMATIC_LOGGED_IN, roles: [ROLE.SYSTEM] })
   @HttpCode(StatusCodes.OK)
   @ApiOkResponse({ description: 'Activity 1fa ban has been lifted.' })
@@ -188,7 +188,7 @@ export class SystemController {
     return await this.systemService.lift1FaBan(activityUuid);
   }
 
-  @Post('activities/:activityUuid/lift-2fa')
+  @Post('ops-support/activities/:activityUuid/lift-2fa')
   @FileSGAuth({ auth_state: AUTH_STATE.PROGRAMMATIC_LOGGED_IN, roles: [ROLE.SYSTEM] })
   @HttpCode(StatusCodes.OK)
   @ApiOkResponse({ description: 'Activity 1fa ban has been lifted.' })
@@ -197,6 +197,16 @@ export class SystemController {
   @UseInterceptors(AppendTraceIdInterceptor)
   async liftActivity2FaBan(@Param('activityUuid') activityUuid: string) {
     return await this.systemService.lift2FaBan(activityUuid);
+  }
+
+  @Post('ops-support/issuance/query')
+  @FileSGAuth({ auth_state: AUTH_STATE.PROGRAMMATIC_LOGGED_IN, roles: [ROLE.SYSTEM] })
+  @ApiBody({ type: IssuanceQueryRequest })
+  @ApiOkResponse({ type: IssuanceQueryResponse, description: 'Return issuance query result.' })
+  @ApiUnauthorizedResponse({ description: ERROR_RESPONSE_DESC.UNAUTHORISED })
+  @HttpCode(200)
+  async issuanceQuery(@Body() issuanceQueryRequest: IssuanceQueryRequest) {
+    return await this.systemService.issuanceQuery(issuanceQueryRequest);
   }
 
   // ===========================================================================
@@ -240,16 +250,6 @@ export class SystemController {
     }
   }
 
-  @Post('report/ops-support/generate-issuance-report')
-  @FileSGAuth({ auth_state: AUTH_STATE.PROGRAMMATIC_LOGGED_IN, roles: [ROLE.SYSTEM] })
-  @ApiBody({ type: IssuanceReportRequest })
-  @ApiOkResponse({ type: IssuanceReportResponse, description: 'Return issuance report.' })
-  @ApiUnauthorizedResponse({ description: ERROR_RESPONSE_DESC.UNAUTHORISED })
-  @HttpCode(200)
-  async generateFileSgIssuanceReport(@Body() issuanceReportRequest: IssuanceReportRequest) {
-    return await this.reportingService.generateFileSgIssuanceReport(issuanceReportRequest);
-  }
-
   // TODO: (enhancement) output report to s3
   // TODO: (enhancement) split report after 1m records
   // TODO: come back again to discuss on whether to use POST or GET
@@ -259,7 +259,6 @@ export class SystemController {
   @ApiUnauthorizedResponse({ description: ERROR_RESPONSE_DESC.UNAUTHORISED })
   async generateFileSgUserActionsReport(@Body() fileSgUserActionsReportRequest: FileSgUserActionsReportRequest, @Res() res: Response) {
     const { zipFileName, type, stream } = await this.reportingService.generateFileSgUserActionsReport(fileSgUserActionsReportRequest);
-    this.logger.log(`[BILLING REPORT DEBUG] Generate method end`);
 
     res.set({
       'Content-Disposition': `attachment; filename=${zipFileName}`,
@@ -267,7 +266,6 @@ export class SystemController {
     });
 
     try {
-      this.logger.log(`[BILLING REPORT DEBUG] Pipeline starts`);
       await pipeline(stream, res);
     } catch (error) {
       this.logger.warn(`Piping stream failed. Error: ${error}`);

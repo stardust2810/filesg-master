@@ -18,7 +18,6 @@ type OptionalUserAttributes =
   | 'email'
   | 'phoneNumber'
   | 'isOnboarded'
-  | 'isBannedFromContactUpdate'
   | 'role'
   | 'lastLoginAt'
   | 'ownedfileAssets'
@@ -30,7 +29,7 @@ type OptionalUserAttributes =
 type OmitUserAttributes = 'id' | 'uuid' | 'type';
 
 type OptionalAgencyUserAttributes = OptionalUserAttributes;
-type OptionalCitizenUserAttributes = Exclude<OptionalUserAttributes, 'uin'>;
+type OptionalCitizenUserAttributes = Exclude<OptionalUserAttributes, 'uin'> | 'contactUpdateBannedUntil';
 type OptionalProgrammaticUserAttributes = OptionalUserAttributes;
 type OptionalEserviceUserAttributes = OptionalUserAttributes | 'whitelistedUsers';
 type OptionalCorporateUserAttributes = OptionalUserAttributes | 'corporate';
@@ -91,9 +90,6 @@ export class User extends TimestampableEntity {
   @Column({ type: 'bool', default: false })
   isOnboarded: boolean;
 
-  @Column({ type: 'bool', default: false })
-  isBannedFromContactUpdate: boolean;
-
   @Column({ type: 'enum', enum: Object.values(STATUS) })
   status: STATUS;
 
@@ -131,6 +127,9 @@ export class CitizenUser extends User {
   type: USER_TYPE.CITIZEN;
   role: ROLE.CITIZEN;
   eservices: never;
+
+  @Column({ type: 'datetime', nullable: true })
+  contactUpdateBannedUntil: Date | null;
 }
 
 @ChildEntity(USER_TYPE.PROGRAMMATIC)

@@ -1,3 +1,4 @@
+import { NOTIFICATION_CHANNEL } from '@filesg/common';
 import mjml2html from 'mjml';
 
 import { Activity } from '../../../entities/activity';
@@ -26,7 +27,23 @@ export interface IssuanceTemplateArgs {
 
 export class IssuanceEmail extends EmailTemplate {
   protected override generateEmailHeader({ activity }: IssuanceTemplateArgs): string {
-    return activity.transaction!.name;
+    const { notificationMessageInputs, name: transactionName, customAgencyMessage } = activity.transaction!;
+
+    // NOTE: Check transaction is created via v1 createFileTransaction
+    if (customAgencyMessage) {
+      const isSponsorCopy = !!activity.fileAssets![0].metadata?.['isSponsorCopy'];
+      // FIXME: to confirm term to be used
+      return `${isSponsorCopy ? '[Sponsor Copy] ' : ''}${transactionName}`;
+    }
+
+    const emailCustomMessageTemplateInput = notificationMessageInputs!.find(
+      (input) => input.notificationChannel === NOTIFICATION_CHANNEL.EMAIL,
+    );
+
+    const { copyRecipientSubjectAffix } = emailCustomMessageTemplateInput!.notificationMessageTemplate!;
+    const { isCopy } = activity.recipientInfo!;
+
+    return `${isCopy && copyRecipientSubjectAffix ? '[' + copyRecipientSubjectAffix + '] ' : ''}${transactionName}`;
   }
 
   protected override generateEmailContent({

@@ -1,10 +1,8 @@
 import { useTransition } from '@react-spring/web';
 import FocusTrap from 'focus-trap-react';
-import { useEffect } from 'react';
 
 import { useKeyPress } from '../../../hooks/useKeyPress';
 import { TEST_IDS } from '../../../utils/constants';
-import { addScrollLock, removeScrollLock } from '../../../utils/helper';
 import { Backdrop } from '../../feedback/backdrop';
 import { StyledDrawer } from './style';
 
@@ -16,18 +14,6 @@ export interface Props {
 }
 
 export const Drawer = ({ isOpened, children, topPadding = '0', onClose }: Props) => {
-  useEffect(() => {
-    if (isOpened) {
-      addScrollLock();
-    }
-
-    return function cleanup() {
-      if (isOpened) {
-        removeScrollLock();
-      }
-    };
-  }, [isOpened]);
-
   const transition = useTransition(isOpened, {
     from: { x: '100%' },
     enter: { x: '0' },
@@ -38,7 +24,13 @@ export const Drawer = ({ isOpened, children, topPadding = '0', onClose }: Props)
 
   return (
     <>
-      <Backdrop onBackdropClick={onClose} isBlur={true} topPadding={topPadding} className={isOpened ? '' : 'is-hidden'} />
+      <Backdrop
+        onBackdropClick={onClose}
+        isBlur={true}
+        topPadding={topPadding}
+        className={isOpened ? '' : 'is-hidden'}
+        isScrollLockActive={isOpened}
+      />
       {transition(
         (style, item) =>
           item && (

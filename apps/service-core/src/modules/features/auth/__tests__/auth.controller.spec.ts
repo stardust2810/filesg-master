@@ -2,9 +2,10 @@ import { IcaSsoRequest } from '@filesg/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Response } from 'express';
 
+import { transformUserSessionDetailsResponse } from '../../../../common/transformers/auth.transformer';
 import { LoginRequest } from '../../../../dtos/auth/request';
-import { FileSGSession, RequestWithSession } from '../../../../typings/common';
-import { mockAuthService, mockAuthUser, mockUser } from '../__mocks__/auth.service.mock';
+import { FileSGCitizenSession, RequestWithCitizenSession } from '../../../../typings/common';
+import { mockAuthService, mockCitizenAuthUser, mockUser } from '../__mocks__/auth.service.mock';
 import { AuthController } from '../auth.controller';
 import { AuthService } from '../auth.service';
 
@@ -32,7 +33,7 @@ describe('AuthController', () => {
 
     it('should call ndiLogin method with session and login request', async () => {
       const mockReqBody: LoginRequest = { authCode: 'testAuthCode', nonce: 'testNonce' };
-      const mockSession = {} as FileSGSession;
+      const mockSession = {} as FileSGCitizenSession;
 
       expect(await controller.citizenLogin(mockSession, mockReqBody));
       expect(mockAuthService.ndiLogin).toBeCalledWith(mockSession, mockReqBody);
@@ -45,8 +46,8 @@ describe('AuthController', () => {
     });
 
     it('should call ndiLogin method with session and login request', async () => {
-      const mockSession = { user: mockAuthUser } as FileSGSession;
-      const mockReqBody = { session: mockSession } as RequestWithSession;
+      const mockSession = { user: mockCitizenAuthUser } as FileSGCitizenSession;
+      const mockReqBody = { session: mockSession } as RequestWithCitizenSession;
       const mockRes = {
         clearCookie: jest.fn(),
       };
@@ -72,16 +73,15 @@ describe('AuthController', () => {
       expect(controller.getUserDetails).toBeDefined();
     });
 
-    // gd TODO: fix test
-    it.skip('should return session user', async () => {
-      const mockSession = { user: mockAuthUser } as FileSGSession;
+    it('should return session user', async () => {
+      const mockSession = { user: mockCitizenAuthUser } as FileSGCitizenSession;
 
       const response = await controller.getUserDetails(mockSession);
-      expect(response).toStrictEqual(mockAuthUser);
+      expect(response).toStrictEqual(transformUserSessionDetailsResponse(mockCitizenAuthUser));
     });
 
     it('should return null if no user', async () => {
-      const mockSession = { user: undefined } as unknown as FileSGSession;
+      const mockSession = { user: undefined } as unknown as FileSGCitizenSession;
 
       const response = await controller.getUserDetails(mockSession);
       expect(response).toBeNull();
@@ -95,7 +95,7 @@ describe('AuthController', () => {
 
     it('should call icaSso method with token and session', async () => {
       const mockReqBody: IcaSsoRequest = { token: 'testToken' };
-      const mockSession = {} as FileSGSession;
+      const mockSession = {} as FileSGCitizenSession;
 
       expect(await controller.icaSso(mockSession, mockReqBody));
       expect(mockAuthService.icaSso).toBeCalledWith(mockReqBody.token, mockSession);
@@ -110,7 +110,7 @@ describe('AuthController', () => {
     it('should call updateUserDetailsFromMyInfo method session', async () => {
       const mockSession = {
         user: {},
-      } as FileSGSession;
+      } as FileSGCitizenSession;
 
       expect(await controller.updateUserDetailsUsingMyInfo(mockSession));
       expect(mockAuthService.updateUserDetailsFromMyInfo).toBeCalledWith(mockSession.user);
@@ -125,7 +125,7 @@ describe('AuthController', () => {
     it('should call updateUserDetailsFromMyInfo method session', async () => {
       const mockSession = {
         user: {},
-      } as FileSGSession;
+      } as FileSGCitizenSession;
 
       expect(await controller.updateUserFromMcc(mockSession));
       expect(mockAuthService.updateUserFromMcc).toBeCalledWith(mockSession.user);

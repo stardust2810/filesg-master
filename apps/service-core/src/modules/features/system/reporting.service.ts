@@ -3,14 +3,11 @@ import {
   AUTH_TYPE,
   COMPONENT_ERROR_CODE,
   DateRange,
+  FILE_STATISTICS_AUDIT_EVENTS,
   FileSgStatisticsReportRequest,
   FileSgUserActionsReportRequest,
-  IssuanceReportRequest,
-  IssuanceReportResponse,
   MIME_TYPE,
   TransactionReportRequest,
-  USER_FILE_AUDIT_EVENTS,
-  VIEWABLE_ACTIVITY_TYPES,
 } from '@filesg/common';
 import { ZippingFile, ZipService } from '@filesg/zipper';
 import { Injectable, Logger } from '@nestjs/common';
@@ -22,18 +19,16 @@ import { join } from 'path';
 import { v4 as uuid } from 'uuid';
 
 import { ReportGenerationException } from '../../../common/filters/custom-exceptions.filter';
-import { transformGenerateIssuanceReportResponse } from '../../../common/transformers/system.transformer';
 import { Agency } from '../../../entities/agency';
-import { Application } from '../../../entities/application';
 import {
   ActivityReport,
+  AgencyFilesDownloadAuditEvent,
   DocumentStatisticsReportEntry,
   FileDownloadReport,
   FileReport,
   UserFilesAuditEventData,
 } from '../../../typings/common';
 import { AgencyEntityService } from '../../entities/agency/agency.entity.service';
-import { ApplicationEntityService } from '../../entities/application/application.entity.service';
 import { UserActionRawResult } from '../../entities/audit-event/audit-event.entity.repository';
 import { AuditEventEntityService } from '../../entities/audit-event/audit-event.entity.service';
 import { EserviceEntityService } from '../../entities/eservice/eservice.entity.service';
@@ -44,6 +39,13 @@ import { EmailService } from '../notification/email.service';
 
 export type FileDownloadCount = Map<string, { val: number }>;
 export const USER_ACTIONS_REPORT_QUERY_CHUNK_SIZE = 100 * 1000;
+export interface GenerateFileDownloadReportResponse {
+  userFileDownloadReportFileName: string;
+  agencyFileDownloadReportFileName: string;
+  fileDownloadCountMap: FileDownloadCount;
+}
+
+type AuditEventType = UserFilesAuditEventData | AgencyFilesDownloadAuditEvent;
 
 @Injectable()
 export class ReportingService {
@@ -58,7 +60,6 @@ export class ReportingService {
     private readonly userEntityService: UserEntityService,
     private readonly emailService: EmailService,
     private readonly zipService: ZipService,
-    private readonly applicationEntityService: ApplicationEntityService,
   ) {}
 
   public async generateAgencyTransactionsReport({
@@ -80,13 +81,8 @@ export class ReportingService {
     try {
       await mkdir(tempDirName);
 
-      const { fileDownloadReportFileName, fileDownloadCountMap } = await this.generateFileDownloadReport(
-        agencyCode,
-        tempDirName,
-        eserviceIdsToQuery,
-        startDate,
-        endDate,
-      );
+      const { userFileDownloadReportFileName, agencyFileDownloadReportFileName, fileDownloadCountMap } =
+        await this.generateFileDownloadReport(agencyCode, tempDirName, eserviceIdsToQuery, startDate, endDate);
 
       const { activityFileName, fileReportFileName } = await this.generateActivityAndFileReport(
         eserviceIdsToQuery,
@@ -99,7 +95,8 @@ export class ReportingService {
       const filesToZip: ZippingFile[] = [
         { name: `01-${activityFileName}`, body: createReadStream(`${tempDirName}/${activityFileName}`) },
         { name: `02-${fileReportFileName}`, body: createReadStream(`${tempDirName}/${fileReportFileName}`) },
-        { name: `03-${fileDownloadReportFileName}`, body: createReadStream(`${tempDirName}/${fileDownloadReportFileName}`) },
+        { name: `03-${userFileDownloadReportFileName}`, body: createReadStream(`${tempDirName}/${userFileDownloadReportFileName}`) },
+        { name: `04-${agencyFileDownloadReportFileName}`, body: createReadStream(`${tempDirName}/${agencyFileDownloadReportFileName}`) },
       ];
 
       const archiver = await this.zipService.zipToStream(filesToZip, undefined, false);
@@ -219,98 +216,6 @@ export class ReportingService {
     } catch (error) {
       throw new ReportGenerationException(COMPONENT_ERROR_CODE.REPORTING_SERVICE, 'filesg statistics', (error as Error).message);
     }
-  }
-
-  public async generateFileSgIssuanceReport({
-    externalRefId,
-    activityUuid,
-    recipientName,
-    recipientEmail,
-    agencyCode,
-    startDateString,
-    endDateString,
-  }: IssuanceReportRequest): Promise<IssuanceReportResponse> {
-    let searchValue;
-    const result: Application[] = [];
-    if (externalRefId) {
-      const application = await this.applicationEntityService.retrieveApplicationWithTransactionsAndActivitiesDetailsByExternalRefId(
-        externalRefId,
-        VIEWABLE_ACTIVITY_TYPES,
-      );
-
-      if (application) {
-        const result = await this.processApplicationsDataToIssuanceReportResponse([application], 'externalRefId');
-        if (result) {
-          return result;
-        }
-      }
-    }
-    if (activityUuid) {
-      const applications =
-        await this.applicationEntityService.retrieveApplicationsWithTransactionsAndActivitiesByActivityUuidAndActivityTypes(
-          activityUuid,
-          VIEWABLE_ACTIVITY_TYPES,
-        );
-      const result = await this.processApplicationsDataToIssuanceReportResponse(applications, 'activityUuid');
-      if (result) {
-        return result;
-      }
-    }
-    if (recipientName) {
-      const applications = await this.applicationEntityService.retrieveApplicationsWithTransactionsAndActivitiesByActivityRecipientInfo(
-        recipientName,
-        agencyCode,
-        { startDate: startOfDay(new Date(startDateString)), endDate: endOfDay(new Date(endDateString)) },
-        VIEWABLE_ACTIVITY_TYPES,
-      );
-      const result = await this.processApplicationsDataToIssuanceReportResponse(
-        applications,
-        'recipientName',
-        agencyCode,
-        startDateString,
-        endDateString,
-      );
-      if (result) {
-        return result;
-      }
-    }
-    if (recipientEmail) {
-      const applications = await this.applicationEntityService.retrieveApplicationsWithTransactionsAndActivitiesByActivityRecipientInfo(
-        recipientEmail,
-        agencyCode,
-        { startDate: startOfDay(new Date(startDateString)), endDate: endOfDay(new Date(endDateString)) },
-        VIEWABLE_ACTIVITY_TYPES,
-      );
-      const result = await this.processApplicationsDataToIssuanceReportResponse(
-        applications,
-        'recipientEmail',
-        agencyCode,
-        startDateString,
-        endDateString,
-      );
-      if (result) {
-        return result;
-      }
-    }
-    return transformGenerateIssuanceReportResponse(result, searchValue);
-  }
-
-  private async processApplicationsDataToIssuanceReportResponse(
-    applications: Application[],
-    searchValue: string,
-    agencyCode?: string,
-    startDateString?: string,
-    endDateString?: string,
-  ) {
-    const applicationsIds = applications.map((e) => e.id);
-    if (applicationsIds.length) {
-      const result = await this.applicationEntityService.retrieveApplicationsWithTransactionsAndActivitiesDetailsByIds(
-        applicationsIds,
-        VIEWABLE_ACTIVITY_TYPES,
-      );
-      return transformGenerateIssuanceReportResponse(result, searchValue, agencyCode, startDateString, endDateString);
-    }
-    return false;
   }
 
   public async generateFileSgUserActionsReport({ startDate, endDate }: FileSgUserActionsReportRequest) {
@@ -449,25 +354,65 @@ export class ReportingService {
     eserviceIds: number[],
     startDate: Date,
     endDate: Date,
-  ): Promise<{ fileDownloadReportFileName: string; fileDownloadCountMap: FileDownloadCount }> {
-    const FILE_DOWNLOAD_REPORT_FILE_NAME = 'file-download-report.csv';
+  ): Promise<GenerateFileDownloadReportResponse> {
+    const fileDownloadCountMap: FileDownloadCount = new Map();
+
+    const USER_FILE_DOWNLOAD_REPORT_FILE_NAME = 'user-file-download-report.csv';
+    await this.saveToFileDownloadReport(
+      agencyCode,
+      reportDir,
+      eserviceIds,
+      startDate,
+      endDate,
+      fileDownloadCountMap,
+      USER_FILE_DOWNLOAD_REPORT_FILE_NAME,
+      AUDIT_EVENT_NAME.USER_FILE_DOWNLOAD,
+    );
+
+    const AGENCY_FILE_DOWNLOAD_REPORT_FILE_NAME = 'agency-file-download-report.csv';
+    await this.saveToFileDownloadReport(
+      agencyCode,
+      reportDir,
+      eserviceIds,
+      startDate,
+      endDate,
+      fileDownloadCountMap,
+      AGENCY_FILE_DOWNLOAD_REPORT_FILE_NAME,
+      AUDIT_EVENT_NAME.AGENCY_FILE_DOWNLOAD,
+    );
+
+    return {
+      userFileDownloadReportFileName: USER_FILE_DOWNLOAD_REPORT_FILE_NAME,
+      agencyFileDownloadReportFileName: AGENCY_FILE_DOWNLOAD_REPORT_FILE_NAME,
+      fileDownloadCountMap,
+    };
+  }
+
+  protected async saveToFileDownloadReport(
+    agencyCode: string,
+    reportDir: string,
+    eserviceIds: number[],
+    startDate: Date,
+    endDate: Date,
+    fileDownloadCountMap: FileDownloadCount,
+    reportFilename: string,
+    auditEventName: AUDIT_EVENT_NAME,
+  ) {
     let page = 1;
     let fetchNext = true;
-
-    const fileDownloadCountMap: FileDownloadCount = new Map();
     while (fetchNext) {
       const { auditEvents, next } = await this.auditEventEntityService.retrieveAuditEvents({
-        eventName: AUDIT_EVENT_NAME.USER_FILE_DOWNLOAD,
+        eventName: auditEventName,
         subEventName: agencyCode,
         page,
       });
 
-      const fileAssetUuids = auditEvents.map((record) => (record.data as UserFilesAuditEventData).fileAssetUuid);
+      const fileAssetUuids = auditEvents.map((record) => (record.data as AuditEventType).fileAssetUuid);
       const fileAssets =
         fileAssetUuids.length > 0 ? await this.fileAssetEntityService.retrieveFileAssetsByUuidsWithAgencyInfo(fileAssetUuids) : [];
 
       const filteredAudits = auditEvents.filter((audit) => {
-        const fileAsset = fileAssets.find((fileAsset) => fileAsset.uuid === (audit.data as UserFilesAuditEventData).fileAssetUuid)!;
+        const fileAsset = fileAssets.find((fileAsset) => fileAsset.uuid === (audit.data as AuditEventType).fileAssetUuid)!;
         let isFound = eserviceIds.includes(fileAsset.issuer!.eservices![0].id);
 
         isFound &&= fileAsset.createdAt >= new Date(startDate);
@@ -477,7 +422,7 @@ export class ReportingService {
       });
 
       const fileDownloadAudit: FileDownloadReport[] = filteredAudits.map((audit) => {
-        const { fileAssetUuid, fileName } = audit.data as UserFilesAuditEventData;
+        const { fileAssetUuid, fileName } = audit.data as AuditEventType;
 
         if (!fileDownloadCountMap.has(fileAssetUuid)) {
           fileDownloadCountMap.set(fileAssetUuid, { val: 0 });
@@ -489,16 +434,18 @@ export class ReportingService {
           fileAssetUuid,
           fileName,
           downloadTime: this.formatDate(audit.createdAt, false),
+          ...(auditEventName === AUDIT_EVENT_NAME.AGENCY_FILE_DOWNLOAD && {
+            isUserCopy: (audit.data as AgencyFilesDownloadAuditEvent).isUserCopy,
+          }),
         };
       });
 
       fetchNext = next !== null;
       const convertedData = await json2csv(fileDownloadAudit, { prependHeader: page === 1 });
-      await appendFile(`${reportDir}/${FILE_DOWNLOAD_REPORT_FILE_NAME}`, `${convertedData}${fetchNext ? '\n' : ''}`);
+      await appendFile(`${reportDir}/${reportFilename}`, `${convertedData}${fetchNext ? '\n' : ''}`);
 
       page++;
     }
-    return { fileDownloadReportFileName: FILE_DOWNLOAD_REPORT_FILE_NAME, fileDownloadCountMap };
   }
 
   protected async generateDocumentIssuanceStatisticsReport(
@@ -561,14 +508,14 @@ export class ReportingService {
     });
 
     const agencyApplicationEventCounts = await this.auditEventEntityService.retrieveAgencyAndApplicationTypeEventCountsByEventNames(
-      USER_FILE_AUDIT_EVENTS,
+      FILE_STATISTICS_AUDIT_EVENTS,
       {
         startDate,
         endDate,
       },
     );
 
-    agencyApplicationEventCounts.forEach(({ agency, applicationType, downloadCount, printSaveCount, viewCount }) => {
+    agencyApplicationEventCounts.forEach(({ agency, applicationType, downloadCount, printSaveCount, viewCount, agencyDownloadCount }) => {
       // skip if missing, as older data might not have
       if (!agency || !applicationType) {
         return;
@@ -584,6 +531,7 @@ export class ReportingService {
         downloadCount: parseInt(downloadCount),
         printSaveCount: parseInt(printSaveCount),
         viewCount: parseInt(viewCount),
+        agencyDownloadCount: parseInt(agencyDownloadCount),
       };
     });
 
@@ -733,6 +681,7 @@ export class ReportingService {
       downloadCount: 0,
       printSaveCount: 0,
       viewCount: 0,
+      agencyDownloadCount: 0,
     };
   }
 

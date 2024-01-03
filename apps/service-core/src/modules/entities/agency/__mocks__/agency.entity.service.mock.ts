@@ -18,6 +18,7 @@ export const mockAgencyEntityService: MockService<AgencyEntityService> = {
   retrieveAgencyByCodeWithTemplatesByNames: jest.fn(),
   retrieveAgencyByIdWithFormSgTransactionAndNotificationTemplates: jest.fn(),
   retrieveAgenciesByCodes: jest.fn(),
+  retrieveIssuingAgenciesWithStatusesByUserId: jest.fn(),
 };
 
 export const mockAgencyUuid = 'mockAgency-uuid-1';

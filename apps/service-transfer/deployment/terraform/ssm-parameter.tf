@@ -103,6 +103,10 @@ locals {
       value = 900
     },
     {
+      name  = "AWS_STS_ASSUME_ROLE_EXPIRATION_BUFFER_IN_MS"
+      value = 5 * 1000
+    },
+    {
       name  = "AWS_LAMDBA_DOC_ENCRYPTION_FUNCTION_NAME"
       value = local.lambda_doc_encryption_function_name[var.env_name]
     },

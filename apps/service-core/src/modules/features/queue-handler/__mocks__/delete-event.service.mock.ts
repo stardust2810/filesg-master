@@ -276,7 +276,6 @@ export const OA_AND_PDF_FILE_ASSETS: FileAsset[] = [
     issuerId: 3,
     parentId: null,
     oaCertificateId: MOCK_OA_CERT_UUID_1,
-    lastViewedAt: null,
     activities: [MOCK_ACTIVITY_UPLOAD_WITH_OA_AND_PDF, MOCK_ACTIVITY_SEND_TRANSFER_WITH_OA_AND_PDF],
   }),
   createMockFileAsset({
@@ -296,7 +295,6 @@ export const OA_AND_PDF_FILE_ASSETS: FileAsset[] = [
     issuerId: 3,
     parentId: null,
     oaCertificateId: MOCK_OA_CERT_UUID_1,
-    lastViewedAt: null,
     activities: [MOCK_ACTIVITY_RECEIVE_TRANSFER_WITH_OA_AND_PDF],
   }),
   createMockFileAsset({
@@ -316,7 +314,6 @@ export const OA_AND_PDF_FILE_ASSETS: FileAsset[] = [
     issuerId: 3,
     parentId: null,
     oaCertificateId: null,
-    lastViewedAt: null,
     activities: [MOCK_ACTIVITY_UPLOAD_WITH_OA_AND_PDF, MOCK_ACTIVITY_SEND_TRANSFER_WITH_OA_AND_PDF],
   }),
   createMockFileAsset({
@@ -336,7 +333,6 @@ export const OA_AND_PDF_FILE_ASSETS: FileAsset[] = [
     issuerId: 3,
     parentId: null,
     oaCertificateId: null,
-    lastViewedAt: null,
     activities: [MOCK_ACTIVITY_RECEIVE_TRANSFER_WITH_OA_AND_PDF],
   }),
 ];
@@ -359,7 +355,6 @@ export const ONLY_OA_FILE_ASSETS: FileAsset[] = [
     issuerId: 3,
     parentId: null,
     oaCertificateId: MOCK_OA_CERT_UUID_1,
-    lastViewedAt: null,
     activities: [MOCK_ACTIVITY_UPLOAD_WITH_OA_ONLY, MOCK_ACTIVITY_SEND_TRANSFER_WITH_OA_ONLY],
   }),
   createMockFileAsset({
@@ -379,7 +374,6 @@ export const ONLY_OA_FILE_ASSETS: FileAsset[] = [
     issuerId: 3,
     parentId: null,
     oaCertificateId: MOCK_OA_CERT_UUID_1,
-    lastViewedAt: null,
     activities: [MOCK_ACTIVITY_RECEIVE_TRANSFER_WITH_OA_ONLY],
   }),
 ];
@@ -402,7 +396,6 @@ export const ONLY_PDF_FILE_ASSETS: FileAsset[] = [
     issuerId: 3,
     parentId: null,
     oaCertificateId: null,
-    lastViewedAt: null,
     activities: [MOCK_ACTIVITY_UPLOAD_WITH_PDF_ONLY, MOCK_ACTIVITY_SEND_TRANSFER_WITH_PDF_ONLY],
   }),
   createMockFileAsset({
@@ -422,7 +415,6 @@ export const ONLY_PDF_FILE_ASSETS: FileAsset[] = [
     issuerId: 3,
     parentId: null,
     oaCertificateId: null,
-    lastViewedAt: null,
     activities: [MOCK_ACTIVITY_RECEIVE_TRANSFER_WITH_PDF_ONLY, MOCK_ACTIVITY_RECEIVE_TRANSFER_WITH_PDF_ONLY_2],
   }),
 ];

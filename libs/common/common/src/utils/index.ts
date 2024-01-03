@@ -176,6 +176,21 @@ export const stringToObjectTransformer = ({ value }: TransformFnParams) => {
 
   return JSON.parse(value);
 };
+
+export const stringSanitizerTransformer = ({ value }: TransformFnParams) => {
+  // escape if type not string, to prevent skipping type validators
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  return sanitizeHtmlAndDecodeEscapedSymbol(value);
+};
+
+export const queryParamArrayTransformer = ({ value }: TransformFnParams) => {
+  const str = value.trim();
+  return str ? str.split(',') : [];
+};
+
 /**
  * As sanitize-html escapes ALL text content - this means that ampersands, greater-than, and less-than signs are
  * converted to their equivalent HTML character references (& --> &amp;, < --> &lt;, and so on). Hence, a replace
@@ -189,8 +204,6 @@ export const sanitizeHtmlAndDecodeEscapedSymbol = (value: string) => {
   const re = new RegExp(replace, 'gi');
   return sanitizedString.replace(re, (m) => SANIZE_HTML_ESCAPED_CHAR_REPLACE_OBJECT[m]);
 };
-
-export const stringSanitizerTransformer = ({ value }: TransformFnParams) => sanitizeHtmlAndDecodeEscapedSymbol(value);
 
 // =============================================================================
 // Validation

@@ -27,19 +27,19 @@ export class CsrfInterceptor implements NestInterceptor {
     const req = contextHttp.getRequest();
     const res = contextHttp.getResponse();
     const requestUrl = req.originalUrl;
-    const hasUrlWhitelisted = getWhitelistedCsrfURLs().some((url) => requestUrl.startsWith(url));
-    if (!hasUrlWhitelisted) {
+    const isUrlWhitelisted = getWhitelistedCsrfURLs().some((url) => requestUrl.startsWith(url));
+    if (!isUrlWhitelisted) {
       if (req.method === 'GET' && requestUrl === '/api/core/v1/auth/user-session-details') {
         req.session.csrfToken = generateCsrfToken();
         res.cookie(CSRF_KEY, req.session.csrfToken, this.sessionOptions);
       }
 
       const isNonGetMethod = req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS';
-      if (isNonGetMethod && auth.auth_state === AUTH_STATE.CITIZEN_LOGGED_IN) {
+      if (isNonGetMethod && [AUTH_STATE.CITIZEN_LOGGED_IN, AUTH_STATE.CORPORATE_USER_LOGGED_IN].includes(auth.auth_state)) {
         const sessionCsrfToken = req.session?.csrfToken;
         const headerCsrfToken = req.headers[COOKIE_HEADER];
 
-        if (!headerCsrfToken) {
+        if (!headerCsrfToken || headerCsrfToken === 'undefined') {
           const internalLog = 'csrf token is missing';
           throw new CSRFException(COMPONENT_ERROR_CODE.CSRF_INTERCEPTOR, 'csrf token error', internalLog);
         }
@@ -47,6 +47,7 @@ export class CsrfInterceptor implements NestInterceptor {
           const internalLog = `csrf token is incorrect | sessionCsrfToken ${sessionCsrfToken} | headerCsrfToken ${headerCsrfToken}`;
           throw new CSRFException(COMPONENT_ERROR_CODE.CSRF_INTERCEPTOR, 'csrf token error', internalLog);
         }
+
         req.session.csrfToken = generateCsrfToken();
         req.session.save();
         res.cookie(CSRF_KEY, req.session.csrfToken, this.sessionOptions);

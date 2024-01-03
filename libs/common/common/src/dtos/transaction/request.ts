@@ -30,11 +30,12 @@ import {
 } from 'class-validator';
 
 import {
+  ACTIVITY_SORT_BY,
   NOTIFICATION_CHANNEL,
   NOTIFICATION_TEMPLATE_REGEX,
+  PATH_TRAVERSAL_REGEX,
   RECIPIENT_TYPE,
   REVOCATION_TYPE,
-  SORT_BY,
   TRANSACTION_CREATION_METHOD,
   TRANSACTION_TEMPLATE_REGEX,
   TRANSACTION_TYPE,
@@ -48,6 +49,7 @@ import {
   isUinfinValid,
   isValidAgencyPasswordFilePath,
   isValidFileSGDate,
+  queryParamArrayTransformer,
   recordSanitizerTransformer,
   stringArraySanitizerTransformer,
   stringSanitizerTransformer,
@@ -75,35 +77,43 @@ export class AgencyFileUpload {
   @IsString()
   @Transform(stringSanitizerTransformer)
   @IsValidFilename()
-  @ApiProperty()
+  @ApiProperty({ description: 'Name of the file to be issued with file extension', example: 'invoice.pdf' })
   name: string;
 
   @IsNotEmpty()
   @IsString()
   @IsHash('sha256')
-  @ApiProperty({ description: 'Calculated SHA256 checksum of the file.' })
+  @ApiProperty({
+    description: 'Calculated SHA256 checksum of the file.',
+    format: 'sha256',
+    example: '185ed273fbb93e8f51693faaefb09081b16194906d622c9d0a497fb07a7a30fc',
+  })
   checksum: string;
 
   @IsOptional()
   @IsValidFileSGDate({ allowEmptyMonthDay: false, allowedDate: 'FUTURE' })
-  @ApiProperty({ example: '1995-01-01', required: false, description: 'The file will expire at the end of the specified date.' })
+  @ApiPropertyOptional({ example: '1995-01-01', description: 'The file will expire at the end of the specified date.' })
   expiry?: string;
 
   @IsOptional()
   @IsValidFileSGDate({ allowEmptyMonthDay: false, allowedDate: 'FUTURE' })
   @IsAfterDate('expiry')
-  @ApiProperty({ example: '1995-01-01', required: false, description: 'The file will be deleted at the start of the specified date.' })
+  @ApiPropertyOptional({ example: '1995-01-01', description: 'The file will be deleted at the start of the specified date.' })
   deleteAt?: string;
 
   @IsOptional()
   @IsBoolean()
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: false })
   isPasswordEncryptionRequired?: boolean;
 
   @IsOptional()
   @IsObject()
   @IsNotEmptyObject()
-  @ApiProperty({ required: false, description: 'Information agency intends to store certain data in a file.' })
+  @ApiPropertyOptional({
+    required: false,
+    description: 'Information agency intends to store certain data in a file.',
+    example: { owner: 'John Doe' },
+  })
   metadata?: Metadata;
 
   // isNotEmptyObject has a different option argument, as compared to the rest of class-validator's validation functions. Wrapper arrow function to remove standard option argument
@@ -132,6 +142,7 @@ export class AgencyFileUpload {
   @ApiProperty({
     required: false,
     description: 'If the agency prefers to use their own password for encryption, they can set a password per file.',
+    example: { 'file-one.pdf': 'c0Aswl@a', 'folder1/file-two.pdf': 'f0mAj$ga' },
   })
   agencyPassword?: AgencyPassword;
 }
@@ -140,12 +151,12 @@ export class CreateRecipientRequest {
   @IsNotEmpty()
   @IsString()
   @Transform(stringSanitizerTransformer)
-  @ApiProperty()
+  @ApiProperty({ description: 'Full name of the recipient', example: 'John Doe' })
   name: string;
 
   @IsValidUin()
   @IsNotEmpty()
-  @ApiProperty()
+  @ApiProperty({ example: 'S7800000A' })
   uin: string;
 
   @EnhancedValidateIf(
@@ -158,13 +169,13 @@ export class CreateRecipientRequest {
     [isNotEmpty],
     'dob is required when isNonSingpassRetrievable is true.',
   )
-  @ApiProperty({ example: '1995-01-01 or 1995-01-00 or 1995-00-00', required: false })
+  @ApiPropertyOptional({ example: '1995-01-01 or 1995-01-00 or 1995-00-00' })
   dob?: string;
 
   @IsOptional()
   @IsEmail({})
   @IsASCIICharactersOnlyString()
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: 'john.doe@example.com' })
   email?: string;
 
   @EnhancedValidateIf(
@@ -177,31 +188,34 @@ export class CreateRecipientRequest {
     [isNotEmpty],
     'contact is required when isNonSingpassRetrievable is true',
   )
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: '+6581234567' })
   contact?: string;
 
   @IsOptional()
   @IsObject()
   @IsNotEmptyObject()
-  @ApiProperty({ required: false, description: 'Information agency intends to store certain user-related data in a file.' })
+  @ApiPropertyOptional({
+    description: 'Information agency intends to store certain user-related data in a file.',
+    example: { isGuardian: true },
+  })
   metadata?: Metadata;
 
   @IsOptional()
   @IsBoolean()
-  @ApiProperty({ type: Boolean, required: false })
+  @ApiPropertyOptional({ description: `Specifies whether the recipient is permitted to retrieve the pass using a non-SingPass route.` })
   isNonSingpassRetrievable?: boolean;
 }
 
 export class CreateRecipientV2Request {
   @IsOptional()
   @IsEnum(RECIPIENT_TYPE)
-  @ApiProperty({ enum: RECIPIENT_TYPE, required: false })
+  @ApiPropertyOptional({ enum: RECIPIENT_TYPE })
   type?: RECIPIENT_TYPE;
 
   @IsNotEmpty()
   @IsString()
   @Transform(stringSanitizerTransformer)
-  @ApiProperty()
+  @ApiProperty({ example: 'John Doe' })
   name: string;
 
   @EnhancedValidateIf(
@@ -214,7 +228,7 @@ export class CreateRecipientV2Request {
     [isEmpty],
     'uin must be empty when recipient type is not citizen',
   )
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: 'S7800000A' })
   uin?: string;
 
   @EnhancedValidateIf(
@@ -227,7 +241,7 @@ export class CreateRecipientV2Request {
     [isEmpty],
     'email must be empty when recipient type is not citizen',
   )
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: 'john.doe@example.com' })
   email?: string;
 
   @EnhancedValidateIf(
@@ -241,7 +255,7 @@ export class CreateRecipientV2Request {
     [isEmpty],
     'isNonSingpassRetrievable must be empty when recipient type is not citizen',
   )
-  @ApiProperty({ type: Boolean, required: false })
+  @ApiPropertyOptional()
   isNonSingpassRetrievable?: boolean;
 
   @EnhancedValidateIf(
@@ -261,7 +275,13 @@ export class CreateRecipientV2Request {
     [isEmpty],
     'dob must be empty when recipient type is not citizen',
   )
-  @ApiProperty({ example: '1995-01-01 or 1995-01-00 or 1995-00-00', required: false })
+  @EnhancedValidateIf(
+    ({ type, isNonSingpassRetrievable, dob }: CreateRecipientV2Request) =>
+      (!type || type === RECIPIENT_TYPE.CITIZEN) && !isNonSingpassRetrievable && !!dob,
+    [isEmpty],
+    'dob must be empty when isNonSingpassRetrievable is false',
+  )
+  @ApiPropertyOptional({ example: '1995-01-01 or 1995-01-00 or 1995-00-00' })
   dob?: string;
 
   @EnhancedValidateIf(
@@ -277,17 +297,26 @@ export class CreateRecipientV2Request {
     'contact is required when isNonSingpassRetrievable is true.',
   )
   @EnhancedValidateIf(
+    ({ type, isNonSingpassRetrievable, contact }: CreateRecipientV2Request) =>
+      (!type || type === RECIPIENT_TYPE.CITIZEN) && !isNonSingpassRetrievable && !!contact,
+    [isEmpty],
+    'contact must be empty when isNonSingpassRetrievable is false.',
+  )
+  @EnhancedValidateIf(
     ({ type }: CreateRecipientV2Request) => !!type && type !== RECIPIENT_TYPE.CITIZEN,
     [isEmpty],
     'contact must be empty when recipient type is not citizen',
   )
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: '+658123456' })
   contact?: string;
 
   @IsOptional()
   @IsObject()
   @IsNotEmptyObject()
-  @ApiProperty({ required: false, description: 'Information agency intends to store certain user-related data in a file.' })
+  @ApiPropertyOptional({
+    description: 'Information agency intends to store certain user-related data in a file.',
+    example: { isGuardian: true },
+  })
   metadata?: Metadata;
 
   @EnhancedValidateIf(
@@ -300,7 +329,7 @@ export class CreateRecipientV2Request {
     [isEmpty],
     'uen must be empty when recipient type is not corporate',
   )
-  @ApiProperty()
+  @ApiPropertyOptional({ example: 'T09LL0001B' })
   uen?: string;
 
   @EnhancedValidateIf(
@@ -319,7 +348,13 @@ export class CreateRecipientV2Request {
     [isEmpty],
     'emails must be empty when recipient type is not corporate',
   )
+  @ApiPropertyOptional({ example: ['company.one@example.org', 'company.two@example.org'] })
   emails?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  @ApiPropertyOptional({ description: 'Indicator flag to display Copy affix on issuance email subject' })
+  isCopy?: boolean;
 }
 
 export class UpdateUserEmailForTransactionRequest {
@@ -341,10 +376,10 @@ export class UpdateUserEmailForTransactionRequest {
 }
 
 export class CompletedActivitiesRequestDto extends PaginationOptions {
-  @ApiProperty({ enum: SORT_BY })
+  @ApiProperty({ enum: ACTIVITY_SORT_BY })
   @IsNotEmpty()
-  @IsEnum(SORT_BY)
-  sortBy: SORT_BY;
+  @IsEnum(ACTIVITY_SORT_BY)
+  sortBy: ACTIVITY_SORT_BY;
 
   @ApiProperty()
   @IsNotEmpty()
@@ -353,15 +388,20 @@ export class CompletedActivitiesRequestDto extends PaginationOptions {
   asc: boolean;
 
   @ApiProperty({ isArray: true, enum: VIEWABLE_ACTIVITY_TYPES })
-  @Transform(({ value }) => (value as string).split(','))
-  @IsIn(VIEWABLE_ACTIVITY_TYPES, { each: true })
+  @Transform(queryParamArrayTransformer)
   @ArrayNotEmpty()
+  @IsArray()
+  @IsIn(VIEWABLE_ACTIVITY_TYPES, { each: true })
   types: typeof VIEWABLE_ACTIVITY_TYPES[number][];
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, isArray: true })
   @IsOptional()
-  @IsString()
-  agencyCode?: string;
+  @Transform(queryParamArrayTransformer)
+  @ArrayNotEmpty()
+  @IsArray()
+  @IsString({ each: true })
+  @Matches(PATH_TRAVERSAL_REGEX, { message: 'Agency code should only contain alphabets', each: true })
+  agencyCodes?: string[];
 }
 
 export class CustomAgencyMessage {
@@ -369,14 +409,24 @@ export class CustomAgencyMessage {
   @IsArray()
   @IsString({ each: true })
   @Transform(stringArraySanitizerTransformer)
-  @ApiProperty({ type: String, isArray: true, description: 'Text that will be displayed on the activity page.' })
+  @ApiProperty({
+    type: String,
+    isArray: true,
+    description: 'Text that will be displayed on the activity page.',
+    example: ['paragraph one', 'paragraph two'],
+  })
   transaction: string[];
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   @Transform(stringArraySanitizerTransformer)
-  @ApiProperty({ type: String, isArray: true, description: 'Text that will be displayed on the email received by the user.' })
+  @ApiProperty({
+    type: String,
+    isArray: true,
+    description: 'Text that will be displayed on the email received by the user.',
+    example: ['paragraph one', 'paragraph two'],
+  })
   email: string[];
 }
 
@@ -387,26 +437,30 @@ export class MessageTemplate {
   @Matches(TRANSACTION_TEMPLATE_REGEX, {
     message: 'Property `templateId` must be provided that start with `transactioncustommessagetemplate-`',
   })
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Generated by FileSG during template onboarding.',
+    example: 'transactioncustommessagetemplate-xxxxxxxxxxxxx-xxxxxxxxxxxxxxxx',
+  })
   templateId: string;
 
   @IsOptional()
   @IsRecord()
   @IsNotEmpty()
   @Transform(recordSanitizerTransformer)
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, example: { paragraphOne: 'Content that needs to be displayed in para one' } })
   templateInput?: TemplateMessageInput;
 }
 
 export class NotificationMessage extends MessageTemplate {
   @IsNotEmpty()
   @IsEnum(NOTIFICATION_CHANNEL)
-  @ApiProperty({ enum: NOTIFICATION_CHANNEL })
+  @ApiProperty({ enum: NOTIFICATION_CHANNEL, example: 'EMAIL' })
   channel: NOTIFICATION_CHANNEL;
 
   @Matches(NOTIFICATION_TEMPLATE_REGEX, {
     message: 'Property `templateId` must be provided that start with `notificationmessagetemplate-`',
   })
+  @ApiProperty({ example: 'notificationmessagetemplate-xxxxxxxxxxxxx-xxxxxxxxxxxxxxxx' })
   override templateId: string;
 }
 
@@ -433,21 +487,25 @@ class BaseCreateTransactionRequest {
   @IsNotEmpty()
   @IsString()
   @Transform(stringSanitizerTransformer)
-  @ApiProperty()
+  @ApiProperty({ description: 'Title of the transaction page and notification', example: 'Your document is ready for viewing' })
   name: string;
 
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => CustomAgencyMessage)
-  @ApiProperty({ type: CustomAgencyMessage, required: false })
   @IsNotEmptyObject()
+  @ApiPropertyOptional({ type: CustomAgencyMessage })
   customAgencyMessage: CustomAgencyMessage;
 }
 
 export class CreateTransactionRequest extends BaseCreateTransactionRequest {
   @IsNotEmpty()
   @IsEnum(TRANSACTION_TYPE)
-  @ApiProperty({ enum: TRANSACTION_TYPE, description: 'Use the value `upload_transfer` when creating transaction' })
+  @ApiProperty({
+    enum: TRANSACTION_TYPE,
+    description: 'Use the value `upload_transfer` when creating transaction',
+    example: 'upload_transfer',
+  })
   type: TRANSACTION_TYPE;
 
   @IsArray()
@@ -459,27 +517,33 @@ export class CreateTransactionRequest extends BaseCreateTransactionRequest {
 
   @IsOptional()
   @IsBoolean()
-  @ApiProperty({ type: Boolean, required: false })
+  @ApiPropertyOptional({ example: false })
   isAcknowledgementRequired?: boolean;
 
   @IsOptional()
   @IsString()
   @IsNotEmpty()
-  @ApiProperty({ required: false, description: 'Acknowledgement id to be provided if acknowledgement is required.' })
+  @ApiPropertyOptional({
+    description: 'Acknowledgement id to be provided if acknowledgement is required.',
+    example: 'acknowledgementtemplate-xxxxxxxxxxxxx-xxxxxxxxxxxxxxxx',
+  })
   acknowledgementTemplateUuid?: string;
 }
 
 export class CreateApplicationRequest {
   @IsNotEmpty()
   @IsString()
-  @ApiProperty()
+  @ApiProperty({ description: 'Generated by FileSG and given to agency during onboarding.', example: 'INV' })
   type: string;
 
   @IsOptional()
   @IsString()
   @Transform(stringSanitizerTransformer)
   @IsNotEmpty()
-  @ApiProperty({ required: false, description: 'The agency-generated ID enables traceability of transactions within FileSG.' })
+  @ApiPropertyOptional({
+    description: 'The agency-generated ID enables traceability of transactions within FileSG.',
+    example: 'TXN202311211453012345',
+  })
   externalRefId?: string;
 }
 
@@ -509,21 +573,24 @@ export class CreateFileTransactionRequest {
 
 export class RevocationRequest {
   @IsIn([REVOCATION_TYPE.CANCELLED])
-  @ApiProperty({ enum: REVOCATION_TYPE, description: 'Only use `cancelled` value for this property' })
+  @ApiProperty({ enum: REVOCATION_TYPE, description: 'Only use `cancelled` value for this property', example: 'cancelled' })
   type: REVOCATION_TYPE.CANCELLED; // NOTE: only caters for cancellation, for now
 
   @IsOptional()
   @IsNotEmpty()
   @IsString()
   @Transform(stringSanitizerTransformer)
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ description: 'reason of revoking the document', example: 'revoked as the pass has been cancelled' })
   reason?: string;
 
   @EitherOr('fileAssetUuid')
   @ValidateIf((req: RevocationRequest) => !(!req.transactionUuid && req.fileAssetUuids))
   @IsNotEmpty()
   @IsString()
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({
+    example: 'transaction-xxxxxxxxxxxxx-xxxxxxxxxxxxxxxx',
+    description: 'Either provide fileAssetUuids or this field. If providing transactionUuid, do not provide fileAssetUuids.',
+  })
   transactionUuid?: string;
 
   @EitherOr('transactionUuid')
@@ -531,7 +598,12 @@ export class RevocationRequest {
   @ArrayNotEmpty()
   @IsArray()
   @IsString({ each: true })
-  @ApiProperty({ type: String, isArray: true })
+  @ApiPropertyOptional({
+    type: String,
+    isArray: true,
+    example: ['fileasset-xxxxxxxxxxxxx-xxxxxxxxxxxxxxxx'],
+    description: 'Either provide transactionUuid or this field. If providing fileAssetUuids, do not provide transactionUuid.',
+  })
   fileAssetUuids?: string[];
 }
 
@@ -558,7 +630,7 @@ export class BaseCreateTransactionV2Request {
   @IsNotEmpty()
   @IsString()
   @Transform(stringSanitizerTransformer)
-  @ApiProperty()
+  @ApiProperty({ description: 'Title of the transaction page and notification', example: 'Your document is ready for viewing' })
   name: string;
 
   @IsArray()
@@ -568,15 +640,32 @@ export class BaseCreateTransactionV2Request {
   @ApiProperty({ type: CreateRecipientV2Request, isArray: true })
   recipients: CreateRecipientV2Request[];
 
+  @EnhancedValidateIf(
+    ({ recipients }: BaseCreateTransactionV2Request) => recipients.map((recipient) => recipient.type).includes(RECIPIENT_TYPE.CORPORATE),
+    [isEmpty],
+    'isAcknowledgementRequired must be empty when any recipient is of type corporate',
+  )
   @IsOptional()
   @IsBoolean()
   @ApiPropertyOptional()
   isAcknowledgementRequired?: boolean;
 
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  @ApiPropertyOptional()
+  @EnhancedValidateIf(
+    ({ recipients }: BaseCreateTransactionV2Request) => recipients.map((recipient) => recipient.type).includes(RECIPIENT_TYPE.CORPORATE),
+    [isEmpty],
+    'acknowledgementTemplateUuid must be empty when any recipient is of type corporate',
+  )
+  @EnhancedValidateIf(
+    ({ isAcknowledgementRequired }: BaseCreateTransactionV2Request) => !isAcknowledgementRequired,
+    [isEmpty],
+    'acknowledgementTemplateUuid must be empty when isAcknowledgementRequired is false or undefined',
+  )
+  @EnhancedValidateIf(
+    ({ isAcknowledgementRequired }: BaseCreateTransactionV2Request) => !!isAcknowledgementRequired,
+    [isNotEmpty, isString],
+    'acknowledgementTemplateUuid is required when isAcknowledgementRequired is true',
+  )
+  @ApiPropertyOptional({ example: 'acknowledgementtemplate-xxxxxxxxxxxxx-xxxxxxxxxxxxxxxx' })
   acknowledgementTemplateUuid?: string;
 }
 

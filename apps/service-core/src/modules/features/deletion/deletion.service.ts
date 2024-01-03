@@ -270,6 +270,7 @@ export class DeletionService {
         userId: activity.userId,
         parentId: triggerDeleteActivity.id,
         recipientInfo: activity.recipientInfo,
+        isNonSingpassRetrievable: activity.isNonSingpassRetrievable,
       })),
       entityManager,
     );

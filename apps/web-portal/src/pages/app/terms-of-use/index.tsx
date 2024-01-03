@@ -1,13 +1,14 @@
-import { Col, Divider, FSG_DEVICES, RESPONSIVE_VARIANT, TextLink, Typography, useShouldRender } from '@filesg/design-system';
+import { Col, Divider, FSG_DEVICES, RESPONSIVE_VARIANT, useShouldRender } from '@filesg/design-system';
 
 import { PublicPageWithDescriptorBannerLayout } from '../../../components/layout/pages/public-page-descriptor-banner';
+import { QuickLinks } from '../../../components/navigation/quick-links';
 import { ExternalLink, WebPage } from '../../../consts';
 import { usePageDescription } from '../../../hooks/common/usePageDescription';
 import { usePageTitle } from '../../../hooks/common/usePageTitle';
 import { useScrollToHashLink } from '../../../hooks/common/useScrollToHashLink';
 import { TermsOfUseListContent } from './components/list-content';
 import { TermsOfUseSchedule } from './components/schedule';
-import { StyledContainer, StyledRelatedPagesContainer, StyledRelatedPagesHeaderContainer, StyledRelatedPagesLinksContainer } from './style';
+import { StyledContainer } from './style';
 
 // Meta Tags
 const PAGE_TITLE = 'Terms of Use';
@@ -21,8 +22,21 @@ const TermsOfUse = (): JSX.Element => {
 
   useScrollToHashLink();
 
+  // ===========================================================================
+  // Const
+  // ===========================================================================
   const isSmallerThanNormalTabletLandscape = useShouldRender(RESPONSIVE_VARIANT.SMALLER_THAN, FSG_DEVICES.NORMAL_TABLET_LANDSCAPE);
-
+  const relatedPagesLinks = [
+    {
+      to: WebPage.PRIVACY_STATEMENT,
+      label: 'Privacy Statement',
+    },
+    {
+      to: ExternalLink.CONTACT_US,
+      label: 'Contact Us',
+      isExternal: true,
+    },
+  ];
   return (
     <StyledContainer>
       <PublicPageWithDescriptorBannerLayout title="Terms of Use">
@@ -33,21 +47,7 @@ const TermsOfUse = (): JSX.Element => {
         </Col>
         {isSmallerThanNormalTabletLandscape && <Divider thick verticalOffset={24} />}
         <Col column={isSmallerThanNormalTabletLandscape ? 12 : 4}>
-          <StyledRelatedPagesContainer>
-            <StyledRelatedPagesHeaderContainer>
-              <Typography variant="H4" bold="FULL">
-                Related Pages
-              </Typography>
-            </StyledRelatedPagesHeaderContainer>
-            <StyledRelatedPagesLinksContainer>
-              <TextLink font="PARAGRAPH" type="LINK" to={WebPage.PRIVACY_STATEMENT}>
-                Privacy Statement
-              </TextLink>
-              <TextLink endIcon="sgds-icon-external" newTab={true} font="PARAGRAPH" type="ANCHOR" to={ExternalLink.CONTACT_US}>
-                Contact Us
-              </TextLink>
-            </StyledRelatedPagesLinksContainer>
-          </StyledRelatedPagesContainer>
+          <QuickLinks title="Related Pages" links={relatedPagesLinks} />
         </Col>
       </PublicPageWithDescriptorBannerLayout>
     </StyledContainer>

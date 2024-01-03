@@ -57,7 +57,7 @@ export const FileDetailsList = ({
       },
       {
         field: 'Owner',
-        value: ownerName,
+        value: ownerName ?? '-',
       },
       {
         field: 'Agency Ref No.',

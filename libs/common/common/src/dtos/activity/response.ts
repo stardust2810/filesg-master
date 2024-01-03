@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { ACTIVITY_STATUS, ACTIVITY_TYPE } from '../../constants/common';
+import { ACTIVITY_RETRIEVAL_OPTIONS, ACTIVITY_STATUS, ACTIVITY_TYPE } from '../../constants/common';
 import { TemplateContent } from '../../typings/acknowledgement-template';
 import { BasicAgencyResponse } from '../agency/response';
 import { DetailApplicationResponse } from '../application/response';
@@ -55,7 +55,7 @@ export class ActivityDetailsResponse extends BasicActivityResponse {
 }
 
 export class ActivityStatusResponse {
-  @ApiProperty({ enum: ACTIVITY_STATUS })
+  @ApiProperty({ example: 'FSG-xxxxxxxx-xxxxxxxxxxxxxxxx' })
   uuid: string;
 
   @ApiProperty({ type: FileAssetStatusResponse, isArray: true, nullable: true })
@@ -90,12 +90,15 @@ export class ActivitiesResponse {
   next: number | null;
 }
 
-export class ValidateActivityNonSingpassRetrievableResponse {
+export class RetrieveActivityRetrievableOptionsResponse {
   @ApiProperty()
-  isNonSingpassRetrievable: boolean;
+  retrievalOptions: Array<ACTIVITY_RETRIEVAL_OPTIONS>;
 
   @ApiProperty()
   isBannedFromNonSingpassVerification: boolean;
+
+  @ApiProperty()
+  isNonSingpassVerifiable: boolean;
 }
 
 export class AcknowledgeActivityResponse {

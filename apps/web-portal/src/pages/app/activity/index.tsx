@@ -8,7 +8,6 @@ import {
   RESPONSIVE_VARIANT,
   ResponsiveRenderer,
   Skeleton,
-  TEST_IDS as DS_TEST_IDS,
   TextLink,
   Typography,
 } from '@filesg/design-system';
@@ -179,13 +178,21 @@ const Activity = () => {
             title="We can't seem to find the activity you are looking for"
             descriptions={[
               'Check that the URL entered is correct, and try again.',
-              <Typography variant="BODY" data-testid={DS_TEST_IDS.INFO_DESCRIPTION}>
-                Activities can only be accessed by recipients themselves with Singpass login or identity verification via Two-Factor
-                Authentication (2FA) for individuals without a Singpass account. View{' '}
-                <TextLink font="BODY" to={`${WebPage.FAQ}${WebPage.RETRIEVING_YOUR_DOCUMENTS}`} type="LINK">
-                  FAQ - Retrieving your documents
-                </TextLink>{' '}
-                for more details.
+              <Typography variant="BODY">
+                Please note that only document recipients themselves can view their documents via Singpass login.
+              </Typography>,
+              <Typography variant="BODY">
+                If you do not have a Singpass account, or if you are retrieving a document on behalf of the document recipient, you will
+                need to {` `}
+                <TextLink
+                  font="BODY"
+                  to={`${WebPage.FAQ}${WebPage.RETRIEVING_YOUR_DOCUMENTS}#document-retrieval`}
+                  type="LINK"
+                  isInline={true}
+                >
+                  retrieve the document without a Singpass account
+                </TextLink>
+                .
               </Typography>,
             ]}
           />

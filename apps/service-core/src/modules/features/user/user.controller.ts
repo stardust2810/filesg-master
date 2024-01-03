@@ -3,7 +3,7 @@ import { Controller, Get, Logger, Param, Put, Req } from '@nestjs/common';
 import { ApiOkResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
 import { AUTH_STATE, FileSGAuth } from '../../../common/decorators/filesg-auth.decorator';
-import { RequestWithSession } from '../../../typings/common';
+import { RequestWithCitizenSession } from '../../../typings/common';
 import { UserService } from './user.service';
 
 @ApiTags('user')
@@ -17,7 +17,7 @@ export class UserController {
   @FileSGAuth({ auth_state: AUTH_STATE.CITIZEN_LOGGED_IN, requireOnboardedUser: false })
   @ApiOkResponse({ type: DetailUserResponse, description: 'Retrieves login user detail profile.' })
   @ApiUnauthorizedResponse({ description: ERROR_RESPONSE_DESC.UNAUTHORISED })
-  async retrieveUserDetail(@Req() req: RequestWithSession): Promise<DetailUserResponse> {
+  async retrieveUserDetail(@Req() req: RequestWithCitizenSession): Promise<DetailUserResponse> {
     return await this.userService.retrieveUserDetail(req.session.user.userUuid);
   }
 
@@ -25,7 +25,7 @@ export class UserController {
   @FileSGAuth({ auth_state: AUTH_STATE.CITIZEN_LOGGED_IN, requireOnboardedUser: false })
   @ApiOkResponse({ description: 'Onboards citizen user.' })
   @ApiUnauthorizedResponse({ description: ERROR_RESPONSE_DESC.UNAUTHORISED })
-  async onboardCitizenUser(@Req() req: RequestWithSession) {
+  async onboardCitizenUser(@Req() req: RequestWithCitizenSession) {
     await this.userService.onboardCitizenUser(req);
   }
 
@@ -41,7 +41,7 @@ export class UserController {
   @FileSGAuth({ auth_state: AUTH_STATE.CITIZEN_LOGGED_IN, requireOnboardedUser: false })
   @ApiOkResponse({ description: 'Get a list of agencies that issued files to a user' })
   @ApiUnauthorizedResponse({ description: ERROR_RESPONSE_DESC.UNAUTHORISED })
-  async getAgencyList(@Req() req: RequestWithSession): Promise<AgencyListResponse> {
+  async getAgencyList(@Req() req: RequestWithCitizenSession): Promise<AgencyListResponse> {
     return await this.userService.getAgencyList(req);
   }
 }

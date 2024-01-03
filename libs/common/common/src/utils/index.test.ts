@@ -1,3 +1,5 @@
+import { plainToClass, Transform } from 'class-transformer';
+
 import { FILE_ENCRYPTION_MAX_PASSWORD_CHAR } from '../dtos/transaction/request';
 import { AgencyPassword } from '../typings/common';
 import {
@@ -8,7 +10,9 @@ import {
   isValidFilename,
   isValidFilePath,
   pluralise,
+  queryParamArrayTransformer,
   redactUinfin,
+  stringSanitizerTransformer,
   transformAllFirstLetterUppercase,
   transformFirstLetterUppercase,
 } from '.';
@@ -709,6 +713,52 @@ describe('utils', () => {
       expect(transformAllFirstLetterUppercase(randomCase)).toEqual('Hello World');
       expect(transformAllFirstLetterUppercase(kebabCase)).toEqual('Hello-world');
       expect(transformAllFirstLetterUppercase(screamKebabCase)).toEqual('Hello-world');
+    });
+  });
+
+  describe('stringSanitizerTransformer', () => {
+    class StringSanitiserTest {
+      @Transform(stringSanitizerTransformer)
+      input: string;
+    }
+    it('should sanitise the input string', () => {
+      const inputOne = 'test<p>this</p>';
+      const expectedOutputOne = 'testthis';
+      const firstTest = plainToClass(StringSanitiserTest, { input: inputOne });
+      expect(firstTest.input).toEqual(expectedOutputOne);
+    });
+    it('should not alter the input as it is not string', () => {
+      const inputTwo = 123;
+      const expectedOutputTwo = 123;
+      const secondTest = plainToClass(StringSanitiserTest, { input: inputTwo });
+      expect(secondTest.input).toEqual(expectedOutputTwo);
+
+      const inputThree = false;
+      const expectedOutputThree = false;
+      const thirdTest = plainToClass(StringSanitiserTest, { input: inputThree });
+      expect(thirdTest.input).toEqual(expectedOutputThree);
+    });
+  });
+
+  describe('queryParamArrayTransformer', () => {
+    class TestClass {
+      @Transform(queryParamArrayTransformer)
+      agencyCodes: string[];
+    }
+
+    it('should non empty array when string is given with items separated by delimiter "," ', () => {
+      const test = plainToClass(TestClass, { agencyCodes: 'agency1,agency2' });
+      expect(test.agencyCodes).toEqual(['agency1', 'agency2']);
+    });
+
+    it('should return empty array when empty string is given', () => {
+      const test = plainToClass(TestClass, { agencyCodes: '' });
+      expect(test.agencyCodes).toEqual([]);
+    });
+
+    it('should return empty array when string with spaces is given', () => {
+      const test = plainToClass(TestClass, { agencyCodes: '   ' });
+      expect(test.agencyCodes).toEqual([]);
     });
   });
 });

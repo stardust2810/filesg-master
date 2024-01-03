@@ -38,10 +38,12 @@ export class StsService {
   }
 
   public async assumeUploadRole() {
-    const { uploadRoleArn, assumeRoleSessionDuration } = this.fileSGConfigService.awsConfig;
+    const { uploadRoleArn, assumeRoleSessionDuration, assumeRoleExpirationBufferInMs } = this.fileSGConfigService.awsConfig;
 
-    // gd TODO: make 5 into a const?
-    if (!this.assumedRoleForUpload || new Date(this.assumedRoleForUpload.expiration!.getTime() - 5 * 1000) <= new Date()) {
+    if (
+      !this.assumedRoleForUpload ||
+      new Date(this.assumedRoleForUpload.expiration!.getTime() - assumeRoleExpirationBufferInMs) <= new Date()
+    ) {
       this.assumedRoleForUpload = await this.baseStsService.assumeRoleInSts(uploadRoleArn, 'upload', assumeRoleSessionDuration);
       this.logger.log('Creating new assume role');
     }

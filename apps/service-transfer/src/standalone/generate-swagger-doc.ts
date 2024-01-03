@@ -117,9 +117,18 @@ function generateSwaggerDoc(
         type: 'http',
         scheme: 'bearer',
         bearerFormat: 'JWT',
-        description: 'Use `accessToken` obtained from the response of create transaction',
+        description: 'Use `accessToken` obtained from the response of `create transaction`',
       },
-      'FileSGBearerToken',
+      'FileSGBearerTokenUpload',
+    )
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Use `accessToken` obtained from the response of `generate download token` to download the file',
+      },
+      'FileSGBearerTokenDownload',
     )
     .build();
 

@@ -1,26 +1,17 @@
-import { Col, Divider, FSG_DEVICES, RESPONSIVE_VARIANT, TextLink, Typography, useShouldRender } from '@filesg/design-system';
+import { Col, Divider, FSG_DEVICES, RESPONSIVE_VARIANT, Typography, useShouldRender } from '@filesg/design-system';
 import React from 'react';
 import { isValidElement } from 'react';
 
 import { PublicPageWithDescriptorBannerLayout } from '../../../components/layout/pages/public-page-descriptor-banner';
+import { QuickLinks } from '../../../components/navigation/quick-links';
 import { ExternalLink, WebPage } from '../../../consts';
 import { usePageDescription } from '../../../hooks/common/usePageDescription';
 import { usePageTitle } from '../../../hooks/common/usePageTitle';
 import { ListContent } from '../../../typings';
 import { PrivacyStatementAnnex } from './components/annex';
+import { StyledLiWithoutNumbering } from './components/annex/style';
 import { privacyStatementContent, privacyStatementIntro } from './consts';
-import {
-  StyledContainer,
-  StyledIntroText,
-  StyledLi,
-  StyledOl,
-  StyledOverallOl,
-  StyledRelatedPagesContainer,
-  StyledRelatedPagesHeaderContainer,
-  StyledRelatedPagesLinksContainer,
-  StyledSectionHeader,
-  StyledText,
-} from './style';
+import { StyledContainer, StyledIntroText, StyledLi, StyledOl, StyledOverallOl, StyledSectionHeader, StyledText } from './style';
 
 export interface PrivacyStatementSection {
   sectionTitle: string;
@@ -43,6 +34,17 @@ const PrivacyStatement = (): JSX.Element => {
   const isSmallerThanNormalTabletLandscape = useShouldRender(RESPONSIVE_VARIANT.SMALLER_THAN, FSG_DEVICES.NORMAL_TABLET_LANDSCAPE);
   const isSmallerThanSmallTablet = useShouldRender(RESPONSIVE_VARIANT.SMALLER_THAN, FSG_DEVICES.SMALL_TABLET);
 
+  const relatedPagesLinks = [
+    {
+      to: WebPage.TERMS_OF_USE,
+      label: 'Terms of Use',
+    },
+    {
+      to: ExternalLink.CONTACT_US,
+      label: 'Contact Us',
+      isExternal: true,
+    },
+  ];
   // ===========================================================================
   // Render
   // ===========================================================================
@@ -51,9 +53,11 @@ const PrivacyStatement = (): JSX.Element => {
       <StyledOverallOl>
         {privacyStatementSectionList.map((section, index) => (
           <React.Fragment key={`privacy-section-${index}`}>
-            <StyledSectionHeader variant={isSmallerThanSmallTablet ? 'H3_MOBILE' : 'H3'} bold="FULL">
-              {section.sectionTitle}
-            </StyledSectionHeader>
+            <StyledLiWithoutNumbering>
+              <StyledSectionHeader variant={isSmallerThanSmallTablet ? 'H3_MOBILE' : 'H3'} bold="FULL">
+                {section.sectionTitle}
+              </StyledSectionHeader>
+            </StyledLiWithoutNumbering>
             {renderListContent(section.content)}
           </React.Fragment>
         ))}
@@ -97,21 +101,7 @@ const PrivacyStatement = (): JSX.Element => {
         </Col>
         {isSmallerThanNormalTabletLandscape && <Divider thick verticalOffset={24} />}
         <Col column={isSmallerThanNormalTabletLandscape ? 12 : 4}>
-          <StyledRelatedPagesContainer>
-            <StyledRelatedPagesHeaderContainer>
-              <Typography variant="H4" bold="FULL">
-                Related Pages
-              </Typography>
-            </StyledRelatedPagesHeaderContainer>
-            <StyledRelatedPagesLinksContainer>
-              <TextLink font="PARAGRAPH" type="LINK" to={WebPage.TERMS_OF_USE}>
-                Terms of Use
-              </TextLink>
-              <TextLink endIcon="sgds-icon-external" newTab font="PARAGRAPH" type="ANCHOR" to={ExternalLink.CONTACT_US}>
-                Contact Us
-              </TextLink>
-            </StyledRelatedPagesLinksContainer>
-          </StyledRelatedPagesContainer>
+          <QuickLinks title="Related Pages" links={relatedPagesLinks} />
         </Col>
       </PublicPageWithDescriptorBannerLayout>
     </StyledContainer>

@@ -24,11 +24,12 @@ enum AuthModalType {
 interface AuthModalProps {
   title?: string;
   onCloseModal: () => void;
-  onNonSingpassLogin?: () => void;
+  canNonSingpassLogin?: boolean;
+  canCorppassLogin?: boolean;
   showSingpassOptionsOnly?: boolean;
 }
 
-const AuthenticationModal = ({ title, onCloseModal, onNonSingpassLogin, showSingpassOptionsOnly }: AuthModalProps) => {
+const AuthenticationModal = ({ title, onCloseModal, canNonSingpassLogin, showSingpassOptionsOnly, canCorppassLogin }: AuthModalProps) => {
   const { hash } = useLocation();
 
   const [type, setType] = useState<AuthModalType | null>(null);
@@ -37,14 +38,6 @@ const AuthenticationModal = ({ title, onCloseModal, onNonSingpassLogin, showSing
   // Effects
   // ===========================================================================
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (showSingpassOptionsOnly) {
-      window.location.hash = AuthModalType.SINGPASS_AUTH_OPTION;
-      return;
-    }
-    window.location.hash = AuthModalType.AUTH_OPTION;
-  }, [showSingpassOptionsOnly]);
 
   useEffect(() => {
     switch (hash.replace('#', '')) {
@@ -72,6 +65,16 @@ const AuthenticationModal = ({ title, onCloseModal, onNonSingpassLogin, showSing
         break;
     }
   }, [hash]);
+
+  useEffect(() => {
+    if (showSingpassOptionsOnly) {
+      setType(AuthModalType.SINGPASS_AUTH_OPTION);
+      window.location.hash = AuthModalType.SINGPASS_AUTH_OPTION;
+      return;
+    }
+    setType(AuthModalType.AUTH_OPTION);
+    window.location.hash = AuthModalType.AUTH_OPTION;
+  }, [showSingpassOptionsOnly]);
 
   // ===========================================================================
   // Handlers
@@ -106,12 +109,13 @@ const AuthenticationModal = ({ title, onCloseModal, onNonSingpassLogin, showSing
   };
 
   const handleNavToMockLogin = (isCorppass: boolean) => {
+    setType(isCorppass ? AuthModalType.MOCK_CORPPASS_LOGIN : AuthModalType.MOCK_LOGIN);
     window.location.hash = isCorppass ? AuthModalType.MOCK_CORPPASS_LOGIN : AuthModalType.MOCK_LOGIN;
   };
 
   const handleCloseModal = () => {
-    onCloseModal();
     setType(null);
+    onCloseModal();
     window.location.hash = '';
   };
 
@@ -127,14 +131,14 @@ const AuthenticationModal = ({ title, onCloseModal, onNonSingpassLogin, showSing
             title={title ? title : undefined}
             onSingpassButtonClick={() => handleNavToLogin(false)}
             onNonSingpassButtonClick={
-              onNonSingpassLogin
+              canNonSingpassLogin
                 ? () => {
                     startWogaaTrackingForNonSingpassRetrieval();
                     handleNavToNonSingpassLogin();
-                    onNonSingpassLogin();
                   }
                 : undefined
             }
+            onCorppassButtonClick={canCorppassLogin ? () => handleNavToLogin(true) : undefined}
             onClose={handleCloseModal}
           />
         );

@@ -23,14 +23,17 @@ export class OtpConfigService {
   get redisRecordExpiryBuffer() {
     return this.configService.get('OTP_REDIS_RECORD_EXPIRY_BUFFER', { infer: true })!;
   }
-  get maxAllowedOtpSentPerCycle() {
-    return this.configService.get('OTP_MAX_ALLOWED_SENT_PER_CYCLE', { infer: true })!;
+  get maxAllowedOtpSendCount() {
+    return this.configService.get('OTP_MAX_ALLOWED_SEND_COUNT', { infer: true })!;
   }
   get toggleMock() {
     return this.configService.get('OTP_TOGGLE_MOCK', { infer: true })!;
   }
   get mockString() {
     return this.configService.get('OTP_MOCK_STRING', { infer: true })!;
+  }
+  get contactUpdateBanSeconds() {
+    return this.configService.get('CONTACT_UPDATE_BAN_SECONDS', { infer: true })!;
   }
 }
 
@@ -63,7 +66,7 @@ export class OtpEnvironmentVariables {
   @Transform(numberTransformer)
   @Expose()
   @IsNumber()
-  OTP_MAX_ALLOWED_SENT_PER_CYCLE: number;
+  OTP_MAX_ALLOWED_SEND_COUNT: number;
 
   @Expose()
   @IsEnum(FEATURE_TOGGLE)
@@ -72,4 +75,9 @@ export class OtpEnvironmentVariables {
   @Expose()
   @IsString()
   OTP_MOCK_STRING: string;
+
+  @Transform(numberTransformer)
+  @Expose()
+  @IsNumber()
+  CONTACT_UPDATE_BAN_SECONDS: number;
 }

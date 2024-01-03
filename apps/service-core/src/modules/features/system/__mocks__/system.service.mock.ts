@@ -11,6 +11,7 @@ export const mockSystemService: MockService<SystemService> = {
   resendNotification: jest.fn(),
   lift1FaBan: jest.fn(),
   lift2FaBan: jest.fn(),
+  issuanceQuery: jest.fn(),
 };
 
 export class TestSystemService extends SystemService {

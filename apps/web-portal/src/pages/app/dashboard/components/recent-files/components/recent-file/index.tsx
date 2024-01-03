@@ -1,12 +1,5 @@
 import { FILE_TYPE } from '@filesg/common';
-import {
-  Color,
-  FileIcon,
-  getFileExtensionAndLastChars,
-  getFileNameWithoutExtensionAndLastChars,
-  IconButton,
-  Typography,
-} from '@filesg/design-system';
+import { Color, FileIcon, generateEllipsisFileNameParts, IconButton, Typography } from '@filesg/design-system';
 import { FileSGProps } from '@filesg/design-system';
 import { formatDistance } from 'date-fns';
 
@@ -40,17 +33,20 @@ export const RecentFile = ({
   const currentDate = new Date();
   const getLastViewedAt = `${formatDistance(lastViewedAt, currentDate, { addSuffix: true })}`;
   const ariaLabel = `${type} file format icon`;
+
+  const { front, back } = generateEllipsisFileNameParts(name, 8);
+
   return (
     <StyledContainer to={linkTo} state={linkState} className={className} data-testid={rest['data-testid'] ?? TEST_IDS.RECENT_FILE}>
       <FileIcon type={type} variant="solid" size="ICON_LARGE" aria-label={ariaLabel} />
 
       <StyledFileDetailsTextContainer>
         <StyledFileName>
-          <Typography variant="BODY" ellipsisLine={1} isEllipsis>
-            {getFileNameWithoutExtensionAndLastChars(name, 8)}
+          <Typography variant="BODY" ellipsisLine={1} isEllipsis whitespace="pre-wrap">
+            {front}
           </Typography>
-          <Typography variant="BODY" noWrap>
-            {getFileExtensionAndLastChars(name, 8)}
+          <Typography variant="BODY" whitespace="pre">
+            {back}
           </Typography>
         </StyledFileName>
 

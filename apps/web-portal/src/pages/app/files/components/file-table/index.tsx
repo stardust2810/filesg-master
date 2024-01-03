@@ -1,4 +1,4 @@
-import { SORT_BY } from '@filesg/common';
+import { FILE_ASSET_SORT_BY } from '@filesg/common';
 import {
   Color,
   FileIcon,
@@ -37,7 +37,7 @@ interface Props {
   onDownloadClick: (id: string, name: string, size: number) => void;
   onViewClick: (id: string) => void;
   loadMoreRows?: () => void;
-  onSortClick?: (sortType: SORT_BY) => void;
+  onSortClick?: (sortType: FILE_ASSET_SORT_BY) => void;
   asc?: boolean;
   infiniteQueryResult: UseInfiniteQueryResult;
   topInPx?: number;
@@ -123,7 +123,7 @@ export function FileTable({
     {
       field: 'createdAt',
       headerName: 'Created',
-      onHeaderClick: () => onSortClick!(SORT_BY.CREATED_AT),
+      onHeaderClick: () => onSortClick!(FILE_ASSET_SORT_BY.CREATED_AT),
       width: 224,
       minWidth: 176,
       hiddenOn: 'MOBILE',

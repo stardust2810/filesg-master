@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { ActivityEntityModule } from '../../entities/activity/activity.entity.module';
+import { AuditEventEntityModule } from '../../entities/audit-event/audit-event.entity.module';
 import { EmailBlackListEntityModule } from '../../entities/email-black-list/email-black-list.entity.module';
 import { FileAssetEntityModule } from '../../entities/file-asset/file-asset.entity.module';
 import { FileAssetAccessEntityModule } from '../../entities/file-asset-access/file-asset-access.entity.module';
@@ -41,6 +42,7 @@ import { SesNotificationQueueHandlerService } from './ses-notification-queue-han
     OaCertificateEntityModule,
     ApiClientModule,
     TransactionModule,
+    AuditEventEntityModule,
   ],
   providers: [
     CoreEventsQueueHandlerService,

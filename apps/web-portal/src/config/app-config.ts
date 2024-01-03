@@ -49,7 +49,6 @@ function getBooleanValuesFromEnv(key: string, defaultValue: boolean, disableWarn
 
 export const config = {
   mockAuth: getValueFromEnv('TOGGLE_MOCK_AUTH', FEATURE_TOGGLE.OFF),
-  hideMockAuth: getValueFromEnv('HIDE_MOCK_AUTH', FEATURE_TOGGLE.OFF),
   toggleReduxDevTool: getValueFromEnv('TOGGLE_REDUX_DEV_TOOL', FEATURE_TOGGLE.OFF),
   rendererUrl: getValueFromEnv('RENDERER_URL', ''),
   singpassNdiScriptUrl: getValueFromEnv('SINGPASS_NDI_SCRIPT', 'https://id.singpass.gov.sg/static/ndi_embedded_auth.js'),

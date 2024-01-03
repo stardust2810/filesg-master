@@ -63,6 +63,12 @@ export type ActionProps = {
   onClick: MouseEventHandler;
 } & CtaLabelProps;
 
+export interface LinkProps {
+  label: string;
+  to: string;
+  isExternal?: boolean;
+}
+
 export enum FSGThemeType {
   THEME_1 = 'basic',
   THEME_2 = 'light',

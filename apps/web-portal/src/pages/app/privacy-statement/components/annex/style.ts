@@ -97,3 +97,10 @@ export const StyledText = styled(Typography)`
     margin-left: 4.5rem;
   }
 `;
+
+export const StyledLiWithoutNumbering = styled.li`
+  list-style: none;
+  &::before {
+    content: none !important;
+  }
+`;

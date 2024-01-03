@@ -171,12 +171,12 @@ function VerificationOptions({ setOaBlob, setVerificationOption }: Props) {
                 Alternatively, you may{' '}
                 <StyledTextButton
                   color={Color.PURPLE_DEFAULT}
-                  label={'upload an image of the QR code'}
+                  label={'upload an image of the QR code.'}
                   onClick={hanldeOnUploadQRImageClick}
                   data-testid={'upload-qrcode-image'}
                   disabled={isScanning || isLoading}
+                  isEllipsis={false}
                 />
-                .
               </>
             }
             dropzoneOptions={{

@@ -1,5 +1,5 @@
 import { ErrorLogLevel, FileSGBaseException, FileSGBaseHttpException, InputValidationException } from '@filesg/backend-common';
-import { COMPONENT_ERROR_CODE, EXCEPTION_ERROR_CODE, TRANSACTION_TYPE, USER_TYPE } from '@filesg/common';
+import { COMPONENT_ERROR_CODE, EXCEPTION_ERROR_CODE, FILE_TYPE, TRANSACTION_TYPE, USER_TYPE } from '@filesg/common';
 import { HttpStatus } from '@nestjs/common';
 
 import { DuplicateEserviceWhitelistedUsersAgencyEserviceDetails, InvalidEserviceWhitelistedUserEmailsDetails } from '../../typings/common';
@@ -151,6 +151,18 @@ export class ReportGenerationException extends FileSGBaseHttpException {
   }
 }
 
+export class UserInfoFailedToUpdateException extends FileSGBaseHttpException {
+  constructor(componentErrorCode: COMPONENT_ERROR_CODE, internalLog?: string) {
+    super(
+      `[UserInfoFailedToUpdateException] User info retrived failed to be updated in DB`,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      componentErrorCode,
+      EXCEPTION_ERROR_CODE.INTERNAL_SERVER_ERROR,
+    );
+    this.internalLog = internalLog;
+  }
+}
+
 // =============================================================================
 // Bad request exception (400)
 // =============================================================================
@@ -239,13 +251,13 @@ export class OtpDoesNotExistException extends FileSGBaseHttpException {
   }
 }
 
-export class OtpMaxRetriesReachedException extends FileSGBaseHttpException {
+export class OtpMaxVerificationCountReachedException extends FileSGBaseHttpException {
   constructor(componentErrorCode: COMPONENT_ERROR_CODE) {
     super(
-      `[OtpMaxRetriesReachedException] Max retries reached for this OTP. Please trigger a new OTP resend.`,
+      `[OtpMaxVerificationCountReachedException] Max verification count reached for this OTP. Please trigger a new OTP resend.`,
       HttpStatus.BAD_REQUEST,
       componentErrorCode,
-      EXCEPTION_ERROR_CODE.OTP_MAX_RETRIES_REACHED,
+      EXCEPTION_ERROR_CODE.OTP_MAX_VERIFICATION_ATTEMPT_COUNT_REACHED,
     );
     this.errorLogLevel = 'warn';
   }
@@ -315,18 +327,6 @@ export class UserAlreadyOnboardedException extends FileSGBaseHttpException {
   }
 }
 
-export class UserInfoFailedToUpdateException extends FileSGBaseHttpException {
-  constructor(componentErrorCode: COMPONENT_ERROR_CODE, internalLog?: string) {
-    super(
-      `[UserInfoFailedToUpdateException] User info retrived failed to be updated in DB`,
-      HttpStatus.INTERNAL_SERVER_ERROR,
-      componentErrorCode,
-      EXCEPTION_ERROR_CODE.INTERNAL_SERVER_ERROR,
-    );
-    this.internalLog = internalLog;
-  }
-}
-
 export class ActivityAcknowledgementNotRequiredException extends FileSGBaseHttpException {
   constructor(componentErrorCode: COMPONENT_ERROR_CODE, activityUuid: string) {
     super(
@@ -363,17 +363,18 @@ export class ActivityNotBannedException extends FileSGBaseHttpException {
   }
 }
 
-export class RecalledActivityException extends FileSGBaseHttpException {
-  constructor(componentErrorCode: COMPONENT_ERROR_CODE, activityUuid: string) {
+export class InvalidFileTypeForQrGenerationException extends FileSGBaseHttpException {
+  constructor(componentErrorCode: COMPONENT_ERROR_CODE) {
     super(
-      `[RecalledActivityException] Activity with UUID:${activityUuid} has already been recalled`,
+      `[InvalidFileTypeForQrGenerationException] File asset is not of type ${FILE_TYPE.OA} thus not allowed to generate QR.`,
       HttpStatus.BAD_REQUEST,
       componentErrorCode,
-      EXCEPTION_ERROR_CODE.ACTIVITY_HAD_ALREADY_BEEN_ACKNOWLEDGED,
+      EXCEPTION_ERROR_CODE.BAD_REQUEST,
     );
     this.errorLogLevel = 'warn';
   }
 }
+
 // =============================================================================
 // Unauthorized exception (401)
 // =============================================================================
@@ -417,6 +418,17 @@ export class SingpassNonceMatchError extends FileSGBaseHttpException {
   }
 }
 
+export class CorppassNonceMatchError extends FileSGBaseHttpException {
+  constructor(componentErrorCode: COMPONENT_ERROR_CODE) {
+    super(
+      `[CorppassNonceMatchError] Failed to match the nonce provided inside payload`,
+      HttpStatus.UNAUTHORIZED,
+      componentErrorCode,
+      EXCEPTION_ERROR_CODE.UNAUTHORIZED,
+    );
+  }
+}
+
 // =============================================================================
 // Forbidden exception (403)
 // =============================================================================
@@ -433,9 +445,22 @@ export class NonSingpassVerificationInvalidCredentialException extends FileSGBas
 }
 
 export class NonSingpassVerificationBanException extends FileSGBaseHttpException {
+  constructor(componentErrorCode: COMPONENT_ERROR_CODE, activityUuid: string, internalLog?: string) {
+    super(
+      `[NonSingpassVerificationBanException] Activity ${activityUuid} is banned from performing any further non singpass verification`,
+      HttpStatus.FORBIDDEN,
+      componentErrorCode,
+      EXCEPTION_ERROR_CODE.NON_SINGPASS_VERIFICATION_BAN,
+    );
+    this.errorLogLevel = 'warn';
+    this.internalLog = internalLog;
+  }
+}
+
+export class NonSingpassRetrievalException extends FileSGBaseHttpException {
   constructor(componentErrorCode: COMPONENT_ERROR_CODE, activityUuid: string) {
     super(
-      `[NonSingpassVerificationBanException] Activity ${activityUuid} is banned from performing any further non singpass verfication`,
+      `[NonSingpassVerificationBanException] Activity ${activityUuid} is not retrievable using non singpass verification`,
       HttpStatus.FORBIDDEN,
       componentErrorCode,
       EXCEPTION_ERROR_CODE.NON_SINGPASS_VERIFICATION_BAN,

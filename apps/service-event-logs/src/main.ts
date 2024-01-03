@@ -22,7 +22,7 @@ export default async function bootstrap() {
   app.use(json({ limit: '50mb' }));
   app.useLogger(app.get(PinoLogger));
   app.flushLogs();
-  app.enableCors({ origin: true, credentials: true }); // TODO: set cors according to the subdomains
+  app.enableCors({ origin: [/\.file\.gov\.sg$/], credentials: true });
   app.use(helmet());
   app.useGlobalFilters(new GlobalExceptionsFilter(SERVICE_NAME.EVENT_LOGS));
   app.useGlobalPipes(new ValidationPipe());

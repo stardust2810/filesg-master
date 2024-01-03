@@ -1,12 +1,12 @@
 import { Replace } from '@filesg/common';
-import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn, RelationId } from 'typeorm';
 
 import { CreationAttributes } from '../typings/common';
 import { TimestampableEntity } from './base-model';
 import { CorporateUser } from './corporate-user';
 import { CorporateBaseUser, CorporateBaseUserCreationModel } from './user';
 
-type OptionalCorporateWithBaseUserAttributes = 'name' | 'corporateUsers';
+type OptionalCorporateWithBaseUserAttributes = 'name' | 'corporateUsers' | 'userId';
 type OptionalCorporateAttributes = OptionalCorporateWithBaseUserAttributes | 'user';
 type OmitCorporateAttributes = 'id';
 
@@ -32,6 +32,9 @@ export class Corporate extends TimestampableEntity {
   @OneToOne(() => CorporateBaseUser, (user) => user.corporate, { cascade: ['insert'] })
   @JoinColumn()
   user?: CorporateBaseUser;
+
+  @RelationId((entity: Corporate) => entity.user)
+  userId?: number;
 
   @OneToMany(() => CorporateUser, (corporateUser) => corporateUser.corporate)
   corporateUsers?: CorporateUser[];

@@ -56,8 +56,9 @@ export const mockFileSGConfigService = {
     resendWaitSeconds: 60,
     maxValidationAttemptCount: 3,
     redisRecordExpiryBuffer: 60,
-    maxAllowedOtpSentPerCycle: 6,
+    maxAllowedOtpSendCount: 6,
     toggleMock: FEATURE_TOGGLE.OFF,
+    contactUpdateBanSeconds: 60 * 60,
   },
   sessionConfig: {
     toggleConcurrentSession: FEATURE_TOGGLE.ON,

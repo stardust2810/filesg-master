@@ -1,4 +1,4 @@
-import { ForbiddenException, JWT_TYPE, LogMethod, maskString, MaskType, maskUin } from '@filesg/backend-common';
+import { ForbiddenException, JWT_TYPE, LogMethod, maskEmail, maskMobile, maskUin } from '@filesg/backend-common';
 import {
   ACTIVITY_STATUS,
   AUDIT_EVENT_NAME,
@@ -14,6 +14,7 @@ import { addSeconds } from 'date-fns';
 import { v4 as uuid } from 'uuid';
 
 import {
+  NonSingpassRetrievalException,
   NonSingpassVerificationBanException,
   NonSingpassVerificationInvalidCredentialException,
 } from '../../../common/filters/custom-exceptions.filter';
@@ -48,15 +49,19 @@ export class NonSingpassVerificationService {
     }
 
     if (activity.isBannedFromNonSingpassVerification) {
-      this.logger.log(`${maskUin(uin)} is banned from non singpass verification`);
-      throw new NonSingpassVerificationBanException(COMPONENT_ERROR_CODE.NON_SINGPASS_VERIFICATION_SERVICE, activityUuid);
+      const internalLog = `${maskUin(uin)} is banned from non singpass verification`;
+      throw new NonSingpassVerificationBanException(COMPONENT_ERROR_CODE.NON_SINGPASS_VERIFICATION_SERVICE, activityUuid, internalLog);
+    }
+
+    if (!activity.isNonSingpassRetrievable) {
+      throw new NonSingpassRetrievalException(COMPONENT_ERROR_CODE.NON_SINGPASS_VERIFICATION_SERVICE, activityUuid);
     }
 
     const recipientInfo = activity.recipientInfo!;
-    const { dob: dobFromInfo, mobile, failedAttempts } = recipientInfo;
+    const { dob: dobFromInfo, mobile, email, failedAttempts } = recipientInfo;
 
-    if (!mobile) {
-      this.logger.log(`${maskUin(uin)} no mobile provided for the user to perform 2FA`);
+    if (!mobile && !email) {
+      this.logger.log(`${maskUin(uin)} no contact provided for the user to perform 2FA`);
       throw new NonSingpassVerificationInvalidCredentialException(COMPONENT_ERROR_CODE.ACTIVITY_SERVICE);
     }
 
@@ -94,12 +99,13 @@ export class NonSingpassVerificationService {
       accessToken: await this.authService.generateJWT({ activityUuid }, JWT_TYPE.NON_SINGPASS_2FA, {
         expiresIn: jwt2FATokenExpirationDuration,
       }),
-      maskedMobile: mobile.slice(0, 3) + maskString(mobile, 4, MaskType.PHONE_NUMBER).slice(3),
+      maskedMobile: mobile ? maskMobile(mobile) : undefined,
+      maskedEmail: email ? maskEmail(email) : undefined,
     };
   }
 
   @LogMethod()
-  public async sendOtpFor2Fa(activityUuid: string) {
+  public async sendOtpFor2Fa(activityUuid: string, channel: OTP_CHANNEL) {
     const activity = await this.activityEntityService.retrieveActivityByUuid(activityUuid, { toThrow: false });
 
     // Throwing forbidden exception here instead of not found exception to be in sync with exception thrown by jwt strategy when jwt content is invalid
@@ -113,10 +119,11 @@ export class NonSingpassVerificationService {
     }
 
     const { recipientInfo } = activity;
-    const { mobile } = recipientInfo!;
+    const { mobile, email } = recipientInfo!;
+    const recipientContact = channel === OTP_CHANNEL.SMS ? mobile : email;
 
-    if (!mobile) {
-      this.logger.log(`No mobile was provided to perform 2FA verification`);
+    if (!recipientContact) {
+      this.logger.log(`No ${channel} was provided to perform 2FA verification`);
       throw new ForbiddenException(COMPONENT_ERROR_CODE.OTP_SERVICE);
     }
 
@@ -124,7 +131,7 @@ export class NonSingpassVerificationService {
       otpDetails: { allowResendAt, expireAt },
       hasReachedOtpMaxResend,
       hasSentOtp,
-    } = await this.otpService.generateOtp(activityUuid, OTP_TYPE.NON_SINGPASS_VERIFICATION, OTP_CHANNEL.SMS, mobile);
+    } = await this.otpService.generateOtp(activityUuid, OTP_TYPE.NON_SINGPASS_VERIFICATION, channel, recipientContact);
 
     return { allowResendAt, expireAt, hasReachedOtpMaxResend, hasSentOtp };
   }

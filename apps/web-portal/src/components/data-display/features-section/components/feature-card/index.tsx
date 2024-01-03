@@ -175,7 +175,7 @@ export const FeatureCard = ({
           : desktopLeftToRightTransition((styles, item) => item && featureDescriptor(styles))}
       </Col>
       <StyledIllustrationWrapper column={getImageColumns()} offset={getImageOffset()}>
-        <StyledIllustration src={image} alt={imageAlt} />
+        <StyledIllustration width={584} height={288} src={image} alt={imageAlt} />
       </StyledIllustrationWrapper>
     </StyledFeatureCardWrapper>
   );

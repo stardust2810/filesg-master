@@ -1,3 +1,4 @@
+import { FILE_ASSET_ACTION } from '@filesg/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { FileAsset } from '../../../../entities/file-asset';
@@ -88,8 +89,8 @@ describe('ExpireDocumentsService', () => {
           oaCertIdToExpire: [MOCK_OA_CERT_UUID_1],
           allFileAssetIds: [5001, 5002],
           toCreatefileAssetHistories: [
-            { fileAssetId: 5001, type: 'expire', actionById: 3, actionToId: 3 },
-            { fileAssetId: 5002, type: 'expire', actionById: 3, actionToId: 4 },
+            { fileAssetId: 5001, type: FILE_ASSET_ACTION.EXPIRED, actionById: 3, actionToId: 3 },
+            { fileAssetId: 5002, type: FILE_ASSET_ACTION.EXPIRED, actionById: 3, actionToId: 4 },
           ],
         },
       });
@@ -116,8 +117,8 @@ describe('ExpireDocumentsService', () => {
           oaCertIdToExpire: [MOCK_OA_CERT_UUID_1],
           allFileAssetIds: [5001, 5002],
           toCreatefileAssetHistories: [
-            { fileAssetId: 5001, type: 'expire', actionById: 3, actionToId: 3 },
-            { fileAssetId: 5002, type: 'expire', actionById: 3, actionToId: 4 },
+            { fileAssetId: 5001, type: FILE_ASSET_ACTION.EXPIRED, actionById: 3, actionToId: 3 },
+            { fileAssetId: 5002, type: FILE_ASSET_ACTION.EXPIRED, actionById: 3, actionToId: 4 },
           ],
         },
         '3002': {
@@ -149,9 +150,9 @@ describe('ExpireDocumentsService', () => {
           oaCertIdToExpire: [MOCK_OA_CERT_UUID_2],
           allFileAssetIds: [5003, 5004, 5005],
           toCreatefileAssetHistories: [
-            { fileAssetId: 5003, type: 'expire', actionById: 3, actionToId: 3 },
-            { fileAssetId: 5004, type: 'expire', actionById: 3, actionToId: 4 },
-            { fileAssetId: 5005, type: 'expire', actionById: 3, actionToId: 5 },
+            { fileAssetId: 5003, type: FILE_ASSET_ACTION.EXPIRED, actionById: 3, actionToId: 3 },
+            { fileAssetId: 5004, type: FILE_ASSET_ACTION.EXPIRED, actionById: 3, actionToId: 4 },
+            { fileAssetId: 5005, type: FILE_ASSET_ACTION.EXPIRED, actionById: 3, actionToId: 5 },
           ],
         },
       });

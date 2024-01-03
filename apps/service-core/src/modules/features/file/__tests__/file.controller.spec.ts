@@ -1,8 +1,9 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+import { PaginationOptions } from '@filesg/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { FileAssetAccessToken } from '../../../../dtos/file/request';
-import { FileAccess, NonSingpassContentRetrievalRequest, RequestWithSession } from '../../../../typings/common';
+import { FileAccess, NonSingpassContentRetrievalRequest, RequestWithCitizenSession } from '../../../../typings/common';
 import { mockFileAssetUuid } from '../../../entities/file-asset/__mocks__/file-asset.entity.service.mock';
 import { mockFileService } from '../__mocks__/file.service.mock';
 import { FileController } from '../file.controller';
@@ -30,16 +31,16 @@ describe('File Controller', () => {
     });
 
     it('should call generateFileSessionAndJwtForDownload', () => {
-      const mockFileAssetUuids = { uuid: ['mockFileAsset-uuid-1', 'mockFileAsset-uuid-2'] };
+      const mockFileAssetUuids = { uuids: ['mockFileAsset-uuid-1', 'mockFileAsset-uuid-2'] };
       const req = {
         session: {
           user: {
             userUuid: 'mockUser-uuid-1',
           },
         },
-      } as RequestWithSession;
+      } as RequestWithCitizenSession;
       expect(controller.generateDownloadFileToken(mockFileAssetUuids, req));
-      expect(mockFileService.generateFileSessionAndJwtForDownload).toBeCalledWith(mockFileAssetUuids.uuid, req.session.user.userUuid);
+      expect(mockFileService.generateFileSessionAndJwtForDownload).toBeCalledWith(mockFileAssetUuids.uuids, req.session.user.userUuid);
     });
   });
 
@@ -77,9 +78,28 @@ describe('File Controller', () => {
             userUuid: 'mockUser-uuid-1',
           },
         },
-      } as RequestWithSession;
+      } as RequestWithCitizenSession;
       expect(controller.generateVerifyToken(mockFileAssetUuid, mockRequest));
       expect(mockFileService.generateVerifyToken).toBeCalledWith(mockFileAssetUuid, mockRequest.session.user.userUuid);
+    });
+  });
+
+  describe('/recent', () => {
+    it('should be defined', () => {
+      expect(controller.retrieveRecentFileAssets).toBeDefined();
+    });
+
+    it('should call retrieveAllFileAssets', () => {
+      const mockRequestWithSession = {
+        session: { user: { userId: 1 } },
+      } as RequestWithCitizenSession;
+      const mockQuery: PaginationOptions = {
+        limit: 0,
+        page: 0,
+      };
+
+      expect(controller.retrieveRecentFileAssets(mockRequestWithSession, mockQuery));
+      expect(mockFileService.retrieveRecentFileAssets).toBeCalledWith(mockRequestWithSession.session.user.userId, mockQuery);
     });
   });
 
@@ -99,10 +119,10 @@ describe('File Controller', () => {
     });
   });
 
-  describe('update/:fileAssetUuid/lastViewedAt', () => {
+  describe(':fileAssetUuid/lastViewedAt', () => {
     const mockRequestWithSession = {
       session: { user: { userId: 1 } },
-    } as RequestWithSession;
+    } as RequestWithCitizenSession;
 
     it('should be defined', () => {
       expect(controller.updateLastViewedAt).toBeDefined();
@@ -114,7 +134,7 @@ describe('File Controller', () => {
     });
   });
 
-  describe('non-singpass/update/:fileAssetUuid/lastViewedAt', () => {
+  describe('non-singpass/:fileAssetUuid/lastViewedAt', () => {
     const mockRequest = {
       user: {
         userId: 1,

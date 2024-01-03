@@ -10,9 +10,18 @@ import {
   OtpDoesNotExistException,
   OtpExpiredException,
   OtpInvalidException,
-  OtpMaxRetriesReachedException,
+  OtpMaxVerificationCountReachedException,
 } from '../../../common/filters/custom-exceptions.filter';
-import { ContactVerificationOtpDetails, OtpDetails } from '../../../typings/common';
+import {
+  ContactVerificationOtpDetails,
+  GenerateContactVerificationOtpDetails,
+  GenerateNonSingpassRetrievalOtpDetails,
+  GenerateOtpDetails,
+  OtpDetails,
+  VerifyContactVerificationOtpDetails,
+  VerifyNonSingpassRetrivalOtpDetails,
+  VerifyOtpDetails,
+} from '../../../typings/common';
 import { otpDataTransformer } from '../../../utils/helpers';
 import { FileSGConfigService } from '../../setups/config/config.service';
 import { SnsService } from '../aws/sns.service';
@@ -32,21 +41,29 @@ export class OtpService {
   // =============================================================================
   //  Generic OTP methods
   // =============================================================================
+  public async generateOtp(uuid: string, type: OTP_TYPE.CONTACT_VERIFICATION, channelType: OTP_CHANNEL, userContact: string, userName?: string | null): Promise<GenerateContactVerificationOtpDetails>; //prettier-ignore
+  public async generateOtp(uuid: string, type: OTP_TYPE.NON_SINGPASS_VERIFICATION, channelType: OTP_CHANNEL, userContact: string, userName?: string | null): Promise<GenerateNonSingpassRetrievalOtpDetails>; //prettier-ignore
   @LogMethod()
-  public async generateOtp(uuid: string, type: OTP_TYPE, channelType: OTP_CHANNEL, userContact: string, userName?: string | null) {
+  public async generateOtp(
+    uuid: string,
+    type: OTP_TYPE,
+    channelType: OTP_CHANNEL,
+    userContact: string,
+    userName?: string | null,
+  ): Promise<GenerateOtpDetails> {
     const currentDate = new Date();
-    let newTotalOtpSentPerCycleCount = 0;
+    let newOtpSentCount = 0;
     let hasReachedOtpMaxResend = false;
-    const { resendWaitSeconds, otpLength, otpExpirySeconds, redisRecordExpiryBuffer, maxAllowedOtpSentPerCycle, toggleMock } =
+    const { resendWaitSeconds, otpLength, otpExpirySeconds, redisRecordExpiryBuffer, maxAllowedOtpSendCount, toggleMock } =
       this.fileSGConfigService.otpConfig;
 
     const { otpKey, otpData } = await this.getOtpRecord(uuid, type, channelType);
     if (otpData) {
       this.logger.log(`Existing otp data retrieved`);
       const otpDetails = otpDataTransformer(otpData);
-      const { allowResendAt, totalOTPSentPerCycleCount: totalOtpSentCount } = otpDetails;
+      const { allowResendAt, otpSentCount: currentOtpSentCount } = otpDetails;
 
-      if (!allowResendAt || totalOtpSentCount === maxAllowedOtpSentPerCycle) {
+      if (!allowResendAt || currentOtpSentCount === maxAllowedOtpSendCount) {
         this.logger.log(`OTP has reached max resend`);
         return { otpDetails, hasReachedOtpMaxResend: true, hasSentOtp: false };
       }
@@ -58,8 +75,8 @@ export class OtpService {
         return { otpDetails, hasReachedOtpMaxResend: false, hasSentOtp: false };
       }
 
-      newTotalOtpSentPerCycleCount = totalOtpSentCount + 1;
-      hasReachedOtpMaxResend = newTotalOtpSentPerCycleCount === maxAllowedOtpSentPerCycle;
+      newOtpSentCount = currentOtpSentCount + 1;
+      hasReachedOtpMaxResend = newOtpSentCount === maxAllowedOtpSendCount;
     }
 
     const otp = generator.generate({
@@ -70,16 +87,15 @@ export class OtpService {
     });
 
     // Create / overwrite with new record
-    const otpDetails: OtpDetails | ContactVerificationOtpDetails = {
+    const otpDetails: OtpDetails = {
       otp,
       verificationAttemptCount: 0,
       expireAt: add(currentDate, { seconds: otpExpirySeconds }),
       allowResendAt: hasReachedOtpMaxResend ? null : add(currentDate, { seconds: resendWaitSeconds }),
-      totalOTPSentPerCycleCount: !otpData ? 1 : newTotalOtpSentPerCycleCount,
+      otpSentCount: !otpData ? 1 : newOtpSentCount,
     };
 
     if (type === OTP_TYPE.CONTACT_VERIFICATION) {
-      this.logger.log(`OTP verification type is ${type}`);
       (otpDetails as ContactVerificationOtpDetails).contact = userContact;
     }
 
@@ -105,17 +121,11 @@ export class OtpService {
     return { otpDetails, hasReachedOtpMaxResend, hasSentOtp: true };
   }
 
+  public async verifyOtp(uuid: string, inputOtp: string, type: OTP_TYPE.NON_SINGPASS_VERIFICATION, channelType: OTP_CHANNEL): Promise<VerifyNonSingpassRetrivalOtpDetails>; //prettier-ignore
+  public async verifyOtp(uuid: string, inputOtp: string, type: OTP_TYPE.CONTACT_VERIFICATION, channelType: OTP_CHANNEL): Promise<VerifyContactVerificationOtpDetails>; //prettier-ignore
   @LogMethod()
-  public async verifyOtp(
-    uuid: string,
-    inputOtp: string,
-    type: OTP_TYPE,
-    channelType: OTP_CHANNEL,
-  ): Promise<
-    | { hasReachedBothMaxResendAndVerify: true; otpDetails: null }
-    | { hasReachedBothMaxResendAndVerify: false; otpDetails: OtpDetails | ContactVerificationOtpDetails }
-  > {
-    const { maxValidationAttemptCount, maxAllowedOtpSentPerCycle, toggleMock, mockString } = this.fileSGConfigService.otpConfig;
+  public async verifyOtp(uuid: string, inputOtp: string, type: OTP_TYPE, channelType: OTP_CHANNEL): Promise<VerifyOtpDetails> {
+    const { maxValidationAttemptCount, maxAllowedOtpSendCount, toggleMock, mockString } = this.fileSGConfigService.otpConfig;
     const { otpKey, otpData } = await this.getOtpRecord(uuid, type, channelType);
 
     // Throw error if no OTP record found with the key
@@ -124,11 +134,11 @@ export class OtpService {
     }
 
     const otpDetails = otpDataTransformer(otpData);
-    const { otp, verificationAttemptCount, expireAt, totalOTPSentPerCycleCount } = otpDetails;
+    const { otp, verificationAttemptCount, expireAt, otpSentCount } = otpDetails;
 
     // Throw error if max retries reached
     if (verificationAttemptCount >= maxValidationAttemptCount) {
-      throw new OtpMaxRetriesReachedException(COMPONENT_ERROR_CODE.OTP_SERVICE);
+      throw new OtpMaxVerificationCountReachedException(COMPONENT_ERROR_CODE.OTP_SERVICE);
     }
 
     // Throw error if OTP expired
@@ -144,13 +154,13 @@ export class OtpService {
     if (inputOtp !== otp) {
       this.incrementVerificationAttemptCount(otpKey, otpDetails);
       const hasReachedMaxVerificationAttempt = verificationAttemptCount + 1 === maxValidationAttemptCount;
-      const hasReachedOtpMaxResend = totalOTPSentPerCycleCount >= maxAllowedOtpSentPerCycle;
+      const hasReachedOtpMaxResend = otpSentCount >= maxAllowedOtpSendCount;
 
       if (hasReachedMaxVerificationAttempt) {
         if (hasReachedOtpMaxResend) {
           return { hasReachedBothMaxResendAndVerify: true, otpDetails: null };
         }
-        throw new OtpMaxRetriesReachedException(COMPONENT_ERROR_CODE.OTP_SERVICE);
+        throw new OtpMaxVerificationCountReachedException(COMPONENT_ERROR_CODE.OTP_SERVICE);
       }
 
       throw new OtpInvalidException(COMPONENT_ERROR_CODE.OTP_SERVICE);
@@ -158,22 +168,22 @@ export class OtpService {
     return { hasReachedBothMaxResendAndVerify: false, otpDetails };
   }
 
-  public async getOtpRecord(uuid: string, type: OTP_TYPE, channelType: OTP_CHANNEL) {
-    const otpKey = this.generateOtpRedisKey(uuid, type, channelType);
+  public async getOtpRecord(uuid: string, type: OTP_TYPE, subType: string) {
+    const otpKey = this.generateOtpRedisKey(uuid, type, subType);
     const otpData = await this.redisService.get(FILESG_REDIS_CLIENT.OTP, otpKey);
     return { otpKey, otpData };
   }
 
-  public async deleteOtpRecord(uuid: string, type: OTP_TYPE, channelType: OTP_CHANNEL) {
-    const redisKey = this.generateOtpRedisKey(uuid, type, channelType);
+  public async deleteOtpRecord(uuid: string, type: OTP_TYPE, subType: string) {
+    const redisKey = this.generateOtpRedisKey(uuid, type, subType);
     return await this.redisService.del(FILESG_REDIS_CLIENT.OTP, redisKey);
   }
 
   // ===========================================================================
   // Private methods
   // ===========================================================================
-  private generateOtpRedisKey(uuid: string, type: OTP_TYPE, channelType: OTP_CHANNEL) {
-    return `${uuid}-${type}-${channelType}`;
+  private generateOtpRedisKey(uuid: string, type: OTP_TYPE, subType: string) {
+    return `${uuid}-${type}-${subType}`;
   }
 
   private async sendEmail(email: string, otp: string, expireAt: Date, userName?: string | null) {

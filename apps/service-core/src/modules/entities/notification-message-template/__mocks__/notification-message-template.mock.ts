@@ -8,7 +8,6 @@ export const createMockNotificationMessageTemplate = (args: TestCreationModel<No
   args.uuid && (notificationMessageTemplate.uuid = args.uuid);
   notificationMessageTemplate.name = args.name;
   notificationMessageTemplate.template = args.template;
-  notificationMessageTemplate.version = args.version;
   args.requiredFields && (notificationMessageTemplate.requiredFields = args.requiredFields);
   notificationMessageTemplate.type = args.type;
   notificationMessageTemplate.notificationChannel = args.notificationChannel;

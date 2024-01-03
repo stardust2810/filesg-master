@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { EntityNotFoundException } from '@filesg/backend-common';
-import { ACTIVITY_STATUS, ACTIVITY_TYPE, COMPONENT_ERROR_CODE, FILE_STATUS, FILE_TYPE, SORT_BY } from '@filesg/common';
+import { ACTIVITY_SORT_BY, ACTIVITY_STATUS, ACTIVITY_TYPE, COMPONENT_ERROR_CODE, FILE_STATUS, FILE_TYPE } from '@filesg/common';
 import { CompletedActivitiesRequestDto } from '@filesg/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
@@ -316,7 +316,7 @@ describe('ActivityEntityService', () => {
 
   describe('retrieveCompletedActivitiesByUserId', () => {
     const query: CompletedActivitiesRequestDto = {
-      sortBy: SORT_BY.LAST_VIEWED_AT,
+      sortBy: ACTIVITY_SORT_BY.CREATED_AT,
       asc: true,
       types: [ACTIVITY_TYPE.RECEIVE_TRANSFER],
     };
@@ -433,10 +433,10 @@ describe('ActivityEntityService', () => {
       const activityType = ACTIVITY_TYPE.RECEIVE_TRANSFER;
       const mockActivities = [mockActivity];
 
-      mockActivityEntityRepository.findActivityDetailsRequiredForEmail.mockResolvedValueOnce(mockActivities);
+      mockActivityEntityRepository.findActivitiesDetailsRequiredForEmail.mockResolvedValueOnce(mockActivities);
 
       expect(await service.retrieveActivitiesDetailsRequiredForEmail(activityUuids, activityType)).toEqual(mockActivities);
-      expect(mockActivityEntityRepository.findActivityDetailsRequiredForEmail).toBeCalledWith(activityUuids, activityType, undefined);
+      expect(mockActivityEntityRepository.findActivitiesDetailsRequiredForEmail).toBeCalledWith(activityUuids, activityType, undefined);
     });
   });
 

@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cluster, Redis } from 'ioredis';
 
 import { FILESG_REDIS_CLIENT, REDIS_CLIENT } from './redis.constants';
@@ -6,6 +6,8 @@ import { RedisClient, RedisClientError } from './redis-client.provider';
 
 @Injectable()
 export class RedisService {
+  private readonly logger = new Logger(RedisService.name);
+
   constructor(@Inject(REDIS_CLIENT) private readonly redisClient: RedisClient) {}
 
   // ===========================================================================

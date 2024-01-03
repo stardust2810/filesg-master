@@ -18,7 +18,7 @@ describe('Info component', () => {
 
     expect(infoContainer).toBeInTheDocument();
     expect(iconComponent).toBeInTheDocument();
-    expect(textComponents.length).toEqual(2);
+    expect(textComponents.length).toEqual(1);
   });
 
   it('should render title', () => {
@@ -56,8 +56,7 @@ describe('Info component', () => {
 
     const descriptionsComponents = screen.getAllByTestId(TEST_IDS.INFO_DESCRIPTION);
 
-    expect(descriptionsComponents[0].textContent).toEqual('desc-A');
-    expect(descriptionsComponents[1].textContent).toEqual('desc-B');
+    expect(descriptionsComponents[0].textContent).toEqual('desc-Adesc-B');
   });
 
   it('should not render description if no desc is pass in', () => {

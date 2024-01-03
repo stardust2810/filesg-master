@@ -2,11 +2,14 @@ import styled from 'styled-components';
 
 import { Props } from '.';
 
-type StyledProps = Pick<Props, 'ellipsisLine' | 'isEllipsis' | 'variant' | 'bold' | 'noWrap' | 'overrideFontFamily' | 'underline'>;
+type StyledProps = Pick<
+  Props,
+  'ellipsisLine' | 'isEllipsis' | 'variant' | 'bold' | 'whitespace' | 'overrideFontFamily' | 'underline' | 'textAlign'
+>;
 
 export const StyledSpan = styled.span<StyledProps>`
-  white-space: ${({ noWrap }) => (noWrap ? 'nowrap' : 'initial')};
-  text-align: left;
+  white-space: ${({ whitespace }) => (whitespace ? whitespace : 'initial')};
+  text-align: ${({ textAlign }) => textAlign ?? 'left'};
   /* display: block; */
 
   ${({ ellipsisLine }) =>

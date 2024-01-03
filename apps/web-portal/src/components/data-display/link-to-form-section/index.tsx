@@ -45,7 +45,7 @@ export const LinkToFormSection = ({ title, description, buttonLabel, linkToForm,
           />
         </Col>
         <StyledIllustrationWrapper column={getImgCol()}>
-          <StyledIllustration alt="" src={betaTesterIllustration} />
+          <StyledIllustration alt="" width={192} height={192} src={betaTesterIllustration} />
         </StyledIllustrationWrapper>
       </StyledBetaTesterWrapper>
     </StyledBetaTesterSection>

@@ -34,8 +34,8 @@ const MockAuthCallback = ({ isCorppass }: { isCorppass?: boolean }): JSX.Element
     if (isCorppass) {
       const uin = searchParams.get('uin');
       const uen = searchParams.get('uen');
-      const role = searchParams.get('role');
-      corppassLoginRedirect({ uin: uin!, uen: uen!, role: role! });
+      const roles = searchParams.get('roles');
+      corppassLoginRedirect({ uin: uin!, uen: uen!, roles: roles!.split(',').map((role) => role.trim()) });
     } else {
       const code = searchParams.get('code');
       loginRedirect({ authCode: code! });

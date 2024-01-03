@@ -24,8 +24,7 @@ import {
   TestReportingService,
 } from '../__mocks__/reporting.service.mock';
 
-// gd TODO: fix test
-describe.skip('ReportingService', () => {
+describe('ReportingService', () => {
   let service: TestReportingService;
 
   beforeEach(async () => {
@@ -41,32 +40,63 @@ describe.skip('ReportingService', () => {
   });
 
   describe('generateFormSgIssuanceReport', () => {
-    it('should call generateFormSgIssuanceSuccessReport with the right params when transaction result is success', async () => {
+    let generateFormSgIssuanceRecordsSpy: jest.SpyInstance;
+    let json2csvSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      generateFormSgIssuanceRecordsSpy = jest.spyOn(service, 'generateFormSgIssuanceRecords');
+      generateFormSgIssuanceRecordsSpy.mockReturnValueOnce([]);
+      json2csvSpy = jest.spyOn(json2csvLib, 'json2csv');
+    });
+
+    it('should call methods with right args when transaction is part of a batch', async () => {
+      const batchTransaction = new FormSgTransaction();
+      batchTransaction.batchSize = 1;
+
+      mockFormSgTransactionEntityService.findFormSgTransaction.mockResolvedValueOnce(batchTransaction);
+      mockFormSgTransactionEntityService.findFormSgBatchTransactionsByBatchId.mockResolvedValueOnce([mockSuccessFormSgTransaction]);
+
+      await service.generateFormSgIssuanceReport(mockRecordId);
+
+      expect(generateFormSgIssuanceRecordsSpy).toBeCalledWith([mockSuccessFormSgTransaction], mockRecordId, undefined);
+      expect(json2csvSpy).toBeCalledWith([], { prependHeader: true });
+    });
+
+    it('should call methods with right args when transaction is not part of a batch', async () => {
       mockFormSgTransactionEntityService.findFormSgTransaction.mockResolvedValueOnce(mockSuccessFormSgTransaction);
+
+      await service.generateFormSgIssuanceReport(mockRecordId);
+
+      expect(generateFormSgIssuanceRecordsSpy).toBeCalledWith([mockSuccessFormSgTransaction], mockRecordId, undefined);
+      expect(json2csvSpy).toBeCalledWith([], { prependHeader: true });
+    });
+  });
+
+  describe('generateFormSgIssuanceRecords', () => {
+    it('should call generateFormSgIssuanceSuccessReport with the right params when transaction result is success', () => {
+      const transactions = [mockSuccessFormSgTransaction];
 
       const generateFormSgIssuanceSuccessReportSpy = jest.spyOn(service, 'generateFormSgIssuanceSuccessReport');
       generateFormSgIssuanceSuccessReportSpy.mockReturnValueOnce([]);
 
-      const json2csvSpy = jest.spyOn(json2csvLib, 'json2csv');
+      service.generateFormSgIssuanceRecords(transactions, mockRecordId);
 
-      await service.generateFormSgIssuanceReport(mockRecordId);
-
-      expect(generateFormSgIssuanceSuccessReportSpy).toBeCalledWith(mockSuccessFormSgTransaction, mockRecordId);
-      expect(json2csvSpy).toBeCalledWith([], { prependHeader: true });
+      transactions.forEach((transaction, index) => {
+        expect(generateFormSgIssuanceSuccessReportSpy).toBeCalledWith(transaction, mockRecordId, index + 1, undefined);
+      });
     });
 
-    it('should call generateFormSgIssuanceSuccessReport with the right params when transaction result is failure', async () => {
-      mockFormSgTransactionEntityService.findFormSgTransaction.mockResolvedValueOnce(mockFailureFormSgTransaction);
+    it('should call generateFormSgIssuanceFailureReport with the right params when transaction result is failure', () => {
+      const transactions = [mockFailureFormSgTransaction];
 
       const generateFormSgIssuanceFailureReportSpy = jest.spyOn(service, 'generateFormSgIssuanceFailureReport');
       generateFormSgIssuanceFailureReportSpy.mockReturnValueOnce([]);
 
-      const json2csvSpy = jest.spyOn(json2csvLib, 'json2csv');
+      service.generateFormSgIssuanceRecords(transactions, mockRecordId);
 
-      await service.generateFormSgIssuanceReport(mockRecordId);
-
-      expect(generateFormSgIssuanceFailureReportSpy).toBeCalledWith(mockFailureFormSgTransaction, mockRecordId);
-      expect(json2csvSpy).toBeCalledWith([], { prependHeader: true });
+      transactions.forEach((transaction, index) => {
+        expect(generateFormSgIssuanceFailureReportSpy).toBeCalledWith(transaction, mockRecordId, index + 1, undefined);
+      });
     });
 
     it('should throw UnknownFormSgTransactionResultException when transaction result is unknown', async () => {
@@ -93,6 +123,7 @@ describe.skip('ReportingService', () => {
         undefined,
         undefined,
         mockNotificationsSent,
+        undefined,
       );
     });
 
@@ -121,21 +152,23 @@ describe.skip('ReportingService', () => {
           mockFormSgTransaction.failType = failType;
           mockFormSgTransaction.failedReason = failedReason;
 
-          service.generateFormSgIssuanceFailureReport(mockFormSgTransaction, mockRecordId,1);
+          service.generateFormSgIssuanceFailureReport(mockFormSgTransaction, mockRecordId, 1);
 
-          expect(generateFormSgIssuanceCsvRecordSpy).toBeCalledWith({
-            formSgSubmissionId: mockRecordId,
-            index: '1',
-            transactionStatus: RESULT_STATUS.FAILURE,
-            failureReason: failedReason,
-          });
+          expect(generateFormSgIssuanceCsvRecordSpy).toBeCalledWith(
+            {
+              formSgSubmissionId: mockRecordId,
+              index: '1',
+              transactionStatus: RESULT_STATUS.FAILURE,
+              failureReason: failedReason,
+            },
+            undefined,
+          );
         }
       });
     });
 
     describe('when fail type is create-txn, file-upload, virus-scan or transaction-others', () => {
-      // gd TODO: fix test
-      it.skip('should call generateFormSgIssuanceTransactionRecords with the right params', () => {
+      it('should call generateFormSgIssuanceTransactionRecords with the right params', () => {
         let mockFormSgTransaction = new FormSgTransaction();
         mockFormSgTransaction = { ...mockSuccessFormSgTransaction };
         mockFormSgTransaction.result = RESULT_STATUS.FAILURE;
@@ -150,19 +183,25 @@ describe.skip('ReportingService', () => {
         ];
 
         for (const failType of failTypes) {
+          const failSubType = `${failType} fail sub type`;
           const failedReason = `${failType} failed reason`;
 
           mockFormSgTransaction.failType = failType;
+          mockFormSgTransaction.failSubType = failSubType;
           mockFormSgTransaction.failedReason = failedReason;
 
-          service.generateFormSgIssuanceFailureReport(mockFormSgTransaction, mockRecordId,1);
+          service.generateFormSgIssuanceFailureReport(mockFormSgTransaction, mockRecordId, 1);
 
           expect(generateFormSgIssuanceTransactionRecordsSpy).toBeCalledWith(
+            mockRecordId,
             mockTransaction,
             mockApplication,
             1,
             RESULT_STATUS.FAILURE,
+            failSubType,
             failedReason,
+            undefined,
+            undefined,
           );
         }
       });
@@ -171,7 +210,7 @@ describe.skip('ReportingService', () => {
         const mockFormSgTransaction = new FormSgTransaction();
         mockFormSgTransaction.failType = FORMSG_PROCESS_FAIL_TYPE.CREATE_TXN;
 
-        expect(() => service.generateFormSgIssuanceFailureReport(mockFormSgTransaction, mockRecordId,1)).toThrow(
+        expect(() => service.generateFormSgIssuanceFailureReport(mockFormSgTransaction, mockRecordId, 1)).toThrow(
           new MissingReportDetailsException(COMPONENT_ERROR_CODE.REPORTING_SERVICE, mockRecordId),
         );
       });
@@ -190,32 +229,43 @@ describe.skip('ReportingService', () => {
       service.generateFormSgIssuanceTransactionRecords(mockRecordId, mockTransaction, mockApplication, mockIndex, RESULT_STATUS.FAILURE);
 
       for (const recipientActivity of mockTransaction.recipientActivities) {
-        for (const { uuid: agencyFileAssetUuid, name: agencyFileAssetName } of mockTransaction.agencyFileAssets) {
-          expect(generateFormSgIssuanceCsvRecordSpy).toBeCalledWith({
-            index: `${mockIndex}`,
-            formSgSubmissionId: mockRecordId,
-            applicationType: mockApplication.type,
-            applicationExternalRefId: mockApplication.externalRefId,
-            transactionUuid: mockTransaction.uuid,
-            recipientActivityUuid: recipientActivity.uuid,
-            recipientName: recipientActivity.name,
-            recipientMaskedUin: recipientActivity.maskedUin,
-            recipientEmail: recipientActivity.email,
-            recipientDob: recipientActivity.dob,
-            recipientContact: recipientActivity.contact,
-            isNonSingpassRetrievable: recipientActivity.isNonSingpassRetrievable,
-            agencyFileAssetUuid,
-            agencyFileAssetName,
-            transactionStatus: RESULT_STATUS.FAILURE,
-            failureReason: undefined,
-            notificationFailureReason: undefined,
-          });
+        for (const {
+          uuid: agencyFileAssetUuid,
+          name: agencyFileAssetName,
+          deleteAt: agencyFileAssetDeleteAt,
+          failSubType: agencyFileAssetFailSubType,
+          failedReason: agencyFileAssetFailedReason,
+        } of mockTransaction.agencyFileAssets) {
+          expect(generateFormSgIssuanceCsvRecordSpy).toBeCalledWith(
+            {
+              index: `${mockIndex}`,
+              formSgSubmissionId: mockRecordId,
+              applicationType: mockApplication.type,
+              applicationExternalRefId: mockApplication.externalRefId,
+              transactionUuid: mockTransaction.uuid,
+              transactionName: mockTransaction.name,
+              recipientActivityUuid: recipientActivity.uuid,
+              recipientName: recipientActivity.name,
+              recipientMaskedUin: recipientActivity.maskedUin,
+              recipientEmail: recipientActivity.email,
+              recipientDob: recipientActivity.dob,
+              recipientContact: recipientActivity.contact,
+              isNonSingpassRetrievable: recipientActivity.isNonSingpassRetrievable,
+              agencyFileAssetUuid,
+              agencyFileAssetName,
+              agencyFileAssetDeleteAt,
+              transactionStatus: RESULT_STATUS.FAILURE,
+              failSubType: agencyFileAssetFailSubType,
+              failureReason: agencyFileAssetFailedReason,
+              notificationFailureReason: undefined,
+            },
+            undefined,
+          );
         }
       }
     });
 
-    // gd TODO: fix test
-    it.skip('should include general fail reason if file asset has no fail reason', () => {
+    it('should include general fail reason if file asset has no fail reason', () => {
       const mockFailedReason = 'some error';
 
       service.generateFormSgIssuanceTransactionRecords(
@@ -224,34 +274,47 @@ describe.skip('ReportingService', () => {
         mockApplication,
         mockIndex,
         RESULT_STATUS.FAILURE,
+        undefined,
         mockFailedReason,
       );
 
       for (const recipientActivity of mockTransaction.recipientActivities) {
-        for (const { uuid: agencyFileAssetUuid, name: agencyFileAssetName } of mockTransaction.agencyFileAssets) {
-          expect(generateFormSgIssuanceCsvRecordSpy).toBeCalledWith({
-            index: `${mockIndex}`,
-            applicationType: mockApplication.type,
-            applicationExternalRefId: mockApplication.externalRefId,
-            transactionUuid: mockTransaction.uuid,
-            recipientActivityUuid: recipientActivity.uuid,
-            recipientName: recipientActivity.name,
-            recipientMaskedUin: recipientActivity.maskedUin,
-            recipientEmail: recipientActivity.email,
-            recipientDob: recipientActivity.dob,
-            recipientContact: recipientActivity.contact,
-            isNonSingpassRetrievable: recipientActivity.isNonSingpassRetrievable,
-            agencyFileAssetUuid,
-            agencyFileAssetName,
-            transactionStatus: RESULT_STATUS.FAILURE,
-            failureReason: mockFailedReason,
-            notificationFailureReason: undefined,
-          });
+        for (const {
+          uuid: agencyFileAssetUuid,
+          name: agencyFileAssetName,
+          deleteAt: agencyFileAssetDeleteAt,
+          failSubType: agencyFileAssetFailSubType,
+        } of mockTransaction.agencyFileAssets) {
+          expect(generateFormSgIssuanceCsvRecordSpy).toBeCalledWith(
+            {
+              index: `${mockIndex}`,
+              formSgSubmissionId: mockRecordId,
+              applicationType: mockApplication.type,
+              applicationExternalRefId: mockApplication.externalRefId,
+              transactionUuid: mockTransaction.uuid,
+              transactionName: mockTransaction.name,
+              recipientActivityUuid: recipientActivity.uuid,
+              recipientName: recipientActivity.name,
+              recipientMaskedUin: recipientActivity.maskedUin,
+              recipientEmail: recipientActivity.email,
+              recipientDob: recipientActivity.dob,
+              recipientContact: recipientActivity.contact,
+              isNonSingpassRetrievable: recipientActivity.isNonSingpassRetrievable,
+              agencyFileAssetUuid,
+              agencyFileAssetName,
+              agencyFileAssetDeleteAt,
+              transactionStatus: RESULT_STATUS.FAILURE,
+              failSubType: agencyFileAssetFailSubType,
+              failureReason: mockFailedReason,
+              notificationFailureReason: undefined,
+            },
+            undefined,
+          );
         }
       }
     });
 
-    it("should include file assets' fail reason if there is any from the filea sset objects", () => {
+    it("should include file assets' fail reason if there is any from the file asset objects", () => {
       const mockTransactionWithFailureFileAssets = { ...mockTransaction, agencyFileAssets: mockFailureAgencyFileAssets };
 
       service.generateFormSgIssuanceTransactionRecords(
@@ -266,33 +329,40 @@ describe.skip('ReportingService', () => {
         for (const {
           uuid: agencyFileAssetUuid,
           name: agencyFileAssetName,
+          deleteAt: agencyFileAssetDeleteAt,
+          failSubType: agencyFileAssetFailSubType,
           failedReason: agencyFileAssetFailedReason,
         } of mockTransactionWithFailureFileAssets.agencyFileAssets) {
-          expect(generateFormSgIssuanceCsvRecordSpy).toBeCalledWith({
-            index: `${mockIndex}`,
-            formSgSubmissionId: mockRecordId,
-            applicationType: mockApplication.type,
-            applicationExternalRefId: mockApplication.externalRefId,
-            transactionUuid: mockTransactionWithFailureFileAssets.uuid,
-            recipientActivityUuid: recipientActivity.uuid,
-            recipientName: recipientActivity.name,
-            recipientMaskedUin: recipientActivity.maskedUin,
-            recipientEmail: recipientActivity.email,
-            recipientDob: recipientActivity.dob,
-            recipientContact: recipientActivity.contact,
-            isNonSingpassRetrievable: recipientActivity.isNonSingpassRetrievable,
-            agencyFileAssetUuid,
-            agencyFileAssetName,
-            transactionStatus: RESULT_STATUS.FAILURE,
-            failureReason: agencyFileAssetFailedReason,
-            notificationFailureReason: undefined,
-          });
+          expect(generateFormSgIssuanceCsvRecordSpy).toBeCalledWith(
+            {
+              index: `${mockIndex}`,
+              formSgSubmissionId: mockRecordId,
+              applicationType: mockApplication.type,
+              applicationExternalRefId: mockApplication.externalRefId,
+              transactionUuid: mockTransactionWithFailureFileAssets.uuid,
+              transactionName: mockTransaction.name,
+              recipientActivityUuid: recipientActivity.uuid,
+              recipientName: recipientActivity.name,
+              recipientMaskedUin: recipientActivity.maskedUin,
+              recipientEmail: recipientActivity.email,
+              recipientDob: recipientActivity.dob,
+              recipientContact: recipientActivity.contact,
+              isNonSingpassRetrievable: recipientActivity.isNonSingpassRetrievable,
+              agencyFileAssetUuid,
+              agencyFileAssetName,
+              agencyFileAssetDeleteAt,
+              transactionStatus: RESULT_STATUS.FAILURE,
+              failSubType: agencyFileAssetFailSubType,
+              failureReason: agencyFileAssetFailedReason,
+              notificationFailureReason: undefined,
+            },
+            undefined,
+          );
         }
       }
     });
 
-    // gd TODO: fix test
-    it.skip('should include notification delivery fail reason if there is any from the notification sent objects', () => {
+    it('should include notification delivery fail reason if there is any from the notification sent objects', () => {
       const mockTransactionWithFailureNotificationSent = { ...mockTransaction, notificationsSent: mockFailureNotificationsSent };
 
       service.generateFormSgIssuanceTransactionRecords(
@@ -310,26 +380,33 @@ describe.skip('ReportingService', () => {
         for (const {
           uuid: agencyFileAssetUuid,
           name: agencyFileAssetName,
+          deleteAt: agencyFileAssetDeleteAt,
         } of mockTransactionWithFailureNotificationSent.agencyFileAssets) {
-          expect(generateFormSgIssuanceCsvRecordSpy).toBeCalledWith({
-            index: `${mockIndex}`,
-            formSgSubmissionId: mockRecordId,
-            applicationType: mockApplication.type,
-            applicationExternalRefId: mockApplication.externalRefId,
-            transactionUuid: mockTransactionWithFailureNotificationSent.uuid,
-            recipientActivityUuid: recipientActivity.uuid,
-            recipientName: recipientActivity.name,
-            recipientMaskedUin: recipientActivity.maskedUin,
-            recipientEmail: recipientActivity.email,
-            recipientDob: recipientActivity.dob,
-            recipientContact: recipientActivity.contact,
-            isNonSingpassRetrievable: recipientActivity.isNonSingpassRetrievable,
-            agencyFileAssetUuid,
-            agencyFileAssetName,
-            transactionStatus: RESULT_STATUS.FAILURE,
-            failureReason: undefined,
-            notificationFailureReason: mockNotificationDeliverFailureReason,
-          });
+          expect(generateFormSgIssuanceCsvRecordSpy).toBeCalledWith(
+            {
+              index: `${mockIndex}`,
+              formSgSubmissionId: mockRecordId,
+              applicationType: mockApplication.type,
+              applicationExternalRefId: mockApplication.externalRefId,
+              transactionUuid: mockTransactionWithFailureNotificationSent.uuid,
+              transactionName: mockTransaction.name,
+              recipientActivityUuid: recipientActivity.uuid,
+              recipientName: recipientActivity.name,
+              recipientMaskedUin: recipientActivity.maskedUin,
+              recipientEmail: recipientActivity.email,
+              recipientDob: recipientActivity.dob,
+              recipientContact: recipientActivity.contact,
+              isNonSingpassRetrievable: recipientActivity.isNonSingpassRetrievable,
+              agencyFileAssetUuid,
+              agencyFileAssetName,
+              agencyFileAssetDeleteAt,
+              transactionStatus: RESULT_STATUS.FAILURE,
+              failSubType: undefined,
+              failureReason: undefined,
+              notificationFailureReason: mockNotificationDeliverFailureReason,
+            },
+            undefined,
+          );
         }
       }
     });

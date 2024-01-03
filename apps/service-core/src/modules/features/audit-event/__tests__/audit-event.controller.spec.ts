@@ -2,7 +2,7 @@ import { AUDIT_EVENT_NAME, AUTH_TYPE } from '@filesg/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { NonSingpassContentRetrievalRequest } from '../../../../typings/common';
-import { RequestWithSession } from '../../../../typings/common';
+import { RequestWithCitizenSession } from '../../../../typings/common';
 import { mockAuditEventService } from '../__mocks__/audit-event.service.mock';
 import { AuditEventController } from '../audit-event.controller';
 import { AuditEventService } from '../audit-event.service';
@@ -42,7 +42,7 @@ describe('AuditEventController', () => {
       const mockReq = { user: { userId: 1, sessionId: 'mockSessionId-1' } } as NonSingpassContentRetrievalRequest;
 
       await controller.userFilesNonSingpassAuditEvent(
-        AUDIT_EVENT_NAME.USER_FILE_DOWNLOAD,
+        { eventName: AUDIT_EVENT_NAME.USER_FILE_DOWNLOAD },
         { fileAssetUuids: mockFileAssetUuids, hasPerformedDocumentAction: false },
         mockReq,
       );
@@ -62,9 +62,13 @@ describe('AuditEventController', () => {
 
     it('should save audit event with correct args', async () => {
       const mockFileAssetUuids = ['mockFileAssetUuid1'];
-      const mockReq = { session: { id: 'mockSessionId-1', user: { userId: 1 } } } as RequestWithSession;
+      const mockReq = { session: { id: 'mockSessionId-1', user: { userId: 1 } } } as RequestWithCitizenSession;
 
-      await controller.userFilesSingpassAuditEvent(AUDIT_EVENT_NAME.USER_FILE_DOWNLOAD, { fileAssetUuids: mockFileAssetUuids }, mockReq);
+      await controller.userFilesSingpassAuditEvent(
+        { eventName: AUDIT_EVENT_NAME.USER_FILE_DOWNLOAD },
+        { fileAssetUuids: mockFileAssetUuids },
+        mockReq,
+      );
       expect(mockAuditEventService.saveUserFilesAuditEvent).toBeCalledWith(
         AUDIT_EVENT_NAME.USER_FILE_DOWNLOAD,
         mockFileAssetUuids,

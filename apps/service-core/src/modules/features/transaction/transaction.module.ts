@@ -17,12 +17,14 @@ import { AuthModule } from '../auth/auth.module';
 import { DeletionModule } from '../deletion/deletion.module';
 import { EmailModule } from '../email/email.module';
 import { NotificationModule } from '../notification/notification.module';
+import { UserModule } from '../user/user.module';
 import { FileTransactionService } from './file-transaction.service';
 import { FileTransactionV2Service } from './file-transaction.v2.service';
 import { RecallTransactionService } from './recall-transaction.service';
 import { RecipientService } from './recipient.service';
 import { RevokeTransactionService } from './revoke-transaction.service';
 import { TransactionController } from './transaction.controller';
+import { CorppassTransactionController } from './transaction.corppass.controller';
 import { TransactionService } from './transaction.service';
 import { TransactionV2Controller } from './transaction.v2.controller';
 import { TransactionActivityService } from './transaction-activity.service';
@@ -30,6 +32,7 @@ import { TransactionActivityService } from './transaction-activity.service';
 @Module({
   imports: [
     UserEntityModule,
+    UserModule,
     AuthModule,
     ActivityEntityModule,
     FileAssetEntityModule,
@@ -57,6 +60,6 @@ import { TransactionActivityService } from './transaction-activity.service';
     TransactionService,
   ],
   exports: [RecallTransactionService, FileTransactionV2Service],
-  controllers: [TransactionController, TransactionV2Controller],
+  controllers: [TransactionController, TransactionV2Controller, CorppassTransactionController],
 })
 export class TransactionModule {}

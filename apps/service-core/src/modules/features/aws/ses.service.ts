@@ -27,8 +27,6 @@ export class SesService {
       return { MessageId: `localstack-message-id-${Date.now()}` };
     }
 
-    return attachments && attachments.length > 0
-      ? await this.baseSesService.sendEmailWithAttachments(sender, receivers, emailTitle, emailContent, attachments)
-      : await this.baseSesService.sendEmail(sender, receivers, emailTitle, emailContent);
+    return await this.baseSesService.sendEmail(sender, receivers, emailTitle, emailContent, attachments);
   }
 }

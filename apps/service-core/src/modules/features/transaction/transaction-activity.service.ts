@@ -1,13 +1,15 @@
 import { EntityNotFoundException, InputValidationException, LogMethod } from '@filesg/backend-common';
 import {
+  ACTIVITY_RETRIEVAL_OPTIONS,
   ACTIVITY_STATUS,
   ACTIVITY_TYPE,
   CompletedActivitiesRequestDto,
   COMPONENT_ERROR_CODE,
   FEATURE_TOGGLE,
   NOTIFICATION_TEMPLATE_TYPE,
+  RetrieveActivityRetrievableOptionsResponse,
+  ROLE,
   UpdateRecipientInfoRequest,
-  ValidateActivityNonSingpassRetrievableResponse,
   VIEWABLE_ACTIVITY_TYPES,
 } from '@filesg/common';
 import { Injectable, Logger } from '@nestjs/common';
@@ -19,9 +21,11 @@ import {
 import { EmailInBlackListException } from '../../../common/filters/custom-exceptions.filter';
 import { transformActivitiesResponse, transformActivityDetailsResponse } from '../../../common/transformers/activity.transformer';
 import { Activity } from '../../../entities/activity';
-import { ProgrammaticUser } from '../../../entities/user';
-import { ActivityRecipientInfo } from '../../../typings/common';
+import { ProgrammaticUser, User } from '../../../entities/user';
+import { ActivityRecipientInfo, CorporateUserAuthUser } from '../../../typings/common';
+import { assertAccessibleAgencies } from '../../../utils/corppass';
 import { ActivityEntityService } from '../../entities/activity/activity.entity.service';
+import { CorporateEntityService } from '../../entities/user/corporate/corporate.entity.service';
 import { UserEntityService } from '../../entities/user/user.entity.service';
 import { FileSGConfigService } from '../../setups/config/config.service';
 import { EmailBlackListService } from '../email/email-black-list.service';
@@ -33,6 +37,7 @@ export class TransactionActivityService {
 
   constructor(
     private readonly activityEntityService: ActivityEntityService,
+    private readonly corporateEntityService: CorporateEntityService,
     private readonly fileSGConfigService: FileSGConfigService,
     private readonly userEntityService: UserEntityService,
     private readonly notificationService: NotificationService,
@@ -43,6 +48,27 @@ export class TransactionActivityService {
   public async retrieveActivities(userId: number, query: CompletedActivitiesRequestDto) {
     const { activities, count, next } = await this.activityEntityService.retrieveCompletedActivitiesByUserId(userId, query);
 
+    return transformActivitiesResponse(activities, count, next);
+  }
+
+  @LogMethod()
+  public async retrieveCorporateActivities(user: CorporateUserAuthUser, query: CompletedActivitiesRequestDto) {
+    const { accessibleAgencies, corporateUen } = user;
+
+    const { agencyCodes } = query;
+
+    const { agencyCodesToAccess, userHasAccessToAll } = assertAccessibleAgencies(accessibleAgencies, agencyCodes!);
+    const isEmptyAgencyCodesToAccess = agencyCodesToAccess.length === 0;
+
+    if (isEmptyAgencyCodesToAccess && !userHasAccessToAll) {
+      return transformActivitiesResponse([], 0, null);
+    }
+
+    query.agencyCodes = isEmptyAgencyCodesToAccess && userHasAccessToAll ? undefined : agencyCodesToAccess;
+
+    const { userId: corporateId } = await this.corporateEntityService.retrieveCorporateByUen(corporateUen!, { toThrow: true });
+
+    const { activities, count, next } = await this.activityEntityService.retrieveCompletedActivitiesByUserId(corporateId!, query);
     return transformActivitiesResponse(activities, count, next);
   }
 
@@ -59,17 +85,45 @@ export class TransactionActivityService {
   }
 
   @LogMethod()
-  public async validateActivityNonSingpassRetrievable(uuid: string): Promise<ValidateActivityNonSingpassRetrievableResponse> {
+  public async retrieveCorporateActivityDetails(activityUuid: string, user: CorporateUserAuthUser) {
+    const { corporateUen, accessibleAgencies } = user;
+
+    const accessibleAgencyCodes = accessibleAgencies?.map(({ code }) => code);
+    const canAccessAll = accessibleAgencyCodes?.includes('ALL');
+
+    if (!accessibleAgencyCodes) {
+      return {};
+    }
+
+    const { userId: corporateId } = await this.corporateEntityService.retrieveCorporateByUen(corporateUen!, { toThrow: true });
+
+    const activity = await this.activityEntityService.retrieveActivityDetailsByFilters({
+      activityUuid,
+      status: ACTIVITY_STATUS.COMPLETED,
+      types: VIEWABLE_ACTIVITY_TYPES,
+      userId: corporateId!,
+      agencyCodes: canAccessAll ? undefined : accessibleAgencyCodes,
+    });
+
+    return transformActivityDetailsResponse(activity);
+  }
+
+  @LogMethod()
+  public async retrieveActivityRetrievableOptions(uuid: string): Promise<RetrieveActivityRetrievableOptionsResponse> {
     const activity = await this.activityEntityService.retrieveActivityByUuidAndStatusAndTypes(
       uuid,
       ACTIVITY_STATUS.COMPLETED,
       VIEWABLE_ACTIVITY_TYPES,
     );
 
-    const { recipientInfo, isBannedFromNonSingpassVerification } = activity;
+    const { user, isBannedFromNonSingpassVerification, isNonSingpassRetrievable, recipientInfo } = activity;
+    const retrievalOptions = this.buildRetrievalOptions(user, isNonSingpassRetrievable);
 
-    const isNonSingpassRetrievable = !!(recipientInfo!.mobile && recipientInfo!.dob);
-    return { isNonSingpassRetrievable, isBannedFromNonSingpassVerification };
+    return {
+      retrievalOptions,
+      isBannedFromNonSingpassVerification,
+      isNonSingpassVerifiable: isNonSingpassRetrievable && !!(recipientInfo?.dob && recipientInfo?.mobile),
+    };
   }
 
   public async acknowledgeActivity(activityUuid: string, userId: number): Promise<void> {
@@ -203,5 +257,21 @@ export class TransactionActivityService {
       isNewContact,
       isNewDob,
     };
+  }
+
+  private buildRetrievalOptions(user?: User, isNonSingpassRetrieval?: boolean): Array<ACTIVITY_RETRIEVAL_OPTIONS> {
+    const retrievalOptionsMap: Record<string, ACTIVITY_RETRIEVAL_OPTIONS> = {
+      [ROLE.CORPORATE]: ACTIVITY_RETRIEVAL_OPTIONS.CORPPASS,
+      [ROLE.CITIZEN]: ACTIVITY_RETRIEVAL_OPTIONS.SINGPASS,
+    };
+
+    const options: Array<ACTIVITY_RETRIEVAL_OPTIONS> = [];
+    isNonSingpassRetrieval && options.push(ACTIVITY_RETRIEVAL_OPTIONS.NON_SINGPASS);
+
+    if (user?.role) {
+      options.push(retrievalOptionsMap[user?.role]);
+    }
+
+    return options;
   }
 }

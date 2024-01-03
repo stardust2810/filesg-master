@@ -9,4 +9,15 @@ export const LOCAL_EXTRACTED_SUBPATH = 'extracted';
 // =============================================================================
 export const TRANSACTIONS_SIDECAR_FILENAME = 'filesg-sidecar-transactions.csv';
 
-export const TRANSACTIONS_SIDECAR_HEADERS = ['uin', 'name', 'email', 'dob', 'contact', 'metadata', 'files', 'externalRefId', 'deleteAt'];
+export const TRANSACTIONS_SIDECAR_HEADERS = [
+  'uin',
+  'name',
+  'email',
+  'dob',
+  'contact',
+  'metadata',
+  'files',
+  'externalRefId',
+  'deleteAt',
+  'isNonSingpassRetrievable',
+];

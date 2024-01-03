@@ -1,7 +1,12 @@
 import { AUDIT_EVENT_NAME, AUTH_TYPE } from '@filesg/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { UserFilesAuditEventData, UserNonSsoSessionAuditEventData, UserSsoSessionAuditEventData } from '../../../../typings/common';
+import {
+  UserCorporateSessionAuditEventData,
+  UserFilesAuditEventData,
+  UserNonSsoSessionAuditEventData,
+  UserSsoSessionAuditEventData,
+} from '../../../../typings/common';
 import { mockAuditEventEntityService } from '../../../entities/audit-event/__mocks__/audit-event.entity.service.mock';
 import { AuditEventEntityService } from '../../../entities/audit-event/audit-event.entity.service';
 import { mockFileAssetEntityService } from '../../../entities/file-asset/__mocks__/file-asset.entity.service.mock';
@@ -15,7 +20,13 @@ import {
   mockSessionId,
   mockUserSessionAuditEventData,
 } from '../__mocks__/audit-event.service.mock';
+import {
+  mockAuditFileAssetStrategyFactory,
+  mockCorppassAuditFileAssetStrategy,
+  mockDefaultAuditFileAssetStrategy,
+} from '../__mocks__/audit-file-asset-retrieval.factory.mock';
 import { AuditEventService } from '../audit-event.service';
+import { AuditFileAssetStrategyFactory } from '../factory/audit-file-asset-retrieval.factory';
 
 describe('AuditEventService', () => {
   let service: AuditEventService;
@@ -27,6 +38,7 @@ describe('AuditEventService', () => {
         { provide: FileAssetEntityService, useValue: mockFileAssetEntityService },
         { provide: AuditEventEntityService, useValue: mockAuditEventEntityService },
         { provide: DatabaseTransactionService, useValue: mockDatabaseTransactionService },
+        { provide: AuditFileAssetStrategyFactory, useValue: mockAuditFileAssetStrategyFactory },
       ],
     }).compile();
 
@@ -44,19 +56,26 @@ describe('AuditEventService', () => {
       expect(service.saveUserFilesAuditEvent).toBeDefined();
     });
 
+    beforeEach(() => jest.clearAllMocks());
+
     it('should call methods with correct args', async () => {
-      mockFileAssetEntityService.retrieveActivatedFileAssetsWithApplicationTypeByUuidsAndUserId.mockResolvedValueOnce([mockFileAsset]);
-      const { entityManager } = mockDatabaseTransaction;
-
-      await service.saveUserFilesAuditEvent(AUDIT_EVENT_NAME.USER_FILE_DOWNLOAD, [mockFileAsset.uuid], mockUserSessionAuditEventData);
-
       const { userId, sessionId, ssoEservice, authType } = mockUserSessionAuditEventData;
       const mockBaseUserSessionAuditEventData = {
         sessionId,
         userId,
         authType,
         ssoEservice,
-      } as UserSsoSessionAuditEventData | UserNonSsoSessionAuditEventData;
+      } as UserSsoSessionAuditEventData | UserNonSsoSessionAuditEventData | UserCorporateSessionAuditEventData;
+
+      jest.spyOn(mockAuditFileAssetStrategyFactory, 'getStrategy').mockResolvedValueOnce(mockDefaultAuditFileAssetStrategy);
+
+      mockDefaultAuditFileAssetStrategy.retrieveActivatedFileAssetsWithApplicationTypeByUuidsAndUserId.mockResolvedValueOnce([
+        mockFileAsset,
+      ]);
+      mockDefaultAuditFileAssetStrategy.buildBaseUserSessionAuditEventData.mockResolvedValueOnce(mockBaseUserSessionAuditEventData);
+      const { entityManager } = mockDatabaseTransaction;
+
+      await service.saveUserFilesAuditEvent(AUDIT_EVENT_NAME.USER_FILE_DOWNLOAD, [mockFileAsset.uuid], mockUserSessionAuditEventData);
 
       const mockDownloadFileAuditEvent: UserFilesAuditEventData = {
         ...mockBaseUserSessionAuditEventData,
@@ -80,6 +99,7 @@ describe('AuditEventService', () => {
     });
 
     it('should return without creating record if no fileAsset found', async () => {
+      jest.spyOn(mockAuditFileAssetStrategyFactory, 'getStrategy').mockResolvedValue(mockDefaultAuditFileAssetStrategy);
       await service.saveUserFilesAuditEvent(AUDIT_EVENT_NAME.USER_FILE_DOWNLOAD, [mockFileAsset.uuid], {
         sessionId: mockSessionId,
         authType: AUTH_TYPE.SINGPASS,
@@ -88,6 +108,48 @@ describe('AuditEventService', () => {
       });
 
       expect(mockAuditEventEntityService.insertAuditEvents).not.toBeCalled();
+    });
+
+    it('should retrieve files from default strategy', async () => {
+      const { userId, sessionId, ssoEservice, authType } = mockUserSessionAuditEventData;
+      const mockBaseUserSessionAuditEventData = {
+        sessionId,
+        userId,
+        authType,
+        ssoEservice,
+      } as UserSsoSessionAuditEventData | UserNonSsoSessionAuditEventData | UserCorporateSessionAuditEventData;
+
+      jest.spyOn(mockAuditFileAssetStrategyFactory, 'getStrategy').mockResolvedValueOnce(mockDefaultAuditFileAssetStrategy);
+
+      mockDefaultAuditFileAssetStrategy.retrieveActivatedFileAssetsWithApplicationTypeByUuidsAndUserId.mockResolvedValueOnce([
+        mockFileAsset,
+      ]);
+      mockDefaultAuditFileAssetStrategy.buildBaseUserSessionAuditEventData.mockResolvedValueOnce(mockBaseUserSessionAuditEventData);
+
+      await service.saveUserFilesAuditEvent(AUDIT_EVENT_NAME.USER_FILE_DOWNLOAD, [mockFileAsset.uuid], mockUserSessionAuditEventData);
+
+      expect(mockDefaultAuditFileAssetStrategy.retrieveActivatedFileAssetsWithApplicationTypeByUuidsAndUserId).toBeCalledTimes(1);
+    });
+
+    it('should retrieve files from corppass strategy', async () => {
+      const { userId, sessionId, ssoEservice, authType } = mockUserSessionAuditEventData;
+      const mockBaseUserSessionAuditEventData = {
+        sessionId,
+        userId,
+        authType,
+        ssoEservice,
+      } as UserSsoSessionAuditEventData | UserNonSsoSessionAuditEventData | UserCorporateSessionAuditEventData;
+
+      jest.spyOn(mockAuditFileAssetStrategyFactory, 'getStrategy').mockResolvedValueOnce(mockCorppassAuditFileAssetStrategy);
+
+      mockDefaultAuditFileAssetStrategy.retrieveActivatedFileAssetsWithApplicationTypeByUuidsAndUserId.mockResolvedValueOnce([
+        mockFileAsset,
+      ]);
+      mockDefaultAuditFileAssetStrategy.buildBaseUserSessionAuditEventData.mockResolvedValueOnce(mockBaseUserSessionAuditEventData);
+
+      await service.saveUserFilesAuditEvent(AUDIT_EVENT_NAME.USER_FILE_DOWNLOAD, [mockFileAsset.uuid], mockUserSessionAuditEventData);
+
+      expect(mockCorppassAuditFileAssetStrategy.retrieveActivatedFileAssetsWithApplicationTypeByUuidsAndUserId).toBeCalledTimes(1);
     });
   });
 });

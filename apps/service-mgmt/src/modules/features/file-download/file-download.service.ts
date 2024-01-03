@@ -46,14 +46,13 @@ export class FileDownloadService {
   private generateDownloadInfo(fileSession: FileDownloadSession): FileDownloadResponse {
     this.logger.log(`Generating download information`);
 
-    const { type, ownerUuid, files } = fileSession;
+    const { ownerUuid } = fileSession;
 
     const ownerUuidHash = this.hashWithSecret(ownerUuid);
 
     return {
-      fileSessionType: type,
+      ...fileSession,
       ownerUuidHash,
-      files,
     };
   }
 

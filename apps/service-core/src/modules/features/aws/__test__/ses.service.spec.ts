@@ -32,6 +32,9 @@ describe('SesService', () => {
     }).compile();
 
     service = module.get<SesService>(SesService);
+  });
+
+  afterEach(() => {
     jest.clearAllMocks();
   });
 
@@ -49,7 +52,13 @@ describe('SesService', () => {
 
       await service.sendEmailFromFileSG(mockEmailReceivers, mockEmailTitle, mockEmailContent);
 
-      expect(mockBaseSesService.sendEmail).toBeCalledWith(`FileSG <${mockSender}>`, mockEmailReceivers, mockEmailTitle, mockEmailContent);
+      expect(mockBaseSesService.sendEmail).toBeCalledWith(
+        `FileSG <${mockSender}>`,
+        mockEmailReceivers,
+        mockEmailTitle,
+        mockEmailContent,
+        undefined,
+      );
     });
 
     it('should call baseSesService sendEmailwithAttachments with correct args when attachments are provided', async () => {
@@ -57,7 +66,7 @@ describe('SesService', () => {
 
       await service.sendEmailFromFileSG(mockEmailReceivers, mockEmailTitle, mockEmailContent, undefined, mockEmailAttachments);
 
-      expect(mockBaseSesService.sendEmailWithAttachments).toBeCalledWith(
+      expect(mockBaseSesService.sendEmail).toBeCalledWith(
         `FileSG <${mockSender}>`,
         mockEmailReceivers,
         mockEmailTitle,
@@ -76,6 +85,7 @@ describe('SesService', () => {
         mockEmailReceivers,
         mockEmailTitle,
         mockEmailContent,
+        undefined,
       );
     });
   });

@@ -27,7 +27,6 @@ export const StyledFrameConnector = styled(FrameConnector)<StyledFrameConnectorP
   height: ${({ height }) => height}px;
   min-height: ${({ height }) => height}px;
 
-  pointer-events: none;
   touch-action: none;
   -ms-touch-action: none;
 `;

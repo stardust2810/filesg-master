@@ -22,7 +22,7 @@ export class DetailFileAssetHistoryResponse extends BasicFileAssetHistoryRespons
 
 export class FileHistory {
   @ApiProperty()
-  id: number;
+  uuid: string;
 
   @ApiProperty()
   createdAt: Date;

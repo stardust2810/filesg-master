@@ -380,7 +380,7 @@ export class BatchIssuanceFormService {
     formSubmissionId: string,
   ): BatchIssuanceSingleTransactionData[] {
     return sidecarData.map<BatchIssuanceSingleTransactionData>(
-      ({ externalRefId, uin, name, email, dob, contact, files: fileNames, deleteAt }) => {
+      ({ externalRefId, uin, name, email, dob, contact, files: fileNames, deleteAt, isNonSingpassRetrievable }) => {
         const uuid = v4();
         const id = `${formSubmissionId}-${uuid}`;
 
@@ -394,6 +394,7 @@ export class BatchIssuanceFormService {
           email,
           dob,
           contact,
+          isNonSingpassRetrievable,
         };
 
         const files: IssuanceFileRecord[] = fileNames.map((fileName) => {
@@ -466,9 +467,17 @@ export class BatchIssuanceFormService {
           uuid: transactionUuid,
           name: transactionName,
           agencyFileAssets: files.map(({ name, uuid }, index) => ({ name, uuid, deleteAt: requestFiles[index].deleteAt })),
-          recipientActivities: recipients.map(({ activityUuid, uin }, index) => {
+          recipientActivities: recipients.map(({ activityUuid, uin, isNonSingpassRetrievable }, index) => {
             const { name, email, dob, contact } = requestRecipients[index];
-            return { uuid: activityUuid, name, maskedUin: maskUin(uin), email, dob, contact, isNonSingpassRetrievable: !!dob && !!contact };
+            return {
+              uuid: activityUuid,
+              name,
+              maskedUin: maskUin(uin),
+              email,
+              dob,
+              contact,
+              isNonSingpassRetrievable,
+            };
           }),
         },
         transactionUuid: createFormSgFileTransactionResponse.transactionUuid,

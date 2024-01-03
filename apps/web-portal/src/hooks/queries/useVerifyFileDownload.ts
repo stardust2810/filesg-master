@@ -1,3 +1,4 @@
+import { GenerateFilesDownloadTokenResponse } from '@filesg/common';
 import { AxiosError } from 'axios';
 import { useQuery } from 'react-query';
 
@@ -16,8 +17,8 @@ interface QueryOptions {
 
 async function verifyFileDownload(token?: string) {
   const fetchTokenUrl = `/v1/file/verify/download`;
-  const jwtResponse = await apiCoreServerClient.post<string>(fetchTokenUrl, { token });
-  const jwt = jwtResponse.data;
+  const jwtResponse = await apiCoreServerClient.post<GenerateFilesDownloadTokenResponse>(fetchTokenUrl, { token });
+  const jwt = jwtResponse.data.token;
 
   const fileResponse = await apiTransferServerClient.get<Blob>(`/v1/file-download/verify`, {
     responseType: 'blob',

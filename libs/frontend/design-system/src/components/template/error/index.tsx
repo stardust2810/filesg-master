@@ -1,20 +1,16 @@
 import React from 'react';
 
+import { LinkProps } from '../../../utils/typings';
 import { ErrorInfo } from '../../data-display/error-info';
 import { TextLink } from '../../navigation/text-link';
 import { LinksContainer, StyledContainer } from './style';
-
-export interface Link {
-  label: string;
-  to: string;
-}
 
 export interface Props {
   image: string;
   tagText?: string;
   title: string;
   descriptions: (string | React.ReactElement)[];
-  links?: Link[];
+  links?: LinkProps[];
 }
 
 export function Error({ title, tagText, image, descriptions, links }: Props) {

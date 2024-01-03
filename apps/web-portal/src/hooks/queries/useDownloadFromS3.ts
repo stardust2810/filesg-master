@@ -1,9 +1,12 @@
+import { GenerateFilesDownloadTokenResponse } from '@filesg/common';
 import { AxiosError, AxiosRequestConfig } from 'axios';
 import { useQuery } from 'react-query';
 
 import { apiCoreServerClient, apiTransferServerClient } from '../../config/api-client';
 import { QueryKey } from '../../consts';
+import { selectIsCorporateUser } from '../../store/slices/session';
 import { DownloadSaveFile } from '../../typings';
+import { useAppSelector } from '../common/useSlice';
 
 interface QueryOptions {
   enabled?: boolean;
@@ -15,11 +18,12 @@ export async function downloadFromS3(
   token?: string,
   signal?: AbortSignal,
   onDownloadProgress?: AxiosRequestConfig['onDownloadProgress'],
+  isCorporateUser?: boolean,
 ): Promise<DownloadSaveFile> {
-  // TODO: FIRE A CALL TO LOG DOWNLOAD (actual download click or document render via query)
-  const query = fileAssetUuids.join('&uuid=');
+  const getAuthenticatedURL = () => `/v1/file/${isCorporateUser ? 'corppass/' : ''}generate-download-token`;
 
-  const fetchTokenUrl = `/v1/file/${token ? 'non-singpass/' : ''}download/?uuid=${query}`;
+  // TODO: FIRE A CALL TO LOG DOWNLOAD (actual download click or document render via query)
+  const fetchTokenUrl = token ? `/v1/file/non-singpass/generate-download-token` : getAuthenticatedURL();
   const fetchTokenConfig = token
     ? {
         headers: {
@@ -27,8 +31,12 @@ export async function downloadFromS3(
         },
       }
     : undefined;
-  const jwtResponse = await apiCoreServerClient.get<string>(fetchTokenUrl, { ...fetchTokenConfig, signal });
-  const jwt = jwtResponse.data;
+  const jwtResponse = await apiCoreServerClient.post<GenerateFilesDownloadTokenResponse>(
+    fetchTokenUrl,
+    { uuids: fileAssetUuids },
+    { ...fetchTokenConfig, signal },
+  );
+  const jwt = jwtResponse.data.token;
 
   const fileResponse = await apiTransferServerClient.get<Blob>(`/v1/file-download`, {
     responseType: 'blob',
@@ -47,9 +55,11 @@ export async function downloadFromS3(
 }
 
 export function useDownloadFromS3(fileAssetUuid: string | undefined, token?: string, { enabled = true, onError }: QueryOptions = {}) {
+  const isCorporateUser = useAppSelector(selectIsCorporateUser);
+
   return useQuery<DownloadSaveFile, AxiosError<DownloadSaveFile>>(
     [QueryKey.DOWNLOAD_FILE, fileAssetUuid],
-    ({ signal }) => downloadFromS3(fileAssetUuid ? [fileAssetUuid] : [], token, signal),
+    ({ signal }) => downloadFromS3(fileAssetUuid ? [fileAssetUuid] : [], token, signal, undefined, isCorporateUser),
     {
       enabled: enabled && !!fileAssetUuid,
       onError,

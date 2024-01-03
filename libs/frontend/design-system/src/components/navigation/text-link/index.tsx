@@ -18,6 +18,7 @@ export type Props = {
   iconSize?: 'ICON_NORMAL' | 'ICON_SMALL' | 'ICON_LARGE' | 'ICON_MINI';
   replace?: boolean;
   underline?: boolean;
+  isInline?: boolean;
   'data-testid'?: string;
 } & AnchorHTMLAttributes<HTMLAnchorElement>;
 
@@ -34,6 +35,7 @@ export function TextLink({
   iconSize = 'ICON_SMALL',
   replace = false,
   underline = true,
+  isInline = false,
   onClick,
   style,
   className,
@@ -49,6 +51,7 @@ export function TextLink({
       replace={replace}
       style={style}
       className={className}
+      $isInline={isInline}
     >
       {startIcon && <Icon icon={startIcon} size={iconSize} />}
       <Typography asSpan={true} variant={font} bold={bold} data-testid={rest['data-testid'] ?? 'text-link'} underline={underline}>

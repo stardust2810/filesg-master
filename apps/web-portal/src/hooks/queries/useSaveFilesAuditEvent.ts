@@ -2,7 +2,11 @@ import { AUDIT_EVENT_NAME, UserFilesNonSingpassAuditEventRequest, UserFilesSingp
 import { useMutation } from 'react-query';
 
 import { apiCoreServerClient } from '../../config/api-client';
+import { TOGGLABLE_FEATURES } from '../../consts/features';
 import { selectHasPerformedDocumentAction, setHasPerformedDocumentAction } from '../../store/slices/non-singpass-session';
+import { selectIsCorporateUser } from '../../store/slices/session';
+import { getRoutePath } from '../../utils/common';
+import { useFeature } from '../common/useFeature';
 import { useAppDispatch, useAppSelector } from '../common/useSlice';
 
 interface FilesAuditEventQueryBody {
@@ -13,6 +17,8 @@ interface FilesAuditEventQueryBody {
 export const useSaveFilesAuditEvent = (contentRetrievalToken: string) => {
   const dispatch = useAppDispatch();
   const hasPerformedDocumentAction = useAppSelector(selectHasPerformedDocumentAction);
+  const isCorporateUser = useAppSelector(selectIsCorporateUser);
+  const isCorppassEnabled = useFeature(TOGGLABLE_FEATURES.FEATURE_CORPPASS);
 
   const saveFilesAuditEvent = async ({ fileAssetUuids, eventName }: FilesAuditEventQueryBody) => {
     const config = contentRetrievalToken
@@ -23,8 +29,11 @@ export const useSaveFilesAuditEvent = (contentRetrievalToken: string) => {
         }
       : undefined;
 
+    const medium = getRoutePath(null, isCorporateUser && isCorppassEnabled);
+    const url = `/v1/audit-event${medium}/files/${eventName}`;
+
     await apiCoreServerClient.post<UserFilesSingpassAuditEventRequest | UserFilesNonSingpassAuditEventRequest>(
-      `/v1/audit-event/${contentRetrievalToken ? 'non-singpass/' : ''}files/${eventName}`,
+      url,
       { fileAssetUuids, hasPerformedDocumentAction: contentRetrievalToken ? hasPerformedDocumentAction : undefined },
       config,
     );

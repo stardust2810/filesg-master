@@ -16,14 +16,8 @@ describe('SqsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SqsService,
-        {
-          provide: BaseSqsService,
-          useValue: mockBaseSqsService,
-        },
-        {
-          provide: FileSGConfigService,
-          useValue: mockFileSGConfigService,
-        },
+        { provide: BaseSqsService, useValue: mockBaseSqsService },
+        { provide: FileSGConfigService, useValue: mockFileSGConfigService },
       ],
     }).compile();
 

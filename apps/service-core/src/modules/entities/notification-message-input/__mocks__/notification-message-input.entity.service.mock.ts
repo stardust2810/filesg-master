@@ -8,31 +8,15 @@ import {
 
 import { NotificationMessageInputCreationModel } from '../../../../entities/notification-message-input';
 import { MockService } from '../../../../typings/common.mock';
-import { createMockApplicationType } from '../../application-type/__mocks__/application-type.mock';
-import { createMockApplicationTypeNotification } from '../../application-type-notification/__mocks__/application-type-notification.mock';
 import { createMockNotificationMessageTemplate } from '../../notification-message-template/__mocks__/notification-message-template.mock';
 import { createMockTransaction } from '../../transaction/__mocks__/transaction.mock';
 import { NotificationMessageInputEntityService } from '../notification-message-input.entity.service';
 import { createMockNotificationMessageInput } from './notification-message-input.mock';
 
-const mockApplicationType = createMockApplicationType({
-  id: 1,
-  uuid: 'applicationType-uuid-1',
-  name: 'Long Term Visit Pass',
-  code: 'LTVP',
-});
-
-const mockApplicationTypeNotification = createMockApplicationTypeNotification({
-  id: 1,
-  applicationType: mockApplicationType,
-  notificationChannel: NOTIFICATION_CHANNEL.EMAIL,
-});
-
 const mockNotificationMessageTemplate = createMockNotificationMessageTemplate({
   name: 'mock name 1',
   template: [],
   type: NOTIFICATION_TEMPLATE_TYPE.ISSUANCE,
-  version: 1,
   notificationChannel: NOTIFICATION_CHANNEL.EMAIL,
 });
 

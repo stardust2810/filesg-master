@@ -17,7 +17,7 @@ export async function bootstrap(): Promise<NestExpressApplication> {
   const { port, serviceName } = configService.systemConfig;
   app.useLogger(app.get(PinoLogger));
   app.flushLogs();
-  app.enableCors({ origin: true, credentials: true }); // TODO: set cors according to the subdomains
+  app.enableCors({ origin: [/\.file\.gov\.sg$/], credentials: true });
   app.use(helmet());
   app.useGlobalFilters(new GlobalExceptionsFilter(SERVICE_NAME.CORE));
   app.useGlobalPipes(new ValidationPipe());

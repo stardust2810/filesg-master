@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream';
 
-import { DownloadInfoErrorException, DownloadMessage } from '@filesg/backend-common';
+import { AgencyFilesDownloadMessage, DownloadInfoErrorException } from '@filesg/backend-common';
 import { COMPONENT_ERROR_CODE, EVENT, FileDownloadResponse } from '@filesg/common';
 import { ZippingFile, ZipService } from '@filesg/zipper';
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -26,7 +26,7 @@ export class FileDownloadService {
   ) {}
 
   public async obfuscateAndDownloadOAFile(fileSessionId: string) {
-    const { type, stream, fileAssetIds } = await this.downloadFile(fileSessionId);
+    const { type, stream, fileAssetIds, name } = await this.downloadFile(fileSessionId);
 
     // convert stream to data in memory to perform obfuscation
     const chunks: Uint8Array[] = [];
@@ -45,7 +45,7 @@ export class FileDownloadService {
     downloadedOAStream.push(JSON.stringify(obfuscatedOADocument));
     downloadedOAStream.push(null);
 
-    return { type, fileAssetIds, stream: downloadedOAStream as Readable };
+    return { type, fileAssetIds, stream: downloadedOAStream as Readable, name };
   }
 
   public async downloadFile(fileSessionId: string) {
@@ -54,7 +54,7 @@ export class FileDownloadService {
     try {
       this.logger.log(`Retrieving download info from Management Serivce, file session: ${fileSessionId}`);
 
-      const { ownerUuidHash, files } = await this.retrieveDownloadInfo(fileSessionId);
+      const { ownerUuidHash, files, isAgencyDownload, ownerUuid } = await this.retrieveDownloadInfo(fileSessionId);
       const fileAssetIds = files.map((file) => file.id);
       this.logger.log(`Retrieved files: ${fileAssetIds.join(',')}`);
 
@@ -70,44 +70,50 @@ export class FileDownloadService {
           throw new Error(`File data missing`);
         }
 
-        return { type: ContentType!, stream: Body as Readable, fileAssetIds };
+        if (isAgencyDownload) {
+          this.sendAgencyDownloadEventMessageToQueueCoreEvents(fileAssetIds, ownerUuid);
+        }
+
+        return { type: ContentType!, stream: Body as Readable, fileAssetIds, name: files[0].name };
       }
 
       // filenameMap to check if filename already exist. Adds numbering to duplicate
       const filenameMap: Record<string, number> = {};
 
-      // If more than one, create promise array
-      const promiseFiles = await Promise.all(
-        files.map(async (file) => {
-          const { id, name } = file;
-          const { Body } = await this.s3Service.downloadFileFromMainBucket(`${ownerUuidHash}/${id}`, name, s3Client);
+      const promiseArray = files.map(async (file) => {
+        const { id, name } = file;
+        const { Body } = await this.s3Service.downloadFileFromMainBucket(`${ownerUuidHash}/${id}`, name, s3Client);
 
-          let streamFilename: string;
+        let streamFilename: string;
 
-          if (!filenameMap[name]) {
-            streamFilename = name;
-            filenameMap[name] = 1;
-          } else {
-            const extensionPeriodIndex = name.lastIndexOf('.') === -1 ? name.length : name.lastIndexOf('.');
-            const filenameWithoutExtension = name.slice(0, extensionPeriodIndex);
-            const extension = name.slice(extensionPeriodIndex);
+        if (!filenameMap[name]) {
+          streamFilename = name;
+          filenameMap[name] = 1;
+        } else {
+          const extensionPeriodIndex = name.lastIndexOf('.') === -1 ? name.length : name.lastIndexOf('.');
+          const filenameWithoutExtension = name.slice(0, extensionPeriodIndex);
+          const extension = name.slice(extensionPeriodIndex);
 
-            streamFilename = `${filenameWithoutExtension} (${filenameMap[name]})${extension}`;
-            filenameMap[name]++;
-          }
+          streamFilename = `${filenameWithoutExtension} (${filenameMap[name]})${extension}`;
+          filenameMap[name]++;
+        }
 
-          const streamFile: ZippingFile = {
-            name: streamFilename,
-            body: Body as Readable,
-          };
+        const streamFile: ZippingFile = {
+          name: streamFilename,
+          body: Body as Readable,
+        };
 
-          return streamFile;
-        }),
-      );
+        return streamFile;
+      });
 
-      const zip = await this.zipService.zipToStream(promiseFiles);
+      const zippingFiles = await Promise.all(promiseArray);
+      const zip = await this.zipService.zipToStream(zippingFiles);
 
-      return { type: 'application/zip', stream: zip, fileAssetIds };
+      if (isAgencyDownload) {
+        this.sendAgencyDownloadEventMessageToQueueCoreEvents(fileAssetIds, ownerUuid);
+      }
+
+      return { type: 'application/zip', stream: zip, fileAssetIds, name: 'filedownload-archive.zip' };
     } catch (error) {
       const internalLog = `[Failed] ${taskMessage}, Error: ${JSON.stringify(error)}`;
       throw new FileDownloadErrorException(COMPONENT_ERROR_CODE.FILE_DOWNLOAD, internalLog);
@@ -130,14 +136,19 @@ export class FileDownloadService {
     }
   }
 
-  public async sendDownloadEventMessageToQueueCoreEvents(fileAssetIds: string[]) {
-    const message: DownloadMessage = {
-      event: EVENT.FILES_DOWNLOADED,
-      payload: {
-        fileAssetIds,
-      },
-    };
+  public async sendAgencyDownloadEventMessageToQueueCoreEvents(fileAssetIds: string[], ownerUuid: string) {
+    try {
+      const message: AgencyFilesDownloadMessage = {
+        event: EVENT.AGENCY_DOWNLOADED_FILES,
+        payload: {
+          fileAssetIds,
+          userUuid: ownerUuid,
+        },
+      };
 
-    await this.sqsService.sendMessageToQueueCoreEvents(message);
+      await this.sqsService.sendMessageToQueueCoreEvents(message);
+    } catch (error) {
+      this.logger.error(`Failed to send agency file download event to core, ${JSON.stringify(error)}`);
+    }
   }
 }

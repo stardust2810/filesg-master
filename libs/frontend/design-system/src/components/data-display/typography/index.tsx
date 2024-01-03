@@ -14,11 +14,12 @@ export type Props = {
   children: React.ReactNode | React.ReactNode[];
   ellipsisLine?: number;
   isEllipsis?: boolean;
-  noWrap?: boolean;
+  whitespace?: 'initial' | 'nowrap' | 'pre' | 'pre-wrap' | 'pre-line' | 'break-spaces';
   color?: Color;
   overrideFontFamily?: 'Work Sans'; // Note: this is standalone use for H3 and BODY typography
   asSpan?: boolean;
   underline?: boolean;
+  textAlign?: 'left' | 'right' | 'center' | 'justify' | 'start' | 'end' | 'inherit';
 } & FileSGProps;
 
 type HtmlTag = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span';

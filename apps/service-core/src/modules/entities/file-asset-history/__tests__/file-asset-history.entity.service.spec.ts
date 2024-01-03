@@ -3,11 +3,9 @@ import { FILE_ASSET_ACTION } from '@filesg/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Equal, FindOneOptions } from 'typeorm';
 
-import { FileAssetHistoryRequestDto } from '../../../../dtos/file/request';
 import { FileAssetHistory } from '../../../../entities/file-asset-history';
 import { mockFileAssetHistoryEntityRepository } from '../__mocks__/file-asset-history.entity.repository.mock';
 import {
-  mockFileAssetHistories,
   mockFileAssetHistory,
   mockFileAssetHistoryModels,
   mockFileAssetHistoryUuid,
@@ -123,60 +121,6 @@ describe('FileAssetHistoryEntityService', () => {
   // ===========================================================================
   // Read
   // ===========================================================================
-  describe('retrieveFileAssetHistoryByFileAssetUuidAndOwnerId', () => {
-    const mockFileAssetUuid = 'mockFileAsset-uuid-1';
-
-    it('should call findAndCountFileAssetHistoryByFileAssetUuidAndOwnerId with page = 1 and limit = 20 when both are not given and return next with null when no additional items', async () => {
-      const mockUserId = 1;
-      const query: FileAssetHistoryRequestDto = {};
-      mockFileAssetHistoryEntityRepository.findAndCountFileAssetHistoryByFileAssetUuidAndOwnerId.mockResolvedValueOnce([
-        mockFileAssetHistories,
-        2,
-      ]);
-
-      expect(await service.retrieveFileAssetHistoryByFileAssetUuidAndOwnerId(mockFileAssetUuid, mockUserId, query)).toEqual({
-        fileHistoryList: mockFileAssetHistories,
-        totalCount: 2,
-        nextPage: null,
-      });
-      expect(mockFileAssetHistoryEntityRepository.findAndCountFileAssetHistoryByFileAssetUuidAndOwnerId).toBeCalledWith(
-        mockFileAssetUuid,
-        mockUserId,
-        {
-          ...query,
-          page: 1,
-          limit: 20,
-        },
-        undefined,
-        undefined,
-      );
-    });
-
-    it('should return next page number when there is still remaining items', async () => {
-      const mockUserId = 1;
-      const query: FileAssetHistoryRequestDto = {
-        page: 1,
-        limit: 1,
-      };
-      mockFileAssetHistoryEntityRepository.findAndCountFileAssetHistoryByFileAssetUuidAndOwnerId.mockResolvedValueOnce([
-        mockFileAssetHistories,
-        2,
-      ]);
-
-      expect(await service.retrieveFileAssetHistoryByFileAssetUuidAndOwnerId(mockFileAssetUuid, mockUserId, query)).toEqual({
-        fileHistoryList: mockFileAssetHistories,
-        totalCount: 2,
-        nextPage: 2,
-      });
-      expect(mockFileAssetHistoryEntityRepository.findAndCountFileAssetHistoryByFileAssetUuidAndOwnerId).toBeCalledWith(
-        mockFileAssetUuid,
-        mockUserId,
-        query,
-        undefined,
-        undefined,
-      );
-    });
-  });
 
   // ===========================================================================
   // Update

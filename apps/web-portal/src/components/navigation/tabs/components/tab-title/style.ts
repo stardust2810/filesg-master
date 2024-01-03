@@ -15,7 +15,6 @@ export const Button = styled.button<Props>`
     const { S12, S16 } = theme.FSG_SPACING;
     return S12 + ' ' + S16;
   }};
-  background-color: inherit;
 
   /* DISABLED */
   ${({ disabled }) =>

@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumberString, IsString, Length } from 'class-validator';
+import { IsIn, IsNotEmpty, IsNumberString, IsString, Length } from 'class-validator';
 
+import { OTP_CHANNEL } from '../../constants/common';
 import { IsValidFileSGDate } from '../../validators';
 
 export class Verify1FaNonSingpassRequest {
@@ -26,4 +27,12 @@ export class Verify2FaOtpNonSingpassRequest {
   @IsNumberString()
   @ApiProperty()
   inputOtp: string;
+}
+
+export class Send2FaOtpNonSingpassRequest {
+  @IsString()
+  @IsIn([OTP_CHANNEL.EMAIL, OTP_CHANNEL.SMS])
+  @IsNotEmpty()
+  @ApiProperty()
+  channel: OTP_CHANNEL;
 }

@@ -9,7 +9,10 @@ import { createMockFileAsset } from '../../../entities/file-asset/__mocks__/file
 import { createMockCitizenUser } from '../../../entities/user/__mocks__/user.mock';
 import { DownloadEventService } from '../events/download-event.service';
 
-export const mockDownloadEventService: MockService<DownloadEventService> = { fileDownloadedHandler: jest.fn() };
+export const mockDownloadEventService: MockService<DownloadEventService> = {
+  fileDownloadedHandler: jest.fn(),
+  agencyFileDownloadedHandler: jest.fn(),
+};
 
 // =============================================================================
 // Test Service
@@ -63,13 +66,13 @@ export const mockMessage: DownloadMessage = {
 };
 
 export const mockFileAssetHistoryCreationModel1: FileAssetHistoryCreationModel = {
-  type: FILE_ASSET_ACTION.DOWNLOAD,
+  type: FILE_ASSET_ACTION.DOWNLOADED,
   actionBy: mockCitizenUser,
   fileAsset: mockFileAsset1,
 };
 
 export const mockFileAssetHistoryCreationModel2: FileAssetHistoryCreationModel = {
-  type: FILE_ASSET_ACTION.DOWNLOAD,
+  type: FILE_ASSET_ACTION.DOWNLOADED,
   actionBy: mockCitizenUser,
   fileAsset: mockFileAsset2,
 };

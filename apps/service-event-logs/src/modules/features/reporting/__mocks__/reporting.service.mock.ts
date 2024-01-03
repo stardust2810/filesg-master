@@ -15,6 +15,14 @@ import { MockService } from '../../../../typings/common.mock';
 import { FormSgIssuanceRecord, FormSgIssuanceRecordContent, ReportingService } from '../reporting.service';
 
 export class TestReportingService extends ReportingService {
+  public generateFormSgIssuanceRecords(
+    transactions: FormSgTransaction[],
+    formSubmissionId: string,
+    excludeFailureDetails?: boolean,
+  ): FormSgIssuanceRecord[] {
+    return super.generateFormSgIssuanceRecords(transactions, formSubmissionId, excludeFailureDetails);
+  }
+
   public generateFormSgIssuanceSuccessReport(
     formsgTransaction: FormSgTransaction,
     id: string,
@@ -126,11 +134,13 @@ export const mockFailureAgencyFileAssets: AgencyFileAsset[] = [
   {
     name: 'multiple-page-01.pdf',
     uuid: 'fileasset-1689839329575-4d22840956ac3db8',
+    failSubType: 'fail sub type',
     failedReason: 'virus error',
   },
   {
     name: 'multiple-page-02.pdf',
     uuid: 'fileasset-1689839329575-3cc9afa743b62076',
+    failSubType: 'fail sub type',
     failedReason: 'scan error',
   },
 ];

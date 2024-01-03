@@ -9,7 +9,6 @@ export class SqsService {
   private readonly logger = new Logger(SqsService.name);
   constructor(private readonly baseSqsService: BaseSqsService, private readonly fileSGConfigService: FileSGConfigService) {}
 
-  // gd TODO: add unit test
   async sendMessageToQueueCoreEvents(messageBody: SqsCoreEventsMessage) {
     const coreEventsQueue = this.fileSGConfigService.awsConfig.coreEventsQueueUrl;
 

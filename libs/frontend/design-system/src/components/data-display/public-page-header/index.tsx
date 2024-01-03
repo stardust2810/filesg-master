@@ -1,6 +1,5 @@
 import { useShouldRender } from '../../../hooks/useShouldRender';
 import { FSG_DEVICES, RESPONSIVE_VARIANT, TEST_IDS } from '../../../utils/constants';
-import { toKebabCase } from '../../../utils/helper';
 import { FileSGProps } from '../../../utils/typings';
 import { Typography } from '../typography';
 import { StyledContainer, StyledImageContainer, StyledImg, StyledPageDescriptorsContainer, StyledPublicPageHeader } from './style';
@@ -47,7 +46,13 @@ export const PublicPageDescriptor = ({ title, description, image, imageAlt, ...r
 
         {image && (
           <StyledImageContainer column={isSmallerThanTabletLandscape ? 12 : 4}>
-            <StyledImg alt={imageAlt ? imageAlt : ''} src={image} data-testid={TEST_IDS.PUBLIC_PAGE_HEADER_IMAGE} />
+            <StyledImg
+              width={277}
+              height={164}
+              alt={imageAlt ? imageAlt : ''}
+              src={image}
+              data-testid={TEST_IDS.PUBLIC_PAGE_HEADER_IMAGE}
+            />
           </StyledImageContainer>
         )}
       </StyledContainer>

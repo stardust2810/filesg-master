@@ -8,7 +8,7 @@ import { OpenAPIV3 } from 'openapi-types';
  *  - Version Number
  */
 const API_TITLE = 'FileSG API';
-const API_VERSION = '1.2.0';
+const API_VERSION = '1.3.0';
 const FILESG_LOGO = 'https://www.dev.file.gov.sg/assets/images/icons/miscellaneous/fsglogo-wpadding.png';
 
 const GENERATE_SWAGGER_CMD = 'npm run swagger:generate -- --with-aws-extension --tags=apigw --with-global-prefix';
@@ -25,7 +25,7 @@ const SWAGGER_TRANSFER_WD = `${WORKING_DIR}/swagger-transfer.json`;
 const SWAGGER_DESCRIPTION_MD_FILE = `${CURRENT_DIR}/tech-doc-info-description.md`;
 const ISSUANCE_TAG_DESCRIPTION = `${CURRENT_DIR}/issuance-tag-description.md`;
 const SWAGGER_SERVERS = `${CURRENT_DIR}/server.json`;
-const SWAGGER_FINAL = `${WORKING_DIR}/swagger-final.json`;
+const SWAGGER_FINAL = `${WORKING_DIR}/filesg-swagger.json`;
 
 export const TECH_DOC_SWAGGER_PREFIX = 'tech-doc';
 

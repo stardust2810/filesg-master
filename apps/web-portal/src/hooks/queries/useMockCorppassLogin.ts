@@ -7,7 +7,7 @@ import { QueryKey } from '../../consts';
 interface LoginQueryBody {
   uin: string;
   uen: string;
-  role: string;
+  roles: string[];
   nonce: string;
 }
 

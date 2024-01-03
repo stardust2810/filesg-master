@@ -322,6 +322,7 @@ export const mockCreateFormSgFileTransactionResponse: CreateFormSgFileTransactio
     {
       uin: mockRecipientUin,
       activityUuid: mockActivityUuid,
+      isNonSingpassRetrievable: false,
     },
   ],
 };

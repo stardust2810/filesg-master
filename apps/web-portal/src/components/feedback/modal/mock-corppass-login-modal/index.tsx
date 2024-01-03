@@ -21,24 +21,24 @@ interface Props {
 interface MockCorppassLoginFormInput {
   uin: string;
   uen: string;
-  role: string;
+  roles: string;
 }
 
 export const MockCorppassLoginModal = forwardRef<HTMLDivElement, Props>(
   ({ title = 'Mock Corppass login', onClose, onBackButtonClick }, ref) => {
     const navigate = useNavigate();
     const { register, handleSubmit } = useForm<MockCorppassLoginFormInput>({
-      defaultValues: { uin: 'S3002610A', uen: '200000177W', role: 'ALL' },
+      defaultValues: { uin: 'S3002610A', uen: '200000177W', roles: 'ALL' },
     });
 
     const buttonRef = useButtonFocus();
 
-    const onLoginHandler = ({ uin, uen, role }: MockCorppassLoginFormInput) => {
-      if (!uin || uin.trim() === '' || !uen || uen.trim() === '' || !role || role.trim() === '') {
+    const onLoginHandler = ({ uin, uen, roles }: MockCorppassLoginFormInput) => {
+      if (!uin || uin.trim() === '' || !uen || uen.trim() === '') {
         return;
       }
       onClose();
-      navigate(`${WebPage.MOCK_CORPPASS_AUTHCALLBACK}?uin=${uin}&uen=${uen}&role=${role}&state=state`);
+      navigate(`${WebPage.MOCK_CORPPASS_AUTHCALLBACK}?uin=${uin}&uen=${uen}&roles=${roles}&state=state`);
     };
 
     const proceedToNdiHandler = () => {
@@ -58,7 +58,7 @@ export const MockCorppassLoginModal = forwardRef<HTMLDivElement, Props>(
 
               <TextInput fieldId="uin" {...register('uin')} label={'Mock FIN/NRIC'} hintText="E.g.: S3002610A" />
               <TextInput fieldId="uen" {...register('uen')} label={'Mock UEN'} hintText="E.g.: 200000177W" />
-              <TextInput fieldId="role" {...register('role')} label={'Mock Role'} hintText="E.g.: ALL" />
+              <TextInput fieldId="roles" {...register('roles')} label={'Mock Roles'} hintText="E.g.: ALL" />
             </Modal.Body>
 
             <StyledFooter>

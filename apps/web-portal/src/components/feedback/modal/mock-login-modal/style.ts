@@ -5,3 +5,8 @@ export const StyledFooter = styled(Modal.Footer)`
   flex-direction: row-reverse;
   justify-content: space-between;
 `;
+
+export const StyledForm = styled.form`
+  width: 100%;
+  display: flex;
+`;

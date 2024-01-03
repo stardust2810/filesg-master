@@ -1,4 +1,9 @@
-import { DATE_FORMAT_PATTERNS, EXCEPTION_ERROR_CODE, ValidateActivityNonSingpassRetrievableResponse } from '@filesg/common';
+import {
+  ACTIVITY_RETRIEVAL_OPTIONS,
+  DATE_FORMAT_PATTERNS,
+  EXCEPTION_ERROR_CODE,
+  RetrieveActivityRetrievableOptionsResponse,
+} from '@filesg/common';
 import {
   Divider,
   Level1Accordion,
@@ -25,8 +30,12 @@ import { FORM_IDS } from '../../../consts/identifiers';
 import { usePageDescription } from '../../../hooks/common/usePageDescription';
 import { usePageTitle } from '../../../hooks/common/usePageTitle';
 import { useAppDispatch, useAppSelector } from '../../../hooks/common/useSlice';
-import { useValidateActivityNonSingpassRetrieval } from '../../../hooks/queries/useValidateActivityNonSingpassRetrieval';
-import { setFirstFaInput, setIsActivityBannedFromNonSingpassVerification } from '../../../store/slices/non-singpass-session';
+import { useActivityRetrievalOptions } from '../../../hooks/queries/useValidateActivityRetrievalOptions';
+import {
+  setFirstFaInput,
+  setIsActivityBannedFromNonSingpassVerification,
+  setIsActivityNonSingpassVerifiable,
+} from '../../../store/slices/non-singpass-session';
 import { selectIsUserLoggedIn } from '../../../store/slices/session';
 import { isFileSGError, isFileSGErrorType, trackWogaaTransaction } from '../../../utils/common';
 import { FaqListContent } from '../faq/components/faq-list-content';
@@ -108,7 +117,7 @@ const Retrieve = (): JSX.Element => {
     }
   };
 
-  const onActivityValidationSuccess = (data: ValidateActivityNonSingpassRetrievableResponse) => {
+  const onActivityValidationSuccess = (data: RetrieveActivityRetrievableOptionsResponse) => {
     if (isUserLoggedIn) {
       navigate(`${WebPage.ACTIVITIES}/${transactionId}`);
       return;
@@ -123,6 +132,7 @@ const Retrieve = (): JSX.Element => {
     );
 
     dispatch(setIsActivityBannedFromNonSingpassVerification(data.isBannedFromNonSingpassVerification));
+    dispatch(setIsActivityNonSingpassVerifiable(data.isNonSingpassVerifiable));
 
     sessionStorage.setItem(REDIRECTION_PATH_KEY, `${WebPage.ACTIVITIES}/${transactionId}`);
     setShowAuthenticationModal(true);
@@ -144,11 +154,13 @@ const Retrieve = (): JSX.Element => {
   const {
     refetch: validateActivity,
     isFetching: isFetchingValidateActivity,
-    data: validateActivityData,
-  } = useValidateActivityNonSingpassRetrieval(transactionId, {
+    data: validateActivityRetrievalOptionsData,
+  } = useActivityRetrievalOptions(transactionId, {
     onSuccess: onActivityValidationSuccess,
     onError: onActivityValidationError,
   });
+  const isNonSingpassRetrievable = validateActivityRetrievalOptionsData?.retrievalOptions.includes(ACTIVITY_RETRIEVAL_OPTIONS.NON_SINGPASS);
+  const isCorppassRetrievable = validateActivityRetrievalOptionsData?.retrievalOptions.includes(ACTIVITY_RETRIEVAL_OPTIONS.CORPPASS);
 
   return (
     <>
@@ -199,11 +211,12 @@ const Retrieve = (): JSX.Element => {
           </>
         </PublicPageContainer>
       </StyledWrapper>
-      {showAuthenticationModal && validateActivityData && (
+      {showAuthenticationModal && validateActivityRetrievalOptionsData && (
         <AuthenticationModal
           showSingpassOptionsOnly={false}
           onCloseModal={() => setShowAuthenticationModal(false)}
-          onNonSingpassLogin={validateActivityData.isNonSingpassRetrievable ? () => null : undefined}
+          canNonSingpassLogin={isNonSingpassRetrievable}
+          canCorppassLogin={isCorppassRetrievable}
         />
       )}
     </>

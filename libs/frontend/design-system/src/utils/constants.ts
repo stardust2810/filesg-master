@@ -158,6 +158,14 @@ export enum TEST_IDS {
   METADATA_LIST_THUMBNAIL = 'filesg-metadata-list-thumbnail',
   // SPINNER
   SPINNER = 'filesg-spinner',
+  // RADIO BUTTONS
+  RADIO_BUTTON_GROUP = 'filesg-radio-button-group',
+  RADIO_BUTTON_GROUP_LABEL = 'filesg-radio-button-group-label',
+  RADIO_BUTTON_GROUP_DESCRIPTION = 'filesg-radio-button-group-description',
+  RADIO_BUTTON = 'filesg-radio-button',
+  RADIO_BUTTON_INPUT = 'filesg-radio-button-input',
+  RADIO_BUTTON_LABEL = 'filesg-radio-button-label',
+  RADIO_BUTTON_DESCRIPTION = 'filesg-radio-button-description',
 }
 
 export enum FIELD_ERROR_IDS {

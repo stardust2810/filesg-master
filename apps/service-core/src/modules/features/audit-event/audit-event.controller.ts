@@ -1,10 +1,15 @@
-import { AUDIT_EVENT_NAME, AUTH_TYPE, UserFilesNonSingpassAuditEventRequest, UserFilesSingpassAuditEventRequest } from '@filesg/common';
+import {
+  AUTH_TYPE,
+  UserFilesAuditEventParams,
+  UserFilesNonSingpassAuditEventRequest,
+  UserFilesSingpassAuditEventRequest,
+} from '@filesg/common';
 import { Body, Controller, HttpCode, HttpStatus, Logger, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { AUTH_STATE, FileSGAuth } from '../../../common/decorators/filesg-auth.decorator';
 import { JwtNonSingpassContentRetrievalAuthGuard } from '../../../common/guards/jwt-non-singpass-content-retrieval.guard';
-import { NonSingpassContentRetrievalRequest, RequestWithSession, UserSessionAuditEventData } from '../../../typings/common';
+import { NonSingpassContentRetrievalRequest, RequestWithCitizenSession, UserSessionAuditEventData } from '../../../typings/common';
 import { AuditEventService } from './audit-event.service';
 
 @ApiTags('audit-event')
@@ -19,7 +24,7 @@ export class AuditEventController {
   @FileSGAuth({ auth_state: AUTH_STATE.JWT })
   @UseGuards(JwtNonSingpassContentRetrievalAuthGuard)
   async userFilesNonSingpassAuditEvent(
-    @Param('eventName') eventName: AUDIT_EVENT_NAME,
+    @Param() { eventName }: UserFilesAuditEventParams,
     @Body() { fileAssetUuids, hasPerformedDocumentAction }: UserFilesNonSingpassAuditEventRequest,
     @Req() req: NonSingpassContentRetrievalRequest,
   ) {
@@ -35,9 +40,9 @@ export class AuditEventController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @FileSGAuth({ auth_state: AUTH_STATE.CITIZEN_LOGGED_IN })
   async userFilesSingpassAuditEvent(
-    @Param('eventName') eventName: AUDIT_EVENT_NAME,
+    @Param() { eventName }: UserFilesAuditEventParams,
     @Body() { fileAssetUuids }: UserFilesSingpassAuditEventRequest,
-    @Req() req: RequestWithSession,
+    @Req() req: RequestWithCitizenSession,
   ) {
     const { userId, ssoEservice, hasPerformedDocumentAction } = req.session.user;
 

@@ -118,7 +118,7 @@ export class FileTransactionV2Service {
     let acknowledgementTemplateId: number | undefined;
 
     const {
-      transaction: { type: transactionType, isAcknowledgementRequired, acknowledgementTemplateUuid, recipients: requestRecipients },
+      transaction: { type: transactionType, acknowledgementTemplateUuid, recipients: requestRecipients },
     } = fileTransactionReq;
 
     this.validateIfTransactionTypeIsUploadTransfer(transactionType);
@@ -126,8 +126,6 @@ export class FileTransactionV2Service {
     const { isCorporateRecipients } = this.validateIfMixedRecipients(requestRecipients);
 
     this.validateIfRecipientsHaveDuplicateIdentifier(requestRecipients, isCorporateRecipients);
-
-    this.enforceAckIdAndIsAck(isAcknowledgementRequired, acknowledgementTemplateUuid);
 
     const user = await this.userEntityService.retrieveUserWithEserviceAndAgencyById(userId);
 
@@ -504,7 +502,6 @@ export class FileTransactionV2Service {
           documentHash: checksum,
           issuerId,
           oaCertificate,
-          lastViewedAt: null,
         });
       },
     );
@@ -557,7 +554,7 @@ export class FileTransactionV2Service {
       if (!corporate) {
         this.logger.log(`Creating new corporate for ${recipientUen}`);
         corporate = this.corporateEntityService.buildCorporateWithBaseUser({ uen: recipientUen, user: { status: STATUS.ACTIVE } });
-        corporatesToBeCreated.push(corporate as CorporateWithBaseUserCreationModel); // gd TODO: typings to be fixed
+        corporatesToBeCreated.push(corporate as CorporateWithBaseUserCreationModel);
         recipientInfoOfUsersToBeInserted.push(recipient);
       } else {
         existingUsers[corporate.user!.id] = recipient;
@@ -592,25 +589,17 @@ export class FileTransactionV2Service {
 
     for (const [id, createRecipientRequest] of Object.entries(existingUsers)) {
       const userId = parseInt(id, 10);
-      const { name, dob, contact, email, isNonSingpassRetrievable, emails } = createRecipientRequest;
+      const { uin, name, dob, contact, email, isNonSingpassRetrievable, emails, isCopy, metadata } = createRecipientRequest;
 
-      const recipientInfo: ActivityRecipientInfo = { name, ...(!isCorporateRecipients && { failedAttempts: 0 }) };
-
-      if (email) {
-        recipientInfo.email = email;
-      }
-
-      if (dob) {
-        recipientInfo.dob = dob;
-      }
-
-      if (contact) {
-        recipientInfo.mobile = contact;
-      }
-
-      if (emails) {
-        recipientInfo.emails = emails;
-      }
+      const recipientInfo: ActivityRecipientInfo = {
+        name,
+        email,
+        dob,
+        mobile: contact,
+        isCopy,
+        emails,
+        ...(!isCorporateRecipients && { failedAttempts: 0 }),
+      };
 
       /**
        * By default insertActivities function is already doing buildActivity internally, theres no need to buildActivity manually.
@@ -630,13 +619,17 @@ export class FileTransactionV2Service {
       });
 
       receiveTransferActivityModels.push(activity);
-      recipients.push({ uin: createRecipientRequest.uin!, activityUuid: activity.uuid });
+      recipients.push({
+        uin: uin!,
+        activityUuid: activity.uuid,
+        isNonSingpassRetrievable: !!isNonSingpassRetrievable,
+      });
 
       for (let i = 0; i < filesLength; i++) {
         fileAssetModels.push({
           fileInfo: files[i],
           ownerId: userId,
-          ownerMetadata: createRecipientRequest.metadata ?? {},
+          ownerMetadata: metadata ?? {},
           issuerId: fileAssetIssuerId,
           parentId: sendTransferFileAssetIds[i],
           type: FILE_ASSET_TYPE.TRANSFERRED,
@@ -722,15 +715,6 @@ export class FileTransactionV2Service {
         },
         undefined,
         isCorporateRecipients ? EXCEPTION_ERROR_CODE.DUPLICATE_RECIPIENT_UENS : EXCEPTION_ERROR_CODE.DUPLICATE_RECIPIENT_UINS,
-      );
-    }
-  }
-
-  protected enforceAckIdAndIsAck(isAcknowledgementRequired?: boolean, acknowledgementTemplateUuid?: string) {
-    if (acknowledgementTemplateUuid && !isAcknowledgementRequired) {
-      throw new InputValidationException(
-        COMPONENT_ERROR_CODE.TRANSACTION_SERVICE,
-        `Property 'acknowledgementTemplateUuid' is not allowed when property 'isAcknowledgementRequired' is false or undefined.`,
       );
     }
   }

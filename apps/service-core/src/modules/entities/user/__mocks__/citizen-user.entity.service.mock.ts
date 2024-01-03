@@ -14,6 +14,7 @@ export const mockCitizenUserEntityService: MockService<CitizenUserEntityService>
 
   // retrieve
   retrieveCitizenUserById: jest.fn(),
+  retrieveCitizenUserByUin: jest.fn(),
 
   // update
   updateCitizenUserById: jest.fn(),

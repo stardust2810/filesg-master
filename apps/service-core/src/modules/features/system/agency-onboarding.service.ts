@@ -16,10 +16,10 @@ import {
   NOTIFICATION_CHANNEL,
   NOTIFICATION_TEMPLATE_TYPE,
   NotificationTemplateOnboardingRequest,
+  NotificationTemplateUpdateRequest,
   ROLE,
   STATUS,
   TEMPLATE_TYPE,
-  TemplateUpdateRequest,
   TransactionTemplateOnboardingRequest,
   UpdateNotificationTemplatesRequest,
   UpdateTransactionTemplatesRequest,
@@ -29,7 +29,7 @@ import { generateEncryptionKey } from '@govtechsg/oa-encryption';
 import { Injectable, Logger } from '@nestjs/common';
 import { Wallet } from 'ethers';
 import { precompile } from 'handlebars';
-import { EntityManager, InsertResult, UpdateResult } from 'typeorm';
+import { EntityManager, UpdateResult } from 'typeorm';
 
 import {
   DuplicateEserviceWhitelistedUserException,
@@ -425,19 +425,20 @@ export class AgencyOnboardingService {
     const txn = await this.databaseTransactionService.startTransaction();
 
     try {
-      const updatedTemplatesPromise: Promise<[InsertResult, UpdateResult]>[] = inputNotificationTemplates.map((template) =>
+      const updatedTemplatesPromise = inputNotificationTemplates.map((template) =>
         this.updateNotificationMessageTemplateAndCreateAudit(template, txn.entityManager),
       );
-      const updatedResults = await Promise.all(updatedTemplatesPromise);
-      const updatedTemplateUuidsAndNames = updatedResults.map((result) => {
-        return { uuid: result[1].raw.uuid, name: result[1].raw.name };
-      });
+      const updatedTemplateUuidsAndNames = await Promise.all(updatedTemplatesPromise);
       await txn.commit();
+
       return transformAddOrUpdateTemplatesResponse(agency, updatedTemplateUuidsAndNames);
-    } catch (err) {
+    } catch (error) {
       await txn.rollback();
-      this.logger.error(err);
-      throw err;
+
+      const errorMessage = (error as Error).message;
+      this.logger.error(errorMessage);
+
+      throw error;
     }
   }
 
@@ -729,8 +730,6 @@ export class AgencyOnboardingService {
     );
   }
 
-  // ENHANCEMENT: Typeorm has a version control decorator
-  // https://orkhan.gitbook.io/typeorm/docs/entities#special-columns
   protected async createNotificationMessageTemplates(
     notificationTemplateOnboardingRequests: NotificationTemplateOnboardingRequest[],
     agency: Agency,
@@ -745,7 +744,6 @@ export class AgencyOnboardingService {
         ...notificationTemplateOnboardingRequest,
         requiredFields,
         agency,
-        version: 1,
       });
     });
 
@@ -756,44 +754,48 @@ export class AgencyOnboardingService {
   }
 
   protected async updateNotificationMessageTemplateAndCreateAudit(
-    notificationMessageTemplateUpdateRequest: TemplateUpdateRequest,
+    notificationMessageTemplateUpdateRequest: NotificationTemplateUpdateRequest,
     entityManager?: EntityManager,
-  ) {
-    const { uuid } = notificationMessageTemplateUpdateRequest;
+  ): Promise<{ uuid: string; name: string }> {
+    const {
+      uuid,
+      template: newTemplate,
+      copyRecipientSubjectAffix: newCopyRecipientSubjectAffix,
+    } = notificationMessageTemplateUpdateRequest;
+
     const oldNotificationMessageTemplate = await this.notificationMessateTemplateEntityService.retrieveNotificationMessageTemplateByUuid(
       uuid,
       { entityManager },
     );
+    const { name, template, version, requiredFields, externalTemplateId, copyRecipientSubjectAffix } = oldNotificationMessageTemplate;
 
-    const requiredFields = this.extractDynamicFieldsFromTemplate(
-      oldNotificationMessageTemplate.name,
-      notificationMessageTemplateUpdateRequest.template,
-    );
+    const newRequiredFields = this.extractDynamicFieldsFromTemplate(name, newTemplate);
 
-    // ENHANCEMENT: Typeorm has a version control decorator
-    // https://orkhan.gitbook.io/typeorm/docs/entities#special-columns
     const newNotificationMessageTemplate: NotificationMessageTemplateUpdateModel = {
       ...notificationMessageTemplateUpdateRequest,
-      requiredFields,
-      version: oldNotificationMessageTemplate.version + 1,
+      requiredFields: newRequiredFields,
+      copyRecipientSubjectAffix: newCopyRecipientSubjectAffix,
     };
 
-    return await Promise.all([
+    await Promise.all([
       // using spread operator will result in inserting/updating same audit instance with id = template id
       this.notificationMessateTemplateAuditEntityService.insertNotificationMessageTemplateAudits(
         [
           {
-            template: oldNotificationMessageTemplate.template,
-            version: oldNotificationMessageTemplate.version,
-            requiredFields: oldNotificationMessageTemplate.requiredFields,
-            externalTemplateId: oldNotificationMessageTemplate.externalTemplateId,
+            template,
+            version,
+            requiredFields,
+            externalTemplateId,
             notificationMessageTemplate: oldNotificationMessageTemplate,
+            copyRecipientSubjectAffix,
           },
         ],
         entityManager,
       ),
       this.notificationMessateTemplateEntityService.updateNotificationMessageTemplate(uuid, newNotificationMessageTemplate, entityManager),
     ]);
+
+    return { uuid, name };
   }
 
   protected async createFormSgIssuanceAgencyTransactionAndNotificationTemplates(
@@ -898,7 +900,7 @@ export class AgencyOnboardingService {
       .flat();
   }
 
-  protected extractDynamicFieldsFromTemplate(name: string, template: string[]): string[] {
+  protected extractDynamicFieldsFromTemplate(name: string, template: string[]): string[] | null {
     const regexToExtractDynamicVariable = /\{\{([^{}]+)\}\}/g;
     const regexToTestAlphabetsOnly = /^[a-zA-Z0-9]+$/;
 
@@ -926,6 +928,6 @@ export class AgencyOnboardingService {
       }
       return extractedDynamicFieldsOnlyAlphabets;
     }
-    return [];
+    return null;
   }
 }

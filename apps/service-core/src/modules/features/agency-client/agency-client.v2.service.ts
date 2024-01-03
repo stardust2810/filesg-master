@@ -237,8 +237,9 @@ export class AgencyClientV2Service {
       >(tokenEndpoint, systemCredentials);
 
       return response.data;
-    } catch (error) {
-      throw new CirisTokenRetrievalException(COMPONENT_ERROR_CODE.AGENCY_CLIENT_SERVICE, JSON.stringify(error));
+    } catch (error: any) {
+      const errorMessage = error?.message ?? JSON.stringify(error);
+      throw new CirisTokenRetrievalException(COMPONENT_ERROR_CODE.AGENCY_CLIENT_SERVICE, errorMessage);
     }
   }
 
@@ -267,8 +268,9 @@ export class AgencyClientV2Service {
         },
       });
       return response.data;
-    } catch (error) {
-      throw new CirisPhotoException(COMPONENT_ERROR_CODE.AGENCY_CLIENT_SERVICE, `${error}`);
+    } catch (error: any) {
+      const errorMessage = error?.message ?? JSON.stringify(error);
+      throw new CirisPhotoException(COMPONENT_ERROR_CODE.AGENCY_CLIENT_SERVICE, errorMessage);
     }
   }
 

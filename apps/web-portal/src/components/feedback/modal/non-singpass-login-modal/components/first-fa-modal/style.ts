@@ -11,3 +11,8 @@ export const StyledDateInput = styled.div`
 export const StyledFooter = styled(Modal.Footer)`
   justify-content: space-between !important;
 `;
+
+export const StyledForm = styled.form`
+  width: 100%;
+  display: flex;
+`;

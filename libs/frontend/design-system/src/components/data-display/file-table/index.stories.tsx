@@ -2,7 +2,7 @@ import { Meta, Story } from '@storybook/react';
 import styled from 'styled-components';
 
 import { Color, FileIcon } from '../../..';
-import { getFileExtensionAndLastChars, getFileNameWithoutExtensionAndLastChars } from '../../../utils/helper';
+import { generateEllipsisFileNameParts } from '../../../utils/helper';
 import { Typography } from '../typography';
 import { FileTable, Props, TableColumns, TableRows } from '.';
 import { StyledFileNameEndText, StyledFileNameSpan, StyledStatusText, StyledTextButton } from './style';
@@ -31,19 +31,23 @@ const columns: TableColumns = [
     width: 900,
     ellipsis: true,
     ellipsisLine: 1,
-    renderCell: ({ cellData, rowData }) => (
-      <StyledTextButton
-        label={
-          <StyledFileNameSpan>
-            <Typography variant="BODY" isEllipsis ellipsisLine={1}>
-              {getFileNameWithoutExtensionAndLastChars(cellData, 8)}
-            </Typography>
-            <StyledFileNameEndText variant="BODY">{getFileExtensionAndLastChars(cellData, 8)}</StyledFileNameEndText>
-          </StyledFileNameSpan>
-        }
-        onClick={() => console.log(`View ${rowData.id}`)}
-      />
-    ),
+    renderCell: ({ cellData, rowData }) => {
+      const { front, back } = generateEllipsisFileNameParts(cellData, 8);
+
+      return (
+        <StyledTextButton
+          label={
+            <StyledFileNameSpan>
+              <Typography variant="BODY" isEllipsis ellipsisLine={1}>
+                {front}
+              </Typography>
+              <StyledFileNameEndText variant="BODY">{back}</StyledFileNameEndText>
+            </StyledFileNameSpan>
+          }
+          onClick={() => console.log(`View ${rowData.id}`)}
+        />
+      );
+    },
   },
   {
     field: 'updatedAt',

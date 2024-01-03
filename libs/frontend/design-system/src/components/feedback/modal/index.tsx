@@ -5,10 +5,10 @@ import ReactDOM from 'react-dom';
 import { useTheme } from 'styled-components';
 
 import { useKeyPress } from '../../../hooks/useKeyPress';
+import { useLocationChange } from '../../../hooks/useLocationChange';
 import { useShouldRender } from '../../../hooks/useShouldRender';
 import { useWindowSize } from '../../../hooks/useWindowSize';
 import { FSG_DEVICES, RESPONSIVE_VARIANT, TEST_IDS } from '../../../utils/constants';
-import { addScrollLock, removeScrollLock } from '../../../utils/helper';
 import { FileSGProps, ModalSize, Position } from '../../../utils/typings';
 import { IconButton } from '../../inputs/icon-button';
 import { Backdrop } from '../backdrop';
@@ -47,8 +47,8 @@ export type ModalProps = {
   size?: ModalSize;
   invisibleBackdrop?: boolean;
   onBackdropClick?: MouseEventHandler;
+  onRouteChange?: () => void;
   onKeyDown?: KeyboardEventHandler<HTMLDivElement>;
-  allowScrollLock?: boolean;
   trapFocus?: boolean;
   initialFocus?: FocusTargetValueOrFalse;
   pauseFocus?: boolean;
@@ -130,10 +130,10 @@ const Modal = forwardRef<HTMLDivElement, ModalProps>(
       size = 'SMALL',
       invisibleBackdrop = false,
       onBackdropClick,
+      onRouteChange,
       onKeyDown,
       style,
       className,
-      allowScrollLock = true,
       trapFocus = true,
       pauseFocus = false,
       initialFocus = undefined,
@@ -149,6 +149,7 @@ const Modal = forwardRef<HTMLDivElement, ModalProps>(
       autoAnchorInitial = 'right',
       useAnchorWidth = false,
       transformOrigin,
+
       ...rest
     }: ModalProps,
     ref,
@@ -157,6 +158,7 @@ const Modal = forwardRef<HTMLDivElement, ModalProps>(
 
     const contentRef = useRef<HTMLDivElement>(null);
     const windowSize = useWindowSize();
+    useLocationChange(onRouteChange);
 
     if (!anchorPadding.vertical) {
       anchorPadding.vertical = 0;
@@ -176,18 +178,6 @@ const Modal = forwardRef<HTMLDivElement, ModalProps>(
         setModalRoot(root);
       }
     }, []);
-
-    useEffect(() => {
-      if (allowScrollLock) {
-        addScrollLock();
-      }
-
-      return function cleanup() {
-        if (allowScrollLock) {
-          removeScrollLock();
-        }
-      };
-    }, [allowScrollLock]);
 
     const onEscKeyPress = (event) => {
       onBackdropClick?.(event);

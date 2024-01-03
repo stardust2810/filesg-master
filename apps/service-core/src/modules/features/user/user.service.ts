@@ -4,7 +4,8 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { transformBasicAgencies } from '../../../common/transformers/agency.transformer';
 import { transformDetailUser } from '../../../common/transformers/user.transformer';
-import { RequestWithSession } from '../../../typings/common';
+import { RequestWithCitizenSession } from '../../../typings/common';
+import { AgencyEntityService } from '../../entities/agency/agency.entity.service';
 import { FileAssetEntityService } from '../../entities/file-asset/file-asset.entity.service';
 import { CitizenUserEntityService } from '../../entities/user/citizen-user.entity.service';
 import { UserEntityService } from '../../entities/user/user.entity.service';
@@ -18,6 +19,7 @@ export class UserService {
     private readonly userEntityService: UserEntityService,
     private readonly citizenUserEntityService: CitizenUserEntityService,
     private readonly fileSGConfigService: FileSGConfigService,
+    private readonly agencyEntityService: AgencyEntityService,
     private readonly fileAssetEntityService: FileAssetEntityService,
   ) {}
 
@@ -32,7 +34,7 @@ export class UserService {
     return { isDuplicate: user ? true : false };
   }
 
-  public async onboardCitizenUser(req: RequestWithSession) {
+  public async onboardCitizenUser(req: RequestWithCitizenSession) {
     const userId = req.session.user.userId;
 
     const citizenUser = await this.citizenUserEntityService.retrieveCitizenUserById(userId);
@@ -50,13 +52,10 @@ export class UserService {
     }
   }
 
-  public async getAgencyList(req: RequestWithSession) {
+  public async getAgencyList(req: RequestWithCitizenSession) {
     const { userId } = req.session.user;
 
-    const agencies = await this.fileAssetEntityService.retrieveAgenciesIssuingFileAssetsWithStatusesByUserId(
-      userId,
-      VIEWABLE_FILE_STATUSES,
-    );
+    const agencies = await this.agencyEntityService.retrieveIssuingAgenciesWithStatusesByUserId(userId, VIEWABLE_FILE_STATUSES);
     return transformBasicAgencies(agencies);
   }
 }

@@ -1,4 +1,4 @@
-import { Send2FaOtpNonSingpassResponse } from '@filesg/common';
+import { OTP_CHANNEL, Send2FaOtpNonSingpassResponse } from '@filesg/common';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { RootState } from '../store';
@@ -18,6 +18,7 @@ interface NonSingpassSessionState {
   firstFaInput: FirstFaInput | null;
   firstFaToken: string;
   maskedMobile: string;
+  maskedEmail: string;
   secondFaToken: string;
   otpDetails: Send2FaOtpNonSingpassResponse | null;
   contentRetrievalToken: string;
@@ -28,7 +29,9 @@ interface NonSingpassSessionState {
   isSessionWarningPopUpShown: boolean;
   isSessionTimedout: boolean;
   isActivityBannedFromNonSingpassVerification: boolean;
+  isActivityNonSingpassVerifiable: boolean;
   hasPerformedDocumentAction: boolean;
+  otpChannel: OTP_CHANNEL | null;
 }
 
 const initialState: NonSingpassSessionState = {
@@ -36,6 +39,7 @@ const initialState: NonSingpassSessionState = {
   firstFaInput: null,
   firstFaToken: '',
   maskedMobile: '',
+  maskedEmail: '',
   secondFaToken: '',
   otpDetails: null,
   contentRetrievalToken: '',
@@ -46,7 +50,9 @@ const initialState: NonSingpassSessionState = {
   isSessionWarningPopUpShown: false,
   isSessionTimedout: false,
   isActivityBannedFromNonSingpassVerification: false,
+  isActivityNonSingpassVerifiable: false,
   hasPerformedDocumentAction: false,
+  otpChannel: null,
 };
 
 export const nonSingpassSessionSlice = createSlice({
@@ -64,6 +70,9 @@ export const nonSingpassSessionSlice = createSlice({
     },
     setMaskedMobile: (state, action: PayloadAction<string>) => {
       state.maskedMobile = action.payload;
+    },
+    setMaskedEmail: (state, action: PayloadAction<string>) => {
+      state.maskedEmail = action.payload;
     },
     setSecondFaToken: (state, action: PayloadAction<string>) => {
       state.secondFaToken = action.payload;
@@ -86,14 +95,28 @@ export const nonSingpassSessionSlice = createSlice({
     setIsActivityBannedFromNonSingpassVerification: (state, action: PayloadAction<boolean>) => {
       state.isActivityBannedFromNonSingpassVerification = action.payload;
     },
+    setIsActivityNonSingpassVerifiable: (state, action: PayloadAction<boolean>) => {
+      state.isActivityNonSingpassVerifiable = action.payload;
+    },
     setHasPerformedDocumentAction: (state, action: PayloadAction<boolean>) => {
       state.hasPerformedDocumentAction = action.payload;
+    },
+    setOtpChannel: (state, action: PayloadAction<OTP_CHANNEL>) => {
+      state.otpChannel = action.payload;
     },
     updateNonSingpassSession: (state, action: PayloadAction<Partial<NonSingpassSessionState>>) => {
       Object.assign(state, action.payload);
     },
-    resetNonSingpassSessionExceptFirstFaInput: (state) => ({ ...initialState, firstFaInput: state.firstFaInput }),
-    resetNonSingpassSessionDueToActivityBan: () => ({ ...initialState, isActivityBannedFromNonSingpassVerification: true }),
+    resetNonSingpassSessionExceptFirstFaInput: (state) => ({
+      ...initialState,
+      isActivityNonSingpassVerifiable: state.isActivityNonSingpassVerifiable,
+      firstFaInput: state.firstFaInput,
+    }),
+    resetNonSingpassSessionDueToActivityBan: (state) => ({
+      ...initialState,
+      isActivityNonSingpassVerifiable: state.isActivityNonSingpassVerifiable,
+      isActivityBannedFromNonSingpassVerification: true,
+    }),
     resetNonSingpassSessionDueToTimeout: () => ({ ...initialState, isSessionTimedout: true }),
     resetNonSingpassSession: () => initialState,
   },
@@ -103,11 +126,14 @@ export const {
   setFirstFaInput,
   setFirstFaToken,
   setMaskedMobile,
+  setMaskedEmail,
   setOtpDetails,
+  setOtpChannel,
   setHasShownExpiryBanner,
   setIsSessionWarningPopUpShown,
   setIsSessionTimedout,
   setIsActivityBannedFromNonSingpassVerification,
+  setIsActivityNonSingpassVerifiable,
   setHasPerformedDocumentAction,
   updateNonSingpassSession,
   resetNonSingpassSessionExceptFirstFaInput,
@@ -118,7 +144,9 @@ export const {
 export const selectFirstFaInput = (state: RootState) => state.nonSingpassSession.firstFaInput;
 export const selectFirstFaToken = (state: RootState) => state.nonSingpassSession.firstFaToken;
 export const selectMaskedMobile = (state: RootState) => state.nonSingpassSession.maskedMobile;
+export const selectMaskedEmail = (state: RootState) => state.nonSingpassSession.maskedEmail;
 export const selectOtpDetails = (state: RootState) => state.nonSingpassSession.otpDetails;
+export const selectOtpChannel = (state: RootState) => state.nonSingpassSession.otpChannel;
 export const selectContentRetrievalToken = (state: RootState) => state.nonSingpassSession.contentRetrievalToken;
 export const selectTokenExpiry = (state: RootState) => state.nonSingpassSession.tokenExpiry;
 export const selectExpiryDurationSecs = (state: RootState) => state.nonSingpassSession.expiryDurationSecs;
@@ -129,4 +157,5 @@ export const selectIsSessionWarningPopUpShown = (state: RootState) => state.nonS
 export const selectIsSessionTimedout = (state: RootState) => state.nonSingpassSession.isSessionTimedout;
 export const selectIsActivityBannedFromNonSingpassVerification = (state: RootState) =>
   state.nonSingpassSession.isActivityBannedFromNonSingpassVerification;
+export const selectIsActivityNonSingpassVerifiable = (state: RootState) => state.nonSingpassSession.isActivityNonSingpassVerifiable;
 export const selectHasPerformedDocumentAction = (state: RootState) => state.nonSingpassSession.hasPerformedDocumentAction;

@@ -8,12 +8,14 @@ import { StyledMenuContainer } from './style';
 type Props = {
   children: React.ReactNode | React.ReactNode[];
   onClose: MouseEventHandler;
+  onRouteChange?: () => void;
 } & ModalPositionProps &
   FileSGProps;
 export function Menu({
   children,
   className,
   onClose,
+  onRouteChange,
   position,
   anchorEl,
   anchorOrigin,
@@ -28,6 +30,7 @@ export function Menu({
     <Modal
       invisibleBackdrop
       onBackdropClick={onClose}
+      onRouteChange={onRouteChange}
       position={position}
       anchorEl={anchorEl}
       anchorOrigin={anchorOrigin}

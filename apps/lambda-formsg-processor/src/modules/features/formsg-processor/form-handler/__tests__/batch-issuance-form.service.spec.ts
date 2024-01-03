@@ -640,7 +640,7 @@ describe('BatchIssuanceFormService', () => {
             uuid: transactionUuid,
             name: transactionName,
             agencyFileAssets: files.map(({ name, uuid }, index) => ({ name, uuid, deleteAt: requestFiles[index].deleteAt })),
-            recipientActivities: recipients.map(({ activityUuid, uin }, index) => {
+            recipientActivities: recipients.map(({ activityUuid, uin, isNonSingpassRetrievable }, index) => {
               const { name, email, dob, contact } = requestRecipients[index];
               return {
                 uuid: activityUuid,
@@ -649,7 +649,7 @@ describe('BatchIssuanceFormService', () => {
                 email,
                 dob,
                 contact,
-                isNonSingpassRetrievable: !!dob && !!contact,
+                isNonSingpassRetrievable,
               };
             }),
           },

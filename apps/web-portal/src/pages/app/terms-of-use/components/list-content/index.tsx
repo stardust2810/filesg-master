@@ -3,7 +3,7 @@ import { isValidElement } from 'react';
 
 import { ListContent } from '../../../../../typings';
 import { termsOfUseListContent } from '../../consts';
-import { StyledLi, StyledOl, StyledOverallOl, StyledText } from './style';
+import { StyledLi, StyledLiWithoutNumbering, StyledOl, StyledOverallOl, StyledText } from './style';
 
 const ALPHABET_CHAR_CODE_A = 65;
 
@@ -55,9 +55,9 @@ export function TermsOfUseListContent() {
     // If not array, renders <Text> instead of <li> (no numbering)
     if (typeof listContent === 'string' || isValidElement(listContent)) {
       return (
-        <StyledText key={`terms-content-base`} variant={isSmallerThanSmallTablet ? 'BODY' : 'PARAGRAPH'}>
-          {listContent}
-        </StyledText>
+        <StyledLiWithoutNumbering key={`terms-content-base`}>
+          <StyledText variant={isSmallerThanSmallTablet ? 'BODY' : 'PARAGRAPH'}>{listContent}</StyledText>
+        </StyledLiWithoutNumbering>
       );
     }
 

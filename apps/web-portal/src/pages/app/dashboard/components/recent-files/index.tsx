@@ -1,10 +1,10 @@
-import { SORT_BY, ViewableFileAssetResponse } from '@filesg/common';
+import { FILE_ASSET_SORT_BY, RecentViewableFileAssetResponse } from '@filesg/common';
 import { Color, FSG_DEVICES, RESPONSIVE_VARIANT, TextButton, TextLink, Tooltip, Typography, useShouldRender } from '@filesg/design-system';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { MINIMUM_LOAD_DELAY_IN_MILLISECONDS, WebPage } from '../../../../../consts';
-import { useAllFileAssets } from '../../../../../hooks/queries/useAllFileAssets';
+import { useRecentlyViewedFileAssets } from '../../../../../hooks/queries/useRecentlyViewedFileAssets';
 import { RecentFile } from './components/recent-file';
 import { RecentFileSkeleton } from './components/recent-file-skeleton';
 import {
@@ -35,7 +35,7 @@ const EMPTY_MESSAGE_DESCRIPTION = 'Files you recently viewed will be listed here
 const ERROR_MESSAGE = 'We can’t seem to load your recently viewed files.';
 
 export const RecentFiles = () => {
-  const [files, setFiles] = useState<ViewableFileAssetResponse[]>();
+  const [files, setFiles] = useState<RecentViewableFileAssetResponse[]>();
   const [show, setShow] = useState(false);
   const { pathname } = useLocation();
 
@@ -48,8 +48,8 @@ export const RecentFiles = () => {
     isError,
     data,
     refetch: fetchRecentFiles,
-  } = useAllFileAssets({
-    sortBy: SORT_BY.LAST_VIEWED_AT,
+  } = useRecentlyViewedFileAssets({
+    sortBy: FILE_ASSET_SORT_BY.LAST_VIEWED_AT,
     asc: false,
     page: 1,
     limit: ITEMS_PER_FETCH,
@@ -75,7 +75,7 @@ export const RecentFiles = () => {
 
   useEffect(() => {
     if (data) {
-      const tempList: ViewableFileAssetResponse[] = [];
+      const tempList: RecentViewableFileAssetResponse[] = [];
 
       data.pages.forEach((page) => {
         page.items.forEach((file) => {

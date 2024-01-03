@@ -1,6 +1,6 @@
 import 'react-virtualized/styles.css';
 
-import { ActiveActivityResponse, SORT_BY } from '@filesg/common';
+import { ActiveActivityResponse, ACTIVITY_SORT_BY } from '@filesg/common';
 import {
   Button,
   Color,
@@ -63,7 +63,7 @@ const FETCH_OFFSET = 1; // should be 6
 
 // As of MVP, sort options are not modifiable via frontend
 const SortOptionDefault: ActivitiesSortOptions = {
-  sortBy: SORT_BY.CREATED_AT,
+  sortBy: ACTIVITY_SORT_BY.CREATED_AT,
   asc: false,
 };
 
@@ -108,7 +108,7 @@ const Activities = () => {
       asc: SortOptionDefault.asc,
       page: 1,
       limit: ITEMS_PER_FETCH,
-      agencyCode: selectedValue as string | null,
+      agencyCodes: [selectedValue].filter(Boolean) as string[] | null,
     },
     options?.length > 0 && !isFilterInvalid,
   );

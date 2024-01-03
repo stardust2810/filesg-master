@@ -1,5 +1,5 @@
 import { ERROR_RESPONSE_DESC, ErrorResponse, FilesUploadRequest } from '@filesg/common';
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Logger, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
 import { JwtFileUploadAuthGuard } from '../../../common/guards/jwt-file-upload.guard';
@@ -8,6 +8,7 @@ import { FileUploadService } from './file-upload.service';
 
 @Controller('v1/file-upload')
 export class FileUploadController {
+  private readonly logger = new Logger(FileUploadController.name);
   constructor(private readonly fileUploadService: FileUploadService) {}
 
   @Post()
@@ -18,7 +19,7 @@ export class FileUploadController {
     description:
       'This API endpoint permits the agency to upload documents related to the transaction created using the `create transaction` API under `issuance` tag.',
   })
-  @ApiBearerAuth('FileSGBearerToken')
+  @ApiBearerAuth('FileSGBearerTokenUpload')
   @ApiBody({ type: FilesUploadRequest })
   @ApiOkResponse({ type: String })
   @ApiUnauthorizedResponse({ description: ERROR_RESPONSE_DESC.JWT_UNAUTHORISED, type: ErrorResponse })

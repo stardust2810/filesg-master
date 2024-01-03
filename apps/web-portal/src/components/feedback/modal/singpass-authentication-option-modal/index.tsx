@@ -2,6 +2,8 @@ import { Button, Color, Divider, Modal, Typography } from '@filesg/design-system
 import { forwardRef } from 'react';
 
 import { TEST_IDS, WebPage } from '../../../../consts';
+import { FEATURE_TOGGLE, TOGGLABLE_FEATURES } from '../../../../consts/features';
+import { FeatureToggle } from '../../../data-display/feature-toggle';
 import { StyledOption, StypedTextLink } from './style';
 
 interface Props {
@@ -56,22 +58,26 @@ export const SingpassAuthenticationOptionModal = forwardRef<HTMLDivElement, Prop
               </Typography>
             </StyledOption>
 
-            <Divider>OR</Divider>
-            <StyledOption>
-              <Button
-                disabled={false} // TODO: until mock corppass login is ready
-                decoration="SOLID"
-                color="DEFAULT"
-                label="For Businesses"
-                endIcon="sgds-icon-arrow-right"
-                onClick={onForBusinessesButtonClick}
-                data-testid={TEST_IDS.CORPPASS_BUTTON}
-                fullWidth
-              />
-              <Typography variant="BODY" color={Color.GREY80} data-testid={TEST_IDS.CORPPASS_OPTION_DESCRIPTION}>
-                {FOR_BUSINESSES_OPTION_DESCRIPTION}
-              </Typography>
-            </StyledOption>
+            <FeatureToggle feature={TOGGLABLE_FEATURES.FEATURE_CORPPASS} featureStatus={FEATURE_TOGGLE.ENABLED}>
+              <>
+                <Divider>OR</Divider>
+                <StyledOption>
+                  <Button
+                    disabled={false} // TODO: until mock corppass login is ready
+                    decoration="SOLID"
+                    color="DEFAULT"
+                    label="For Businesses"
+                    endIcon="sgds-icon-arrow-right"
+                    onClick={onForBusinessesButtonClick}
+                    data-testid={TEST_IDS.CORPPASS_BUTTON}
+                    fullWidth
+                  />
+                  <Typography variant="BODY" color={Color.GREY80} data-testid={TEST_IDS.CORPPASS_OPTION_DESCRIPTION}>
+                    {FOR_BUSINESSES_OPTION_DESCRIPTION}
+                  </Typography>
+                </StyledOption>
+              </>
+            </FeatureToggle>
           </Modal.Body>
         </Modal.Card>
       </Modal>

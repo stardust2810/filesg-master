@@ -6,10 +6,13 @@ import {
   COMPONENT_ERROR_CODE,
   CreateFileTransactionResponse,
   CreateFileTransactionV2Request,
+  CreateRecipientV2Request,
   EXCEPTION_ERROR_CODE,
   FILE_STATUS,
   FILE_TYPE,
   NOTIFICATION_CHANNEL,
+  RECIPIENT_TYPE,
+  REQUIRED_RECIPIENT_FIELD_FOR_NOTIFICATION,
   STATUS,
   TRANSACTION_CREATION_METHOD,
   TRANSACTION_STATUS,
@@ -70,10 +73,7 @@ import {
   mockApplication,
   mockApplicationType,
   mockCitizenUser,
-  mockCreateFileTransactionRecipientResponse,
   mockEncryptedAgencyPassword,
-  mockExistingUsers,
-  mockFileAssetModels,
   mockFileInfos,
   mockFileSessionId,
   mockFileUploadInfo,
@@ -83,30 +83,37 @@ import {
   mockInsertFileAssetsForTxnCreationInsertFileAssetsResult,
   mockInsertFileAssetsForTxnCreationTxnCreationFileAssetInsert,
   mockInsertOwnerFileAssetsForTxnCreationResults,
-  mockInsertReceiveTransferActivitiesResults,
-  mockInsertTransferredFileAssetsResult,
   mockProgrammaticUser,
   mockReceiveTransferActivity,
-  mockReceiveTransferFileAssetHistoryUuids,
-  mockReceiveTransferFileAssetIds,
   mockSendTransferActivity,
   mockTransaction,
-  mockTransactionInfo,
-  mockTransferredFileAsset,
-  mockTransferredFileAssetHistoriesCreationModel,
-  mockTransferredTxnCreationFileAssetInsert,
   mockUploadActivity,
   mockUploadAndSendTransferActivityFileInserts,
   mockUploadAndSendTransferFileAssetHistoryUuids,
   mockUploadAndSendTransferFileAssetIds,
   mockUploadedFileAssetHistoriesCreationModel,
   mockUploadedFileAssetsForTxnCreationInsertResults,
-  receiveTransferActivityFileInserts,
 } from '../__mocks__/file-transaction.service.mock';
 import {
+  corporateRecipients,
+  mockCitizenUser1,
+  mockCitizenUser2,
+  mockCorporate,
+  mockCreateFileTransactionRecipientResponse,
   mockCreateFileTransactionV2Request,
   mockCustomTransactionMessage,
   mockCustomTransactionMessageResponse,
+  mockExistingUsers,
+  mockInsertReceiveTransferActivitiesResults,
+  mockReceiveTransferActivity1,
+  mockReceiveTransferActivity2,
+  mockReceiveTransferFileAssetHistoryUuids,
+  mockReceiveTransferFileAssetIds,
+  mockTransactionInfo,
+  mockTransferredFileAssetHistoriesCreationModel,
+  mockTransferredFileAssetsForTxnCreationInsertResults,
+  mockTransferredTxnCreationFileAssetInsert,
+  receiveTransferActivityFileInserts,
   requestNotUploadTransferV2Txn,
   TestFileTransactionV2Service,
 } from '../__mocks__/file-transaction.v2.service.mock';
@@ -150,6 +157,63 @@ describe('FileTransactionV2Service', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('validateIfMixedRecipients', () => {
+    it('should throw InputValidationException when there is a mix of citizen and corporate recipient', () => {
+      const mixedRecipients: CreateRecipientV2Request[] = [
+        {
+          type: RECIPIENT_TYPE.CORPORATE,
+          name: 'corporate-name-1',
+          uen: '200000177W',
+          emails: ['corporate1@gmail.com'],
+        },
+        {
+          name: mockCitizenUser.name!,
+          contact: '+6581234567',
+          email: 'user1@gmail.com',
+          uin: mockCitizenUser.uin,
+          dob: '1995-01-01',
+        },
+      ];
+
+      expect(() => service.validateIfMixedRecipients(mixedRecipients)).toThrow(InputValidationException);
+    });
+
+    it('should return boolean indicating whether is it corporate recipient if there is no mix', () => {
+      expect(service.validateIfMixedRecipients(mockCreateFileTransactionV2Request.transaction.recipients)).toEqual({
+        isCorporateRecipients: false,
+      });
+    });
+  });
+
+  describe('validateIfRecipientsHaveDuplicateIdentifier', () => {
+    const recipients: CreateRecipientV2Request[] = [
+      {
+        type: RECIPIENT_TYPE.CORPORATE,
+        name: 'corporate-name-1',
+        uen: '200000177W',
+        emails: ['corporate1@gmail.com'],
+      },
+      {
+        type: RECIPIENT_TYPE.CORPORATE,
+        name: 'corporate-name-2',
+        uen: '200000123W',
+        emails: ['corporate2@gmail.com'],
+      },
+    ];
+
+    it('should throw InputValidationException when there is duplicated recipient identifier (uin/uen)', () => {
+      const recipientsWithDuplicatedIdentifiers = [recipients[0], { ...recipients[1], uen: recipients[0].uen }];
+
+      expect(() => service.validateIfRecipientsHaveDuplicateIdentifier(recipientsWithDuplicatedIdentifiers, true)).toThrow(
+        InputValidationException,
+      );
+    });
+
+    it('should return void if there is no duplicate', () => {
+      expect(service.validateIfRecipientsHaveDuplicateIdentifier(recipients, true)).toBeUndefined();
+    });
   });
 
   describe('verifyAndGenerateCustomMessage', () => {
@@ -203,8 +267,7 @@ describe('FileTransactionV2Service', () => {
     });
   });
 
-  // TODO: update test
-  describe.skip('verifyNotificationChannelAndTemplateAndSave', () => {
+  describe('verifyNotificationChannelAndTemplateAndSave', () => {
     const expectedSuccessResponse = [
       {
         notificationChannel: 'EMAIL',
@@ -232,141 +295,137 @@ describe('FileTransactionV2Service', () => {
       },
     ];
 
-    // beforeEach(() => {
-    //   mockApplicationTypeNotificationEntityService.retrieveNotificationChannelsForApplicationType.mockResolvedValueOnce([
-    //     {
-    //       notificationChannel: NOTIFICATION_CHANNEL.EMAIL,
-    //     },
-    //     {
-    //       notificationChannel: NOTIFICATION_CHANNEL.SG_NOTIFY,
-    //     },
-    //   ]);
+    beforeEach(() => {
+      mockApplicationTypeNotificationEntityService.retrieveNotificationChannelsForApplicationType.mockResolvedValueOnce([
+        {
+          notificationChannel: NOTIFICATION_CHANNEL.EMAIL,
+        },
+        {
+          notificationChannel: NOTIFICATION_CHANNEL.SG_NOTIFY,
+        },
+      ]);
 
-    //   const mockNotificationTemplate = {
-    //     uuid: 'notificationmessagetemplate-1655110619636-03e9d4ac12637a54',
-    //     version: 1,
-    //     requiredFields: ['variableOne'],
-    //   };
+      const mockNotificationTemplate = {
+        uuid: 'notificationmessagetemplate-1655110619636-03e9d4ac12637a54',
+        version: 1,
+        requiredFields: ['variableOne'],
+      };
 
-    //   const mockNotificationTemplate2 = {
-    //     uuid: 'notificationmessagetemplate-1655110619636-03e9d4ac12637a55',
-    //     version: 1,
-    //     requiredFields: ['variableOne'],
-    //   };
+      const mockNotificationTemplate2 = {
+        uuid: 'notificationmessagetemplate-1655110619636-03e9d4ac12637a55',
+        version: 1,
+        requiredFields: ['variableOne'],
+      };
 
-    //   mockNotificationMessageTemplateEntityService.retrieveNotificationTemplateUsingUuidAgencyIdAndNotificationChannel
-    //     .mockResolvedValueOnce(mockNotificationTemplate)
-    //     .mockResolvedValueOnce(mockNotificationTemplate2);
-    // });
+      mockNotificationMessageTemplateEntityService.retrieveNotificationTemplateUsingUuidAgencyIdAndNotificationChannel
+        .mockResolvedValueOnce(mockNotificationTemplate)
+        .mockResolvedValueOnce(mockNotificationTemplate2);
+    });
 
-    // it('should verify that the notification channel and templates belong to applicationType', async () => {
-    //   const {
-    //     customAgencyMessage: { notifications },
-    //     recipients,
-    //   } = mockCreateFileTransactionV2Request.transaction;
+    it('should verify that the notification channel and templates belong to applicationType', async () => {
+      const {
+        customAgencyMessage: { notifications },
+        recipients,
+      } = mockCreateFileTransactionV2Request.transaction;
 
-    //   expect(await service.verifyNotificationChannelAndTemplateAndSave(notifications, 1, 1, recipients)).toEqual(expectedSuccessResponse);
-    // });
+      expect(await service.verifyNotificationChannelAndTemplateAndSave(notifications, 1, 1, recipients)).toEqual(expectedSuccessResponse);
+    });
 
-    // describe('notification channel required fields', () => {
-    //   beforeAll(() => {
-    //     const mockedRequiredRecipientFields = jest.mocked(REQUIRED_RECIPIENT_FIELD_FOR_NOTIFICATION);
-    //     mockedRequiredRecipientFields.SG_NOTIFY = 'contact';
-    //   });
+    describe('notification channel required fields', () => {
+      beforeAll(() => {
+        const mockedRequiredRecipientFields = jest.mocked(REQUIRED_RECIPIENT_FIELD_FOR_NOTIFICATION);
+        mockedRequiredRecipientFields.SG_NOTIFY.citizen = 'contact'; // as input validation already ensure uin must be provided, replacing required uin field to contact for testing purpose
+      });
 
-    //   it('should pass if all recipients have atleast one required field for notification', async () => {
-    //     const {
-    //       customAgencyMessage: { notifications },
-    //     } = mockCreateFileTransactionV2Request.transaction;
+      it('should pass if all recipients have at least one required field for notification', async () => {
+        const {
+          customAgencyMessage: { notifications },
+        } = mockCreateFileTransactionV2Request.transaction;
 
-    //     const recipients = [
-    //       { name: 'John Doe', uin: 'S1111111A', contact: '+6511111111' },
-    //       { name: 'Jane Doe', uin: 'S1111111B', email: 'jane@fakeemailprovider.com' },
-    //     ];
+        const recipients = [
+          { name: 'John Doe', uin: 'S1111111A', contact: '+6511111111' }, // has uin for sg-notify channel
+          { name: 'Jane Doe', uin: 'S1111111B', email: 'jane@fakeemailprovider.com' }, // has both uin and email for sg-notify and email channel
+        ];
 
-    //     expect(await service.verifyNotificationChannelAndTemplateAndSave(notifications, 1, 1, recipients)).toEqual(expectedSuccessResponse);
-    //   });
+        expect(await service.verifyNotificationChannelAndTemplateAndSave(notifications, 1, 1, recipients)).toEqual(expectedSuccessResponse);
+      });
 
-    //   it('should fail if the the provided recipients does not have atleast one required field for notification', async () => {
-    //     const {
-    //       customAgencyMessage: { notifications },
-    //     } = mockCreateFileTransactionV2Request.transaction;
+      it('should fail if the provided recipients does not have at least one required field for notification', async () => {
+        const {
+          customAgencyMessage: { notifications },
+        } = mockCreateFileTransactionV2Request.transaction;
 
-    //     const recipients = [{ name: 'John Doe', uin: 'S1111111A' }];
+        const recipients = [{ name: 'John Doe', uin: 'S1111111A' }]; // has no email or contact
 
-    //     try {
-    //       await service.verifyNotificationChannelAndTemplateAndSave(notifications, 1, 1, recipients);
-    //     } catch (error) {
-    //       expect(error).toBeInstanceOf(InputValidationException);
-    //       const errorMsg = ((error as InputValidationException).getResponse() as any).message.error;
-    //       const expectedErrorMsg =
-    //         'The following recipients: [John Doe] are missing the required field(s) for notification. Please provide at least one of the following fields: [email, contact].';
-    //       expect(errorMsg).toBe(expectedErrorMsg);
-    //     }
-    //   });
+        try {
+          await service.verifyNotificationChannelAndTemplateAndSave(notifications, 1, 1, recipients);
+        } catch (error) {
+          expect(error).toBeInstanceOf(InputValidationException);
+          const errorMsg = ((error as InputValidationException).getResponse() as any).message.error;
+          const expectedErrorMsg =
+            'The following recipients: [John Doe] are missing the required field(s) for notification. Please provide at least one of the following fields: [email, contact].';
+          expect(errorMsg).toBe(expectedErrorMsg);
+        }
+      });
 
-    //   it('should fail if one of the recipients does not have atleast one required field for notification', async () => {
-    //     const {
-    //       customAgencyMessage: { notifications },
-    //     } = mockCreateFileTransactionV2Request.transaction;
+      it('should fail if one of the recipients does not have at least one required field for notification', async () => {
+        const {
+          customAgencyMessage: { notifications },
+        } = mockCreateFileTransactionV2Request.transaction;
 
-    //     const recipients = [
-    //       { name: 'John Doe', uin: 'S1111111A', contact: '+6511111111' },
-    //       { name: 'Jane Doe', uin: 'S1111111B' },
-    //     ];
+        const recipients = [
+          { name: 'John Doe', uin: 'S1111111A', contact: '+6511111111' },
+          { name: 'Jane Doe', uin: 'S1111111B' }, // have no email or contact
+        ];
 
-    //     try {
-    //       await service.verifyNotificationChannelAndTemplateAndSave(notifications, 1, 1, recipients);
-    //     } catch (error) {
-    //       expect(error).toBeInstanceOf(InputValidationException);
-    //       const errorMsg = ((error as InputValidationException).getResponse() as any).message.error;
-    //       const expectedErrorMsg =
-    //         'The following recipients: [Jane Doe] are missing the required field(s) for notification. Please provide at least one of the following fields: [email, contact].';
-    //       expect(errorMsg).toBe(expectedErrorMsg);
-    //     }
-    //   });
-    // });
+        try {
+          await service.verifyNotificationChannelAndTemplateAndSave(notifications, 1, 1, recipients);
+        } catch (error) {
+          expect(error).toBeInstanceOf(InputValidationException);
+          const errorMsg = ((error as InputValidationException).getResponse() as any).message.error;
+          const expectedErrorMsg =
+            'The following recipients: [Jane Doe] are missing the required field(s) for notification. Please provide at least one of the following fields: [email, contact].';
+          expect(errorMsg).toBe(expectedErrorMsg);
+        }
+      });
+    });
 
-    // describe('errors', () => {
-    //   it('should fail if the notification channel provided does not belong to application type notification channels', async () => {
-    //     const {
-    //       customAgencyMessage: { notifications },
-    //       recipients,
-    //     } = mockCreateFileTransactionV2Request.transaction;
+    describe('errors', () => {
+      const {
+        customAgencyMessage: { notifications },
+        recipients,
+      } = mockCreateFileTransactionV2Request.transaction;
 
-    //     notifications[0].channel = NOTIFICATION_CHANNEL.SG_NOTIFY;
+      it('should fail if the notification channel provided contains sg notify while processing transaction with corporate recipients', async () => {
+        await expect(service.verifyNotificationChannelAndTemplateAndSave(notifications, 1, 1, recipients, true)).rejects.toThrowError(
+          InputValidationException,
+        );
+      });
 
-    //     await expect(service.verifyNotificationChannelAndTemplateAndSave(notifications, 1, 1, recipients)).rejects.toThrowError(
-    //       InputValidationException,
-    //     );
-    //   });
+      it('should fail if the notification channel provided does not match the application type notification channels', async () => {
+        notifications[0].channel = NOTIFICATION_CHANNEL.SG_NOTIFY;
 
-    //   it('should fail if the notification template id provided does not belong to agency', async () => {
-    //     const {
-    //       customAgencyMessage: { notifications },
-    //       recipients,
-    //     } = mockCreateFileTransactionV2Request.transaction;
+        await expect(service.verifyNotificationChannelAndTemplateAndSave(notifications, 1, 1, recipients)).rejects.toThrowError(
+          InputValidationException,
+        );
+      });
 
-    //     notifications[0].templateId = 'template-id-that-does-not-exist';
+      it('should fail if the notification template id provided does not belong to agency', async () => {
+        notifications[0].templateId = 'template-id-that-does-not-exist';
 
-    //     await expect(service.verifyNotificationChannelAndTemplateAndSave(notifications, 1, 1, recipients)).rejects.toThrowError(
-    //       InputValidationException,
-    //     );
-    //   });
+        await expect(service.verifyNotificationChannelAndTemplateAndSave(notifications, 1, 1, recipients)).rejects.toThrowError(
+          InputValidationException,
+        );
+      });
 
-    //   it('should fail if the notification template input provided does not match the required fields', async () => {
-    //     const {
-    //       customAgencyMessage: { notifications },
-    //       recipients,
-    //     } = mockCreateFileTransactionV2Request.transaction;
+      it('should fail if the notification template input provided does not match the required fields', async () => {
+        notifications[0].templateInput = { variableTwo: 'random data' };
 
-    //     notifications[0].templateInput = { variableTwo: 'random data' };
-
-    //     await expect(service.verifyNotificationChannelAndTemplateAndSave(notifications, 1, 1, recipients)).rejects.toThrowError(
-    //       InputValidationException,
-    //     );
-    //   });
-    // });
+        await expect(service.verifyNotificationChannelAndTemplateAndSave(notifications, 1, 1, recipients)).rejects.toThrowError(
+          InputValidationException,
+        );
+      });
+    });
   });
 
   describe('createFileTransaction', () => {
@@ -433,19 +492,28 @@ describe('FileTransactionV2Service', () => {
     });
 
     it('should return access token, txn uuid, files and recipients info when txn created successfully', async () => {
+      const { files, transaction } = mockCreateFileTransactionV2Request;
+      const { recipients } = transaction;
+
       const expectedResponse: CreateFileTransactionResponse = {
         accessToken: mockFileUploadJwt,
         transactionUuid: mockTransaction.uuid,
         files: [
           {
-            name: mockCreateFileTransactionV2Request.files[0].name,
+            name: files[0].name,
             uuid: mockInsertOwnerFileAssetsForTxnCreationResults.uuids[0],
           },
         ],
         recipients: [
           {
-            activityUuid: mockReceiveTransferActivity.uuid,
-            uin: mockCreateFileTransactionV2Request.transaction.recipients[0].uin!,
+            activityUuid: mockReceiveTransferActivity1.uuid,
+            uin: recipients[0].uin!,
+            isNonSingpassRetrievable: !!recipients[0].isNonSingpassRetrievable,
+          },
+          {
+            activityUuid: mockReceiveTransferActivity2.uuid,
+            uin: recipients[1].uin!,
+            isNonSingpassRetrievable: !!recipients[1].isNonSingpassRetrievable,
           },
         ],
       };
@@ -466,20 +534,6 @@ describe('FileTransactionV2Service', () => {
 
         await expect(service.createFileTransaction(mockProgrammaticUser.id, mockFailTransactionRequest)).rejects.toThrowError(
           new InputValidationException(COMPONENT_ERROR_CODE.TRANSACTION_SERVICE, 'Duplicate recipients UINs'),
-        );
-      });
-
-      it('should throw InputValidationException when property acknowledgementTemplateUuid is given but isAcknowledgementRequired is false or undefined', async () => {
-        const mockFailTransactionRequest: CreateFileTransactionV2Request = {
-          ...mockCreateFileTransactionV2Request,
-          transaction: { ...mockCreateFileTransactionV2Request.transaction, isAcknowledgementRequired: false },
-        };
-
-        await expect(service.createFileTransaction(mockProgrammaticUser.id, mockFailTransactionRequest)).rejects.toThrowError(
-          new InputValidationException(
-            COMPONENT_ERROR_CODE.TRANSACTION_SERVICE,
-            `Property 'acknowledgementTemplateUuid' is not allowed when property 'isAcknowledgementRequired' is false or undefined.`,
-          ),
         );
       });
 
@@ -573,7 +627,7 @@ describe('FileTransactionV2Service', () => {
       createReceiveTransferActivitiesAndFilesForUsersSpy = jest.spyOn(service, 'createReceiveTransferActivitiesAndFilesForUsers');
       createReceiveTransferActivitiesAndFilesForUsersSpy.mockResolvedValueOnce({
         receiveTransferFileAssetIds: mockReceiveTransferFileAssetIds,
-        fileAssetModels: mockFileAssetModels,
+        fileAssetModels: mockTransferredTxnCreationFileAssetInsert,
         recipients: mockCreateFileTransactionRecipientResponse,
       });
 
@@ -597,7 +651,8 @@ describe('FileTransactionV2Service', () => {
       const generateEntityUUIDSpy = jest.spyOn(helpers, 'generateEntityUUID');
       generateEntityUUIDSpy
         .mockReturnValueOnce(mockUploadAndSendTransferFileAssetHistoryUuids[0])
-        .mockReturnValueOnce(mockReceiveTransferFileAssetHistoryUuids[0]);
+        .mockReturnValueOnce(mockReceiveTransferFileAssetHistoryUuids[0])
+        .mockReturnValueOnce(mockReceiveTransferFileAssetHistoryUuids[1]);
 
       await service.uploadTransferHandler(
         mockCreateFileTransactionV2Request,
@@ -664,12 +719,10 @@ describe('FileTransactionV2Service', () => {
         mockEntityManager,
       );
 
-      expect(await mockActivityEntityService.insertActivityFiles).toBeCalledWith(
-        mockUploadAndSendTransferActivityFileInserts,
-        mockEntityManager,
-      );
+      expect(mockActivityEntityService.insertActivityFiles).toBeCalledWith(mockUploadAndSendTransferActivityFileInserts, mockEntityManager);
 
-      expect(await mockFileAssetHistoryEntityService.insertFileAssetHistories).toBeCalledWith(
+      expect(mockFileAssetHistoryEntityService.insertFileAssetHistories).nthCalledWith(
+        1,
         mockUploadedFileAssetHistoriesCreationModel,
         mockEntityManager,
       );
@@ -677,7 +730,10 @@ describe('FileTransactionV2Service', () => {
       expect(getOrCreateUserSpy).toBeCalledWith(mockCreateFileTransactionV2Request.transaction.recipients, mockEntityManager);
 
       expect(createReceiveTransferActivitiesAndFilesForUsersSpy).toBeCalledWith(
-        { [mockCitizenUser.id]: mockCreateFileTransactionV2Request.transaction.recipients[0] },
+        {
+          [mockCitizenUser1.id]: mockCreateFileTransactionV2Request.transaction.recipients[0],
+          [mockCitizenUser2.id]: mockCreateFileTransactionV2Request.transaction.recipients[1],
+        },
         mockTransaction,
         mockSendTransferActivity,
         mockCreateFileTransactionV2Request.files,
@@ -689,12 +745,34 @@ describe('FileTransactionV2Service', () => {
         mockEntityManager,
       );
 
-      expect(await mockFileAssetHistoryEntityService.insertFileAssetHistories).toBeCalledWith(
+      expect(mockFileAssetHistoryEntityService.insertFileAssetHistories).nthCalledWith(
+        2,
         mockTransferredFileAssetHistoriesCreationModel,
         mockEntityManager,
       );
 
       expect(mockDatabaseTransaction.commit).toBeCalledTimes(1);
+    });
+
+    it('should call getOrCreateCorporateUser when dealing with corporate recipients', async () => {
+      const generateEntityUUIDSpy = jest.spyOn(helpers, 'generateEntityUUID');
+      generateEntityUUIDSpy
+        .mockReturnValueOnce(mockUploadAndSendTransferFileAssetHistoryUuids[0])
+        .mockReturnValueOnce(mockReceiveTransferFileAssetHistoryUuids[0])
+        .mockReturnValueOnce(mockReceiveTransferFileAssetHistoryUuids[1]);
+
+      const getOrCreateCorporateUserSpy = jest.spyOn(service, 'getOrCreateCorporateUser');
+      getOrCreateCorporateUserSpy.mockReturnThis();
+
+      await service.uploadTransferHandler(
+        mockCreateFileTransactionV2Request,
+        mockProgrammaticUser,
+        undefined,
+        mockAcknowledgementTemplate.id,
+        true,
+      );
+
+      expect(getOrCreateCorporateUserSpy).toBeCalledWith(mockCreateFileTransactionV2Request.transaction.recipients, mockEntityManager);
     });
 
     it('should return txn uuid, files and recipients when success', async () => {
@@ -1020,7 +1098,6 @@ describe('FileTransactionV2Service', () => {
         documentHash: checksum,
         issuerId,
         oaCertificate,
-        lastViewedAt: null,
       });
 
       expect(mockFileAssetEntityService.insertFileAssets).toBeCalledWith([mockInsertFileAssetsForTxnCreationFileAsset], mockEntityManager);
@@ -1050,7 +1127,7 @@ describe('FileTransactionV2Service', () => {
     });
 
     it('should not build and insert citizenUser if existing user found with uin', async () => {
-      mockUserEntityService.retrieveUserByUin.mockResolvedValueOnce(mockCitizenUser);
+      mockUserEntityService.retrieveUserByUin.mockResolvedValueOnce(mockCitizenUser1).mockResolvedValueOnce(mockCitizenUser2);
 
       await service.getOrCreateUser(recipients);
 
@@ -1059,12 +1136,49 @@ describe('FileTransactionV2Service', () => {
     });
   });
 
+  describe('getOrCreateCorporateUser', () => {
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should build and insert corporate with base user if no existing corporate found with uen', async () => {
+      mockCorporateEntityService.retrieveCorporateWithBaseUserByUen.mockResolvedValueOnce(null);
+      mockCorporateEntityService.buildCorporateWithBaseUser.mockReturnValueOnce(mockCorporate);
+      mockCorporateEntityService.saveCorporatesWithBaseUsers.mockResolvedValueOnce([mockCorporate]);
+
+      await service.getOrCreateCorporateUser(corporateRecipients);
+
+      corporateRecipients.forEach((recipient) =>
+        expect(mockCorporateEntityService.buildCorporateWithBaseUser).toBeCalledWith({
+          uen: recipient.uen,
+          user: { status: STATUS.ACTIVE },
+        }),
+      );
+
+      expect(mockCorporateEntityService.saveCorporatesWithBaseUsers).toBeCalledWith([mockCorporate], undefined);
+    });
+
+    it('should not build and insert corporeate if existing corporate found with uen', async () => {
+      mockCorporateEntityService.retrieveCorporateWithBaseUserByUen.mockResolvedValueOnce(mockCorporate);
+
+      await service.getOrCreateCorporateUser(corporateRecipients);
+
+      expect(mockCorporateEntityService.buildCorporateWithBaseUser).toBeCalledTimes(0);
+      expect(mockCorporateEntityService.saveCorporatesWithBaseUsers).toBeCalledTimes(0);
+    });
+  });
+
   describe('createReceiveTransferActivitiesAndFilesForUsers', () => {
+    let insertFileAssetsForTxnCreationSpy: jest.SpyInstance;
+
     beforeEach(() => {
-      mockActivityEntityService.buildActivity.mockReturnValue(mockReceiveTransferActivity);
+      insertFileAssetsForTxnCreationSpy = jest.spyOn(service, 'insertFileAssetsForTxnCreation');
+
+      mockActivityEntityService.buildActivity
+        .mockReturnValueOnce(mockReceiveTransferActivity1)
+        .mockReturnValueOnce(mockReceiveTransferActivity2);
       mockActivityEntityService.insertActivities.mockResolvedValueOnce(mockInsertReceiveTransferActivitiesResults);
-      mockFileAssetEntityService.buildFileAsset.mockReturnValueOnce(mockTransferredFileAsset);
-      mockFileAssetEntityService.insertFileAssets.mockResolvedValueOnce(mockInsertTransferredFileAssetsResult);
+      insertFileAssetsForTxnCreationSpy.mockResolvedValueOnce(mockTransferredFileAssetsForTxnCreationInsertResults);
     });
 
     afterEach(() => {
@@ -1093,15 +1207,6 @@ describe('FileTransactionV2Service', () => {
     });
 
     it('should call handler functions with correct values', async () => {
-      const { name, dob, contact, email } = mockExistingUsers[mockCitizenUser.id];
-      const mockReciepientInfo: ActivityRecipientInfo = {
-        name,
-        ...(email && { email }),
-        ...(contact && dob && { mobile: contact, dob, failedAttempts: 0 }),
-      };
-
-      const insertFileAssetsForTxnCreationSpy = jest.spyOn(service, 'insertFileAssetsForTxnCreation');
-
       await service.createReceiveTransferActivitiesAndFilesForUsers(
         mockExistingUsers,
         mockTransaction,
@@ -1115,18 +1220,36 @@ describe('FileTransactionV2Service', () => {
         mockEntityManager,
       );
 
-      expect(mockActivityEntityService.buildActivity).toBeCalledWith({
-        status: ACTIVITY_STATUS.INIT,
-        type: ACTIVITY_TYPE.RECEIVE_TRANSFER,
-        transaction: mockTransaction,
-        parent: mockSendTransferActivity,
-        recipientInfo: mockReciepientInfo,
-        userId: mockCitizenUser.id,
-        isAcknowledgementRequired: mockCreateFileTransactionV2Request.transaction.isAcknowledgementRequired,
-        acknowledgementTemplateId: mockAcknowledgementTemplate.id,
-      });
+      for (const [id, createRecipientRequest] of Object.entries(mockExistingUsers)) {
+        const userId = parseInt(id, 10);
+        const { name, dob, contact, email, isCopy, isNonSingpassRetrievable } = createRecipientRequest;
 
-      expect(mockActivityEntityService.insertActivities).toBeCalledWith([mockReceiveTransferActivity], mockEntityManager);
+        const mockReciepientInfo: ActivityRecipientInfo = {
+          name,
+          email,
+          dob,
+          mobile: contact,
+          isCopy,
+          failedAttempts: 0,
+        };
+
+        expect(mockActivityEntityService.buildActivity).toBeCalledWith({
+          status: ACTIVITY_STATUS.INIT,
+          type: ACTIVITY_TYPE.RECEIVE_TRANSFER,
+          transaction: mockTransaction,
+          parent: mockSendTransferActivity,
+          recipientInfo: mockReciepientInfo,
+          userId,
+          isAcknowledgementRequired: mockCreateFileTransactionV2Request.transaction.isAcknowledgementRequired,
+          acknowledgementTemplateId: mockAcknowledgementTemplate.id,
+          isNonSingpassRetrievable: isNonSingpassRetrievable,
+        });
+      }
+
+      expect(mockActivityEntityService.insertActivities).toBeCalledWith(
+        [mockReceiveTransferActivity1, mockReceiveTransferActivity2],
+        mockEntityManager,
+      );
 
       expect(insertFileAssetsForTxnCreationSpy).toBeCalledWith(mockTransferredTxnCreationFileAssetInsert, mockEntityManager);
 

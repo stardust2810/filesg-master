@@ -34,8 +34,8 @@ const textLinkStyles = css<{ disabled: boolean }>`
   }}
 `;
 
-export const StyledLink = styled(Link)<{ disabled: boolean }>`
-  display: inline-flex;
+export const StyledLink = styled(Link)<{ disabled: boolean; $isInline: boolean }>`
+  display: ${({ $isInline }) => ($isInline ? `inline` : `inline-flex`)};
   align-items: center;
   gap: ${({ theme }) => theme.FSG_SPACING.S4};
 

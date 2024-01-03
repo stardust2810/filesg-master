@@ -3,7 +3,7 @@ import { isValidElement } from 'react';
 
 import { ListContent } from '../../../../../typings';
 import { privacyStatementAnnex } from '../../consts';
-import { StyledLi, StyledOl, StyledOverallOl, StyledText, StyledTitleContainer } from './style';
+import { StyledLi, StyledLiWithoutNumbering, StyledOl, StyledOverallOl, StyledText, StyledTitleContainer } from './style';
 
 export function PrivacyStatementAnnex() {
   const isSmallerThanSmallTablet = useShouldRender(RESPONSIVE_VARIANT.SMALLER_THAN, FSG_DEVICES.SMALL_TABLET);
@@ -11,12 +11,9 @@ export function PrivacyStatementAnnex() {
   function renderListContent(listContent, parentIndex?) {
     if (typeof listContent === 'string' || isValidElement(listContent)) {
       return (
-        <StyledText
-          key={`privacy-content-${parentIndex ? parentIndex + '-0' : '0'}`}
-          variant={isSmallerThanSmallTablet ? 'BODY' : 'PARAGRAPH'}
-        >
-          {listContent}
-        </StyledText>
+        <StyledLiWithoutNumbering key={`privacy-content-${parentIndex ? parentIndex + '-0' : '0'}`} style={{ listStyle: 'none' }}>
+          <StyledText variant={isSmallerThanSmallTablet ? 'BODY' : 'PARAGRAPH'}>{listContent}</StyledText>
+        </StyledLiWithoutNumbering>
       );
     }
 

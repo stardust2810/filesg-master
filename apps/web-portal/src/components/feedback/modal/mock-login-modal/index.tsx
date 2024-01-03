@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { WebPage } from '../../../../consts';
 import { useButtonFocus } from '../../../../hooks/common/useButtonFocus';
-import { StyledFooter } from './style';
+import { StyledFooter, StyledForm } from './style';
 
 const TEST_IDS = {
   BACK_BUTTON: 'mock-login-modal-back-button',
@@ -43,11 +43,11 @@ export const MockLoginModal = forwardRef<HTMLDivElement, Props>(({ title = 'Mock
 
   return (
     <Modal onBackdropClick={onClose} trapFocus ref={ref}>
-      <Modal.Card>
-        <Modal.Header onCloseButtonClick={onClose} buttonRef={buttonRef}>
-          <Modal.Title>{title}</Modal.Title>
-        </Modal.Header>
-        <form onSubmit={handleSubmit(onLoginHandler)}>
+      <StyledForm onSubmit={handleSubmit(onLoginHandler)}>
+        <Modal.Card>
+          <Modal.Header onCloseButtonClick={onClose} buttonRef={buttonRef}>
+            <Modal.Title>{title}</Modal.Title>
+          </Modal.Header>
           <Modal.Body>
             <Button label="Proceed with NDI Login" type="button" onClick={proceedToNdiHandler} />
 
@@ -60,8 +60,8 @@ export const MockLoginModal = forwardRef<HTMLDivElement, Props>(({ title = 'Mock
               <TextButton label="Back" startIcon="sgds-icon-arrow-left" onClick={onBackButtonClick} data-testid={TEST_IDS.BACK_BUTTON} />
             )}
           </StyledFooter>
-        </form>
-      </Modal.Card>
+        </Modal.Card>
+      </StyledForm>
     </Modal>
   );
 });

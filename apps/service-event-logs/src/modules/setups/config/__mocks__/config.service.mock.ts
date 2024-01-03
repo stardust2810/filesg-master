@@ -8,4 +8,7 @@ export const mockFileSGConfigService = {
     emailToggleSend: FEATURE_TOGGLE.ON,
     senderAddress: 'mockEmailAddress',
   },
+  awsConfig: {
+    coreEventsQueueUrl: 'mockCoreEventsQueue',
+  },
 };
