@@ -284,7 +284,7 @@
     "swagger-ui-express": "^4.1.6",
     "swiper": "^8.1.4",
     "tslib": "^2.3.1",
-    "typeorm": "^0.3.17",
+    "typeorm": "^0.3.18",
     "typeorm-encrypted": "^0.8.0",
     "ua-parser-js": "^1.0.34",
     "uuid": "^8.3.2",
