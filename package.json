@@ -233,7 +233,7 @@
     "html2canvas": "^1.4.1",
     "http-status-codes": "^2.1.4",
     "ioredis": "^5.3.2",
-    "jose": "^4.11.1",
+    "jose": "^4.15.5",
     "jsbarcode": "^3.11.5",
     "json-2-csv": "^4.0.0",
     "lodash": "^4.17.21",
